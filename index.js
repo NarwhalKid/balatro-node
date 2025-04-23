@@ -655,7 +655,7 @@ const jokers = {
       "rarity": "Common",
       onScore(gameState, cards) {return {"timesMult": 3}},
       onRoundEnd(gameState) {
-        if (random(gameState, 1, 1000)) console.log("WIP") // TODO
+        if (random(gameState, 1, 1000)) return {"destroy": true};
       }
     },
 
@@ -946,7 +946,7 @@ const jokers = {
         "plusMult": 0
       },
       onHandPlayed(gameState, cards) {this.properties.plusMult++;},
-      onDiscard(gameState, cards) {this.properties.plusMult--;},
+      onDiscard(gameState, cards) {this.properties.plusMult = Math.max (0, this.properties.plusMult - 1);},
       onScore(gameState, cards) {return {"plusMult": this.properties.plusMult};}
     },
 
@@ -955,7 +955,7 @@ const jokers = {
       "rarity": "Common",
       onScore(gameState, cards) {return {"plusMult": 15};},
       onRoundEnd(gameState) {
-        if (random(gameState, 1, 6)) console.log("WIP") // TODO
+        if (random(gameState, 1, 6)) return {"destroy": true};
       }
     },
 
@@ -1018,17 +1018,43 @@ const jokers = {
 
     "Hologram": {
       "rarity": "Uncommon",
-      getDesc() { return "This Joker gains X0.25 Mult every time a playing card is added to your deck" }
+      getDesc() { return `This Joker gains X0.25 Mult every time a playing card is added to your deck\nCurrently X${this.properties.timesMult}` },
+      "properties": {
+        "timesMult": 1
+      },
+      cardAdded(gameState) {this.properties.timesMult += 0.25;},
+      onScore(gameState, cards) {return {"timesMult": this.properties.timesMult}} 
     },
 
     "Ice Cream": {
-      getDesc() { return "+100 Chips, -5 Chips for every hand played" },
-      "rarity": "Common"
+      getDesc() { return `+${this.properties.plusChips} Chips, -5 Chips for every hand played` },
+      "rarity": "Common",
+      "properties" : {"plusChips": 100},
+      onScore(gameState, cards) {
+        this.properties.plusChips -= 5;
+        return {
+          "plusChips": this.properties.plusChips + 5,
+          "destroy": this.properties.plusChips <= 0
+        }
+      }
     },
 
     "The Idol": {
       "rarity": "Uncommon",
-      getDesc() { return "Each played [rank] of [suit] gives X2 Mult when scored, Card changes every round" }
+      getDesc() { return `Each played ${card.rank} of ${card.suit} gives X2 Mult when scored, Card changes every round` },
+      "properties": {
+        "card": gameState.fullDeck.filter(card => card.enhancement.toLowerCase().replace(" ", "") != "stonecard").length > 0 ? gameState.fullDeck.filter(card => card.enhancement.toLowerCase().replace(" ", "") != "stonecard")[Math.floor(Math.random() * gameState.fullDeck.filter(card => card.enhancement.toLowerCase().replace(" ", "") != "stonecard").length)] : {"rank": "Ace", "suit": "Spades"}
+      },
+      onRoundEnd(gameState) {
+        const possibleCards = gameState.fullDeck.filter(card => card.enhancement.toLowerCase().replace(" ", "") != "stonecard");
+        if (possibleCards.length < 1) return;
+        this.properties.card = possibleCards[Math.floor(Math.random() * possibleCards.length)];
+      },
+      onCardScored(gameState, card) {
+        if (isSuit(gameState, card, this.properties.card.suit) && isRank(gameState, card, this.properties.card.rank)) { // TODO: see if it works like this
+          return {"timesMult": 2};
+        }
+      }
     },
 
     "Invisible Joker": {
