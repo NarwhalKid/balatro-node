@@ -1,6 +1,28 @@
 const suits = ['Spades', 'Hearts', 'Diamonds', 'Clubs'];
 const ranks = ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King'];
 
+const cards = {
+  "Tarot Card": [
+
+  ],
+  "Planet Card": [
+
+  ],
+  "Spectral Card": [
+
+  ]
+}
+
+cards["Playing Card"] = suits.flatMap(suit =>
+  ranks.map(rank => {
+      let chips = 0;
+      if (rank === 'Ace') chips = 11;
+      else if (['Jack', 'Queen', 'King'].includes(rank)) chips = 10;
+      else chips = BigInt(rank);
+      return { rank, suit, chips };
+  })
+);
+
 const boosterPacks = [
   {"name": "Arcana Pack", "amount": 3, "choices": 1, "odds": 4},
   {"name": "Jumbo Arcana Pack", "amount": 5, "choices": 1, "odds": 2},
@@ -881,21 +903,21 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
         "blindBases": [300n, 800n, 2000n, 5000n, 11000n, 20000n, 35000n, 50000n],
         "shopWeights": {
           "Joker": {
-            "appear": 20
+            "odds": 20
           },
-          "Tarot": {
-            "appear": 4
+          "Tarot Card": {
+            "odds": 4
           },
-          "Planet": {
-            "appear": 4
+          "Planet Card": {
+            "odds": 4
           },
           "Playing Card": {
-            "appear": 0,
+            "odds": 0,
             "enhancement": 0,
             "edition": 0
           },
           "Spectral Card": {
-            "appear": 0
+            "odds": 0
           }
         },
         "editions": {
@@ -956,15 +978,7 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
     };
 
     // Fill default deck
-    game.deckCards = suits.flatMap(suit =>
-        ranks.map(rank => {
-            let chips = 0;
-            if (rank === 'Ace') chips = 11;
-            else if (['Jack', 'Queen', 'King'].includes(rank)) chips = 10;
-            else chips = BigInt(rank);
-            return { rank, suit, chips };
-        })
-    );
+    game.deckCards = cards["Playing Card"];
 
 
 
@@ -995,7 +1009,7 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
             break;
         case "ghostdeck":
             game.consumables.push({"name": "Hex"});
-            game.shopWeights["Spectral Card"].appear = 2;
+            game.shopWeights["Spectral Card"].odds = 2;
             break;
         case "abandoneddeck":
             game.deckCards = deckCards.filter(card => !['Jack', 'Queen', 'King'].includes(card.rank));
@@ -1203,17 +1217,17 @@ function addVoucher(gameState, voucher) {
       break;
     case "tarotmerchant":
       gameState.possibleVouchers.push("Tarot Tycoon");
-      gameState.shopWeights["Tarot"].appear = 9.6;
+      gameState.shopWeights["Tarot"].odds = 9.6;
       break;
     case "tarottycoon":
-      gameState.shopWeights["Tarot"].appear = 32;
+      gameState.shopWeights["Tarot"].odds = 32;
       break;
     case "planetmerchant":
       gameState.possibleVouchers.push("Planet Tycoon");
-      gameState.shopWeights["Planet"].appear = 9.6;
+      gameState.shopWeights["Planet"].odds = 9.6;
       break;
     case "planettycoon":
-      gameState.shopWeights["Planet"].appear = 32;
+      gameState.shopWeights["Planet"].odds = 32;
       break;
     case "seedmoney":
       gameState.possibleVouchers.push("Money Tree");
@@ -1230,7 +1244,7 @@ function addVoucher(gameState, voucher) {
       break;
     case "magictrick":
       gameState.possibleVouchers.push("Illusion");
-      gameState.shopWeights["Playing Card"].appear = 4;
+      gameState.shopWeights["Playing Card"].odds = 4;
       break;
     case "illusion":
       gameState.shopWeights["Playing Card"].enhancement = 40;
@@ -1262,7 +1276,10 @@ function addVoucher(gameState, voucher) {
 
 function fillCards(gameState) {
   while (gameState.shop.cards.length < gameState.shopSlots) {
-    // get new card
+    const cardType = pickWeightedRandom(shopWeights);
+    const edition = pickByPercentage(gameState.editions);
+    if (cardType == "Spectral Card") 
+    if (edition) 
   }
 }
 
@@ -1275,17 +1292,47 @@ function rerollShop(gameState) {
   fillCards(gameState);
 }
 
-function pickWeightedRandom(array) {
-  const totalWeight = array.reduce((sum, pack) => sum + pack.odds, 0);
+function pickByPercentage(input, value = 'odds') {
+  const isArray = Array.isArray(input);
+  const entries = isArray
+    ? input.map((item, i) => [i, item])
+    : Object.entries(input);
+
+  const totalChance = entries.reduce((sum, [_, item]) => sum + item[value], 0);
+  const random = Math.random() * 100;
+
+  if (random >= totalChance) return null;
+
+  let accumulated = 0;
+  for (const [key, item] of entries) {
+    accumulated += item[value];
+    if (random < accumulated) {
+      return isArray ? item : key;
+    }
+  }
+
+  return null;
+}
+
+function pickWeightedRandom(input, value = "odds") {
+  const isArray = Array.isArray(input);
+  const entries = isArray
+    ? input.map((item, i) => [i, item])
+    : Object.entries(input);
+
+  const totalWeight = entries.reduce((sum, [_, item]) => sum + item[value], 0);
   let random = Math.random() * totalWeight;
 
-  for (const item of array) {
-    if (random < item.odds) {
-      return item;
+  for (const [key, item] of entries) {
+    if (random < item[value]) {
+      return isArray ? item : key;
     }
-    random -= item.odds;
+    random -= item[value];
   }
+
+  return null;
 }
+
 
 function addVoucherToShop(gameState) {
   const newVouchers = gameState.possibleVouchers.filter(voucher => !gameState.shop.vouchers.includes(voucher));
@@ -1322,6 +1369,7 @@ function newShop(gameState, newAnte) {
     gameState.shop.packs.push(pickWeightedRandom(allowedPacks));
   }
   
+  // Fill cards
   rerollShop(gameState);
   gameState.shop.filled = true;
 }
