@@ -367,605 +367,760 @@ const boosterPacks = [
   {"name": "Mega Spectral Pack", "amount": 4, "choices": 2, "odds": 0.07}
 ];
 
+function jokerCount(gameState, jokerName) {
+  return gameState.jokers.filter(joker => !joker.debuffed && joker.name.toLowerCase().replace(" ", "") == jokerName).length;
+}
+
+function random(gameState, odds, outOf) {
+  return Math.floor(Math.random() * odds) + 1 <= outOf * Math.pow(2, jokerCount(gameState, "Oops! All 6s"));
+}
+
+function isSuit(gameState, card, suit) {
+  // TODO: make this work lol
+  return card.suit.toLowerCase() == suit.toLowerCase();
+}
+
+function isFaceCard(gameState, card) {
+  if (jokerCount(gameState, "pareidolia") > 0) {
+    return true;
+  }
+  return isSuit(gameState, card, "King") || isSuit(gameState, card, "Queen") || isSuit(gameState, card, "Jack"); 
+}
+
+function isRank(gameState, card, rank) {
+  return card.rank == rank;
+}
+
+function getHandType(gameState, cards) {
+  // TODO
+}
+
 const jokers = {
     "8 Ball": {
-      "text": "1 in 4 chance for each played 8 to create a Tarot card when scored (Must have room)",
-      "rarity": "Common"
-},
+      getDesc() { return "1 in 4 chance for each played 8 to create a Tarot card when scored (Must have room)" },
+      "rarity": "Common",
+      onCardScored(gameState, card) {
+        if (isRank(gameState, card, "8")) {
+          if (random(gameState, 1, 4)) {
+            newCard(gameState, "Tarot Card");
+          }
+        }
+      }
+    },
     "Abstract Joker": {
-      "text": "+3 Mult for each Joker card",
-      "rarity": "Common"
+      getDesc() { return "+3 Mult for each Joker card" },
+      "rarity": "Common",
+      onScore(gameState, cards) {
+        return {"plusMult": gameState.jokers.length * 3};
+      }
     },
     "Acrobat": {
       "rarity": "Uncommon",
-      "text": "X3 Mult on final hand of round"
+      getDesc() {return "X3 Mult on final hand of round"},
+      onScore(gameState, cards) {
+        if (gameState.blind.hands == 0) {
+          return {"timesMult": 3};
+        }
+      }
     },
     "Ancient Joker": {
       "rarity": "Rare",
-      "text": "Each played card with [suit] gives X1.5 Mult when scored, suit changes at end of round"
+      "text": `Each played card with ${this.suit} gives X1.5 Mult when scored, suit changes at end of round`,
+      "properties": {
+        "suit": suits[Math.floor(Math.random() * suits.length)]
+      },
+      onCardScored(gameState, card) {
+        if (isSuit(gameState, card, this.suit)) {
+          return {"timesMult": 1.5};
+        }
+      },
+      onRoundEnd(gameState) {
+        const newSuits = suits.filter(suit => suit != this.suit);
+        this.suit = newSuits[Math.floor(Math.random() * newSuits.length)]
+      }
     },
     "Arrowhead": {
       "rarity": "Uncommon",
-      "text": "Played cards with Spade suit give +50 Chips when scored"
+      getDesc() { return "Played cards with Spade suit give +50 Chips when scored" },
+      onCardScored(gameState, card) {
+        if (isSuit(gameState, card, "Spades")) {
+          return {"plusChips": 50};
+        }
+      }
     },
     "Astronomer": {
       "rarity": "Uncommon",
-      "text": "All Planet cards and Celestial Packs in the shop are free"
+      getDesc() { return "All Planet cards and Celestial Packs in the shop are free" }
+      // TODO
     },
     "Banner": {
-      "text": "+30 Chips for each remaining discard",
-      "rarity": "Common"
+      getDesc() { return "+30 Chips for each remaining discard" },
+      "rarity": "Common",
+      onScore(gameState, cards) {
+        return {"plusChips": 30 * gameState.blind.discards};
+      }
     },
     "Baron": {
       "rarity": "Rare",
-      "text": "Each King held in hand gives X1.5 Mult"
+      getDesc() { return "Each King held in hand gives X1.5 Mult" },
+      onHeld(gameState, card) {
+        if (isRank(gameState, card, "King")) {
+          return {"timesMult": 1.5};
+        }
+      }
     },
     "Baseball Card": {
       "rarity": "Rare",
-      "text": "Uncommon Jokers each give X1.5 Mult"
+      getDesc() { return "Uncommon Jokers each give X1.5 Mult" }
+      // TODO
     },
     "Blackboard": {
       "rarity": "Uncommon",
-      "text": "X3 Mult if all cards held in hand are Spades or Clubs"
+      getDesc() { return "X3 Mult if all cards held in hand are Spades or Clubs" },
+      onScore(gameState, cards) {
+        for (let [idx, card] of gameState.blind.hand.entries()) {
+          if (!isSuit(gameState, card, "Spades") && !isSuit(gameState, card, "Clubs")) {
+            return;
+          }
+        }
+        return {"timesMult": 3};
+      }
     },
     "Bloodstone": {
       "rarity": "Uncommon",
-      "text": "1 in 2 chance for played cards with the Heart suit to give X1.5 Mult when scored"
+      getDesc() { return "1 in 2 chance for played cards with the Heart suit to give X1.5 Mult when scored" },
+      onCardScored(gameState, card) {
+        if (isSuit(gameState, card, "Hearts")) {
+          if (random(gameState, 1, 2)) {
+            return {"timesMult": 1.5};
+          }
+        }
+      }
     },
     "Blue Joker": {
-      "text": "+2 Chips for each remaining card in deck",
-      "rarity": "Common"
+      getDesc() { return "+2 Chips for each remaining card in deck" },
+      "rarity": "Common",
+      onScore(gameState, cards) {return {"plusChips": 2 * gameState.remainingCards.length}}
     },
     "Blueprint": {
       "rarity": "Rare",
-      "text": "Copies ability of Joker to the right"
+      getDesc() { return "Copies ability of Joker to the right" }
+      // TODO
     },
     "Bootstraps": {
       "rarity": "Uncommon",
-      "text": "+2 Mult for every $5 you have"
+      getDesc() { return "+2 Mult for every $5 you have" },
+      onScore(gameState, cards) {return {"plusMult": 2*Math.floor(gameState.money/5)}}
     },
     "Brainstorm": {
       "rarity": "Rare",
-      "text": "Copies the ability of leftmost Joker"
+      getDesc() { return "Copies the ability of leftmost Joker" }
+      // TODO
     },
     "Bull": {
       "rarity": "Uncommon",
-      "text": "+2 Chips for each $1 you have"
+      getDesc() { return "+2 Chips for each $1 you have" },
+      onScore(gameState, cards) {return {"plusChips": 2*gameState.money}}
     },
     "Burglar": {
       "rarity": "Uncommon",
-      "text": "When Blind is selected, gain +3 Hands and lose all discards"
+      getDesc() { return "When Blind is selected, gain +3 Hands and lose all discards" },
+      onBlindStart(gameState) {
+        gameState.blind.discards = 0;
+        gameState.blind.hands += 3;
+      }
     },
     "Burnt Joker": {
       "rarity": "Rare",
-      "text": "Upgrade the level of the first discarded poker hand each round"
+      getDesc() { return "Upgrade the level of the first discarded poker hand each round" },
+      onDiscard(gameState, cards) {
+        // TODO
+      }
     },
     "Business Card": {
-      "text": "Played face cards have a 1 in 2 chance to give $2 when scored",
-      "rarity": "Common"
+      getDesc() { return "Played face cards have a 1 in 2 chance to give $2 when scored" },
+      "rarity": "Common",
+      onCardScored(gameState, card) {
+        if (isFaceCard(gameState, card)) {
+          if (random(gameState, 1, 2)) {
+            gameState.money += 2;
+          }
+        }
+      }
     },
     "Canio": {
       "rarity": "Legendary",
-      "text": "This Joker gains X1 Mult when a face card is destroyed"
+      getDesc() { return `This Joker gains X1 Mult when a face card is destroyed\n(Currently X${this.timesMult})` },
+      "properties": {"timesMult": 1},
+      onScore(gameState, cards) {return {"timesMult": this.timesMult}},
+      onCardsDestroyed(gameState, cards) {
+        cards.forEach(card => {
+          if (isFaceCard(card)) timesMult++;
+        })
+      }
     },
     "Campfire": {
       "rarity": "Rare",
-      "text": "This Joker gains X0.25 Mult for each card sold, resets when Boss Blind is defeated"
+      getDesc() { return `This Joker gains X0.25 Mult for each card sold, resets when Boss Blind is defeated\n(Currently X${this.timesMult})` },
+      "properties": {"timesMult": 1},
+      onScore(gameState, cards) {return {"timesMult": this.timesMult}},
+      onCardSold(gameState, card) {
+        this.timesMult += 0.25;
+      },
+      onBlindEnd(gameState) {
+        const bossName = gameState.blind.toLowerCase().replace(" ", "");
+        if (bossName != "smallblind" && bossName != "bigblind") {
+          this.timesMult = 1;
+        }
+      }
     },
     "Card Sharp": {
       "rarity": "Uncommon",
-      "text": " X3 Mult if played poker hand has already been played this round"
+      getDesc() { return " X3 Mult if played poker hand has already been played this round" },
+      onScore(gameState, cards) {
+        if (gameState.blind.handPlays.includes(getHandType(gameState, cards))) {
+          return {"timesMult": 3};
+        }
+      }
     },
     "Cartomancer": {
       "rarity": "Uncommon",
-      "text": "Create a Tarot card when Blind is selected (Must have room)"
+      getDesc() { return "Create a Tarot card when Blind is selected (Must have room)" },
+      onBlindStart(gameState) {newCard(gameState, "Tarot")}
     },
     "Castle": {
-      "text": "This Joker gains +3 Chips per discarded [suit] card, suit changes every round",
-      "rarity": "Common"
+      getDesc() { return `This Joker gains +3 Chips per discarded ${this.suit} card, suit changes every round\n(Currently +${this.plusChips})` },
+      "rarity": "Common",
+      "properties": {
+        "suit": suits[Math.floor(Math.random() * suits.length)],
+        "plusChips": 0
+      },
+      onCardScored(gameState, card) {
+        return {"plusChips": plusChips};
+        
+      },
+      onDiscard(gameState, cards) {
+        if (isSuit(gameState, card, this.suit)) {
+          this.plusChips += 3;
+        }
+      },
+      onRoundEnd(gameState) {
+        const newSuits = suits.filter(suit => suit != this.suit);
+        this.suit = newSuits[Math.floor(Math.random() * newSuits.length)]
+      }
     },
-    "Cavendish": {
-      "text": "X3 Mult, 1 in 1000 chance this card is destroyed at end of round",
-      "rarity": "Common"
+    "Cavendish": { // TODO: Spawning conditions
+      getDesc() { return "X3 Mult, 1 in 1000 chance this card is destroyed at end of round" },
+      "rarity": "Common",
+      onScore(gameState, cards) {return {"timesMult": 3}},
+      onRoundEnd(gameState) {
+        if (random(gameState, 1, 1000)) console.log("WIP") // TODO
+      }
     },
     "Ceremonial Dagger": {
       "rarity": "Uncommon",
-      "text": "When Blind is selected, destroy Joker to the right and permanently add double its sell value to this Mult"
+      getDesc() { return `When Blind is selected, destroy Joker to the right and permanently add double its sell value to this Mult\nCurrently +${plusMult}` },
+      "properties": {
+        "plusMult": 0
+      },
+      onBlindStart() {
+        // TODO
+      }
     },
     "Certificate": {
       "rarity": "Uncommon",
-      "text": "When round begins, add a random playing card with a random seal to your hand"
+      getDesc() { return "When round begins, add a random playing card with a random seal to your hand" }
     },
     "Chaos the Clown": {
-      "text": "1 free Reroll per shop",
+      getDesc() { return "1 free Reroll per shop" },
       "rarity": "Common"
     },
     "Chicot": {
       "rarity": "Legendary",
-      "text": "Disables effect of every Boss Blind"
+      getDesc() { return "Disables effect of every Boss Blind" }
     },
     "Clever Joker": {
-      "text": "+80 Chips if played hand contains a Two Pair",
+      getDesc() { return "+80 Chips if played hand contains a Two Pair" },
       "rarity": "Common"
     },
     "Cloud 9": {
       "rarity": "Uncommon",
-      "text": "Earn $1 for each 9 in your full deck at end of round"
+      getDesc() { return "Earn $1 for each 9 in your full deck at end of round" }
     },
     "Constellation": {
       "rarity": "Uncommon",
-      "text": "This Joker gains X0.1 Mult every time a Planet card is used"
+      getDesc() { return "This Joker gains X0.1 Mult every time a Planet card is used" }
     },
     "Crafty Joker": {
-      "text": "+80 Chips if played hand contains a Flush",
+      getDesc() { return "+80 Chips if played hand contains a Flush" },
       "rarity": "Common"
     },
     "Crazy Joker": {
-      "text": "+12 Mult if played hand contains a Straight",
+      getDesc() { return "+12 Mult if played hand contains a Straight" },
       "rarity": "Common"
     },
     "Credit Card": {
-      "text": "Go up to -$20 in debt",
+      getDesc() { return "Go up to -$20 in debt" },
       "rarity": "Common"
     },
     "Delayed Gratification": {
-      "text": "Earn $2 per discard if no discards are used by end of the round",
+      getDesc() { return "Earn $2 per discard if no discards are used by end of the round" },
       "rarity": "Common"
     },
     "Devious Joker": {
-      "text": "+100 Chips if played hand contains a Straight",
+      getDesc() { return "+100 Chips if played hand contains a Straight" },
       "rarity": "Common"
     },
     "Diet Cola": {
       "rarity": "Uncommon",
-      "text": "Sell this card to create a free Double Tag"
+      getDesc() { return "Sell this card to create a free Double Tag" }
     },
     "DNA": {
       "rarity": "Rare",
-      "text": "If first hand of round has only 1 card, add a permanent copy to deck and draw it to hand"
+      getDesc() { return "If first hand of round has only 1 card, add a permanent copy to deck and draw it to hand" }
     },
     "Driver's License": {
       "rarity": "Rare",
-      "text": "X3 Mult if you have at least 16 Enhanced cards in your full deck"
+      getDesc() { return "X3 Mult if you have at least 16 Enhanced cards in your full deck" }
     },
     "Droll Joker": {
-      "text": "+10 Mult if played hand contains a Flush",
+      getDesc() { return "+10 Mult if played hand contains a Flush" },
       "rarity": "Common"
     },
     "Drunkard": {
-      "text": "+1 discard each round",
+      getDesc() { return "+1 discard each round" },
       "rarity": "Common"
     },
     "The Duo": {
       "rarity": "Rare",
-      "text": "X2 Mult if played hand contains a Pair"
+      getDesc() { return "X2 Mult if played hand contains a Pair" }
     },
     "Dusk": {
       "rarity": "Uncommon",
-      "text": "Retrigger all played cards in final hand of round"
+      getDesc() { return "Retrigger all played cards in final hand of round" }
     },
     "Egg": {
-      "text": "Gains $3 of sell value at end of round",
+      getDesc() { return "Gains $3 of sell value at end of round" },
       "rarity": "Common"
     },
     "Erosion": {
       "rarity": "Uncommon",
-      "text": "+4 Mult for each card below [the deck's starting size] in your full deck"
+      getDesc() { return "+4 Mult for each card below [the deck's starting size] in your full deck" }
     },
     "Even Steven": {
-      "text": "Played cards with even rank give +4 Mult when scored (10, 8, 6, 4, 2)",
+      getDesc() { return "Played cards with even rank give +4 Mult when scored (10, 8, 6, 4, 2)" },
       "rarity": "Common"
     },
     "Faceless Joker": {
-      "text": "Earn $5 if 3 or more face cards are discarded at the same time",
+      getDesc() { return "Earn $5 if 3 or more face cards are discarded at the same time" },
       "rarity": "Common"
     },
     "The Family": {
       "rarity": "Rare",
-      "text": " X4 Mult if played hand contains a Four of a Kind"
+      getDesc() { return " X4 Mult if played hand contains a Four of a Kind" }
     },
     "Fibonacci": {
       "rarity": "Uncommon",
-      "text": "Each played Ace, 2, 3, 5, or 8 gives +8 Mult when scored"
+      getDesc() { return "Each played Ace, 2, 3, 5, or 8 gives +8 Mult when scored" }
     },
     "Flash Card": {
       "rarity": "Uncommon",
-      "text": "This Joker gains +2 Mult per reroll in the shop"
+      getDesc() { return "This Joker gains +2 Mult per reroll in the shop" }
     },
     "Flower Pot": {
       "rarity": "Uncommon",
-      "text": " X3 Mult if poker hand contains a Diamond card, Club card, Heart card, and Spade card"
+      getDesc() { return " X3 Mult if poker hand contains a Diamond card, Club card, Heart card, and Spade card" }
     },
     "Fortune Teller": {
-      "text": "+1 Mult per Tarot card used this run",
+      getDesc() { return "+1 Mult per Tarot card used this run" },
       "rarity": "Common"
     },
     "Four Fingers": {
       "rarity": "Uncommon",
-      "text": "All Flushes and Straights can be made with 4 cards"
+      getDesc() { return "All Flushes and Straights can be made with 4 cards" }
     },
     "Gift Card": {
       "rarity": "Uncommon",
-      "text": "Add $1 of sell value to every Joker and Consumable card at end of round"
+      getDesc() { return "Add $1 of sell value to every Joker and Consumable card at end of round" }
     },
     "Glass Joker": {
       "rarity": "Uncommon",
-      "text": "This Joker gains X0.75 Mult for every Glass Card that is destroyed"
+      getDesc() { return "This Joker gains X0.75 Mult for every Glass Card that is destroyed" }
     },
     "Gluttonous Joker": {
-      "text": "Played cards with Club suit give +3 Mult when scored",
+      getDesc() { return "Played cards with Club suit give +3 Mult when scored" },
       "rarity": "Common"
     },
     "Golden Joker": {
-      "text": "Earn $4 at end of round",
+      getDesc() { return "Earn $4 at end of round" },
       "rarity": "Common"
     },
     "Greedy Joker": {
-      "text": "Played cards with Diamond suit give +3 Mult when scored",
+      getDesc() { return "Played cards with Diamond suit give +3 Mult when scored" },
       "rarity": "Common"
     },
     "Green Joker": {
-      "text": "+1 Mult per hand played, -1 Mult per discard",
+      getDesc() { return "+1 Mult per hand played, -1 Mult per discard" },
       "rarity": "Common"
     },
     "Gros Michel": {
-      "text": "+15 Mult, 1 in 6 chance this card is destroyed at end of round",
+      getDesc() { return "+15 Mult, 1 in 6 chance this card is destroyed at end of round" },
       "rarity": "Common"
     },
     "Hack": {
       "rarity": "Uncommon",
-      "text": "Retrigger each played 2, 3, 4, or 5"
+      getDesc() { return "Retrigger each played 2, 3, 4, or 5" }
     },
     "Half Joker": {
-      "text": "+20 Mult if played hand contains 3 or fewer cards",
+      getDesc() { return "+20 Mult if played hand contains 3 or fewer cards" },
       "rarity": "Common"
     },
     "Hallucination": {
-      "text": "1 in 2 chance to create a Tarot card when any Booster Pack is opened (Must have room)",
+      getDesc() { return "1 in 2 chance to create a Tarot card when any Booster Pack is opened (Must have room)" },
       "rarity": "Common"
     },
     "Hanging Chad": {
-      "text": "Retrigger first played card used in scoring 2 additional times",
+      getDesc() { return "Retrigger first played card used in scoring 2 additional times" },
       "rarity": "Common"
     },
     "Hiker": {
       "rarity": "Uncommon",
-      "text": "Every played card permanently gains +5 Chips when scored"
+      getDesc() { return "Every played card permanently gains +5 Chips when scored" }
     },
     "Hit the Road": {
       "rarity": "Rare",
-      "text": "This Joker gains X0.5 Mult for every Jack discarded this round"
+      getDesc() { return "This Joker gains X0.5 Mult for every Jack discarded this round" }
     },
     "Hologram": {
       "rarity": "Uncommon",
-      "text": "This Joker gains X0.25 Mult every time a playing card is added to your deck"
+      getDesc() { return "This Joker gains X0.25 Mult every time a playing card is added to your deck" }
     },
     "Ice Cream": {
-      "text": "+100 Chips, -5 Chips for every hand played",
+      getDesc() { return "+100 Chips, -5 Chips for every hand played" },
       "rarity": "Common"
     },
     "The Idol": {
       "rarity": "Uncommon",
-      "text": "Each played [rank] of [suit] gives X2 Mult when scored, Card changes every round"
+      getDesc() { return "Each played [rank] of [suit] gives X2 Mult when scored, Card changes every round" }
     },
     "Invisible Joker": {
       "rarity": "Rare",
-      "text": "After 2 rounds, sell this card to Duplicate a random Joker"
+      getDesc() { return "After 2 rounds, sell this card to Duplicate a random Joker" }
     },
     "Joker": {
-      "text": "+4 Mult",
+      getDesc() { return "+4 Mult" },
       "rarity": "Common"
     },
     "Jolly Joker": {
-      "text": "+8 Mult if played hand contains a Pair",
+      getDesc() { return "+8 Mult if played hand contains a Pair" },
       "rarity": "Common"
     },
     "Juggler": {
-      "text": "+1 hand size",
+      getDesc() { return "+1 hand size" },
       "rarity": "Common"
     },
     "Loyalty Card": {
       "rarity": "Uncommon",
-      "text": " X4 Mult every 6 hands played"
+      getDesc() { return " X4 Mult every 6 hands played" }
     },
     "Luchador": {
       "rarity": "Uncommon",
-      "text": "Sell this card to disable the current Boss Blind"
+      getDesc() { return "Sell this card to disable the current Boss Blind" }
     },
     "Lucky Cat": {
       "rarity": "Uncommon",
-      "text": "This Joker gains X0.25 Mult every time a Lucky card successfully triggers"
+      getDesc() { return "This Joker gains X0.25 Mult every time a Lucky card successfully triggers" }
     },
     "Lusty Joker": {
-      "text": "Played cards with Heart suit give +3 Mult when scored",
+      getDesc() { return "Played cards with Heart suit give +3 Mult when scored" },
       "rarity": "Common"
     },
     "Mad Joker": {
-      "text": "+10 Mult if played hand contains a Two Pair",
+      getDesc() { return "+10 Mult if played hand contains a Two Pair" },
       "rarity": "Common"
     },
     "Madness": {
       "rarity": "Uncommon",
-      "text": "When Small Blind or Big Blind is selected, gain X0.5 Mult and destroy a random Joker"
+      getDesc() { return "When Small Blind or Big Blind is selected, gain X0.5 Mult and destroy a random Joker" }
     },
     "Mail-In Rebate": {
-      "text": "Earn $5 for each discarded [rank], rank changes every round",
+      getDesc() { return "Earn $5 for each discarded [rank], rank changes every round" },
       "rarity": "Common"
     },
     "Marble Joker": {
       "rarity": "Uncommon",
-      "text": "Adds one Stone card to deck when Blind is selected"
+      getDesc() { return "Adds one Stone card to deck when Blind is selected" }
     },
     "Matador": {
       "rarity": "Uncommon",
-      "text": "Earn $8 if played hand triggers the Boss Blind ability"
+      getDesc() { return "Earn $8 if played hand triggers the Boss Blind ability" }
     },
     "Merry Andy": {
       "rarity": "Uncommon",
-      "text": "+3 discards each round, -1 hand size"
+      getDesc() { return "+3 discards each round, -1 hand size" }
     },
     "Midas Mask": {
       "rarity": "Uncommon",
-      "text": "All played face cards become Gold cards when scored"
+      getDesc() { return "All played face cards become Gold cards when scored" }
     },
     "Mime": {
       "rarity": "Uncommon",
-      "text": "Retrigger all card held in hand abilities"
+      getDesc() { return "Retrigger all card held in hand abilities" }
     },
     "Misprint": {
-      "text": "adds a random Mult value from 0 to 23",
+      getDesc() { return "adds a random Mult value from 0 to 23" },
       "rarity": "Common"
     },
     "Mr. Bones": {
       "rarity": "Uncommon",
-      "text": "Prevents Death if chips scored are at least 25% of required chips, self destructs"
+      getDesc() { return "Prevents Death if chips scored are at least 25% of required chips, self destructs" }
     },
     "Mystic Summit": {
-      "text": "+15 Mult when 0 discards remaining",
+      getDesc() { return "+15 Mult when 0 discards remaining" },
       "rarity": "Common"
     },
     "Obelisk": {
       "rarity": "Rare",
-      "text": "This Joker gains X0.2 Mult per consecutive hand played without playing your most played poker hand"
+      getDesc() { return "This Joker gains X0.2 Mult per consecutive hand played without playing your most played poker hand" }
     },
     "Odd Todd": {
-      "text": "Played cards with odd rank give +31 Chips when scored (A, 9, 7, 5, 3)",
+      getDesc() { return "Played cards with odd rank give +31 Chips when scored (A, 9, 7, 5, 3)" },
       "rarity": "Common"
     },
     "Onyx Agate": {
       "rarity": "Uncommon",
-      "text": "Played cards with Club suit give +7 Mult when scored"
+      getDesc() { return "Played cards with Club suit give +7 Mult when scored" }
     },
     "Oops! All 6s": {
       "rarity": "Uncommon",
-      "text": "Doubles all listed probabilities (ex: 1 in 3 -> 2 in 3)"
+      getDesc() { return "Doubles all listed probabilities (ex: 1 in 3 -> 2 in 3)" }
     },
     "The Order": {
       "rarity": "Rare",
-      "text": " X3 Mult if played hand contains a Straight"
+      getDesc() { return " X3 Mult if played hand contains a Straight" }
     },
     "Pareidolia": {
       "rarity": "Uncommon",
-      "text": "All cards are considered face cards"
+      getDesc() { return "All cards are considered face cards" }
     },
     "Perkeo": {
       "rarity": "Legendary",
-      "text": "Creates a Negative copy of 1 random consumable card in your possession at the end of the shop"
+      getDesc() { return "Creates a Negative copy of 1 random consumable card in your possession at the end of the shop" }
     },
     "Photograph": {
-      "text": "First played face card gives X2 Mult when scored",
+      getDesc() { return "First played face card gives X2 Mult when scored" },
       "rarity": "Common"
     },
     "Popcorn": {
-      "text": "+20 Mult -4 Mult per round played",
+      getDesc() { return "+20 Mult -4 Mult per round played" },
       "rarity": "Common"
     },
     "Raised Fist": {
-      "text": "Adds double the rank of lowest ranked card held in hand to Mult",
+      getDesc() { return "Adds double the rank of lowest ranked card held in hand to Mult" },
       "rarity": "Common"
     },
     "Ramen": {
       "rarity": "Uncommon",
-      "text": " X2 Mult, loses X0.01 Mult per card discarded"
+      getDesc() { return " X2 Mult, loses X0.01 Mult per card discarded" }
     },
     "Red Card": {
-      "text": "This Joker gains +3 Mult when any Booster Pack is skipped",
+      getDesc() { return "This Joker gains +3 Mult when any Booster Pack is skipped" },
       "rarity": "Common"
     },
     "Reserved Parking": {
-      "text": "Each face card held in hand has a 1 in 2 chance to give $1",
+      getDesc() { return "Each face card held in hand has a 1 in 2 chance to give $1" },
       "rarity": "Common"
     },
     "Ride the Bus": {
-      "text": "This Joker gains +1 Mult per consecutive hand played without a scoring face card",
+      getDesc() { return "This Joker gains +1 Mult per consecutive hand played without a scoring face card" },
       "rarity": "Common"
     },
     "Riff-Raff": {
-      "text": "When Blind is selected, create 2 Common Jokers (Must have room)",
+      getDesc() { return "When Blind is selected, create 2 Common Jokers (Must have room)" },
       "rarity": "Common"
     },
     "Showman": {
       "rarity": "Uncommon",
-      "text": "Joker, Tarot, Planet, and Spectral cards may appear multiple times"
+      getDesc() { return "Joker, Tarot, Planet, and Spectral cards may appear multiple times" }
     },
     "Rocket": {
       "rarity": "Uncommon",
-      "text": "Earn $1 at end of round. Payout increases by $2 when Boss Blind is defeated"
+      getDesc() { return "Earn $1 at end of round. Payout increases by $2 when Boss Blind is defeated" }
     },
     "Rough Gem": {
       "rarity": "Uncommon",
-      "text": "Played cards with Diamond suit earn $1 when scored"
+      getDesc() { return "Played cards with Diamond suit earn $1 when scored" }
     },
     "Runner": {
-      "text": "Gains +15 Chips if played hand contains a Straight",
+      getDesc() { return "Gains +15 Chips if played hand contains a Straight" },
       "rarity": "Common"
     },
     "Satellite": {
       "rarity": "Uncommon",
-      "text": "Earn $1 at end of round per unique Planet card used this run"
+      getDesc() { return "Earn $1 at end of round per unique Planet card used this run" }
     },
     "Scary Face": {
-      "text": "Played face cards give +30 Chips when scored",
+      getDesc() { return "Played face cards give +30 Chips when scored" },
       "rarity": "Common"
     },
     "Scholar": {
-      "text": "Played Aces give +20 Chips and +4 Mult when scored",
+      getDesc() { return "Played Aces give +20 Chips and +4 Mult when scored" },
       "rarity": "Common"
     },
     "Séance": {
       "rarity": "Uncommon",
-      "text": "If poker hand is a Straight Flush, create a random Spectral card (Must have room)"
+      getDesc() { return "If poker hand is a Straight Flush, create a random Spectral card (Must have room)" }
     },
     "Seeing Double": {
       "rarity": "Uncommon",
-      "text": " X2 Mult if played hand has a scoring Club card and a scoring card of any other suit"
+      getDesc() { return " X2 Mult if played hand has a scoring Club card and a scoring card of any other suit" }
     },
     "Seltzer": {
       "rarity": "Uncommon",
-      "text": "Retrigger all cards played for the next 10 hands"
+      getDesc() { return "Retrigger all cards played for the next 10 hands" }
     },
     "Shoot the Moon": {
-      "text": "Each Queen held in hand gives +13 Mult",
+      getDesc() { return "Each Queen held in hand gives +13 Mult" },
       "rarity": "Common"
     },
     "Shortcut": {
       "rarity": "Uncommon",
-      "text": "Allows Straights to be made with gaps of 1 rank (ex: 10 8 6 5 3)"
+      getDesc() { return "Allows Straights to be made with gaps of 1 rank (ex: 10 8 6 5 3)" }
     },
     "Sixth Sense": {
       "rarity": "Uncommon",
-      "text": "If first hand of round is a single 6, destroy it and create a Spectral card (Must have room)"
+      getDesc() { return "If first hand of round is a single 6, destroy it and create a Spectral card (Must have room)" }
     },
     "Sly Joker": {
-      "text": "+50 Chips if played hand contains a Pair",
+      getDesc() { return "+50 Chips if played hand contains a Pair" },
       "rarity": "Common"
     },
     "Smeared Joker": {
       "rarity": "Uncommon",
-      "text": "Hearts and Diamonds count as the same suit, Spades and Clubs count as the same suit"
+      getDesc() { return "Hearts and Diamonds count as the same suit, Spades and Clubs count as the same suit" }
     },
     "Smiley Face": {
-      "text": "Played face cards give +5 Mult when scored",
+      getDesc() { return "Played face cards give +5 Mult when scored" },
       "rarity": "Common"
     },
     "Sock and Buskin": {
       "rarity": "Uncommon",
-      "text": "Retrigger all played face cards"
+      getDesc() { return "Retrigger all played face cards" }
     },
     "Space Joker": {
       "rarity": "Uncommon",
-      "text": "1 in 4 chance to upgrade level of played poker hand"
+      getDesc() { return "1 in 4 chance to upgrade level of played poker hand" }
     },
     "Splash": {
-      "text": "Every played card counts in scoring",
+      getDesc() { return "Every played card counts in scoring" },
       "rarity": "Common"
     },
     "Square Joker": {
-      "text": "This Joker gains +4 Chips if played hand has exactly 4 cards",
+      getDesc() { return "This Joker gains +4 Chips if played hand has exactly 4 cards" },
       "rarity": "Common"
     },
     "Steel Joker": {
       "rarity": "Uncommon",
-      "text": "Gives X0.2 Mult for each Steel Card in your full deck"
+      getDesc() { return "Gives X0.2 Mult for each Steel Card in your full deck" }
     },
     "Joker Stencil": {
       "rarity": "Uncommon",
-      "text": " X1 Mult for each empty Joker slot, Joker Stencil included"
+      getDesc() { return " X1 Mult for each empty Joker slot, Joker Stencil included" }
     },
     "Stone Joker": {
       "rarity": "Uncommon",
-      "text": "Gives +25 Chips for each Stone Card in your full deck"
+      getDesc() { return "Gives +25 Chips for each Stone Card in your full deck" }
     },
     "Stuntman": {
       "rarity": "Rare",
-      "text": "+250 Chips, -2 hand size"
+      getDesc() { return "+250 Chips, -2 hand size" }
     },
     "Supernova": {
-      "text": "Adds the number of times poker hand has been played this run to Mult",
+      getDesc() { return "Adds the number of times poker hand has been played this run to Mult" },
       "rarity": "Common"
     },
     "Superposition": {
-      "text": "Create a Tarot card if poker hand contains an Ace and a Straight (Must have room)",
+      getDesc() { return "Create a Tarot card if poker hand contains an Ace and a Straight (Must have room)" },
       "rarity": "Common"
     },
     "Swashbuckler": {
-      "text": "Adds the sell value of all other owned Jokers to Mult",
+      getDesc() { return "Adds the sell value of all other owned Jokers to Mult" },
       "rarity": "Common"
     },
     "Throwback": {
       "rarity": "Uncommon",
-      "text": " X0.25 Mult for each Blind skipped this run"
+      getDesc() { return " X0.25 Mult for each Blind skipped this run" }
     },
     "Golden Ticket": {
-      "text": "Played Gold cards earn $4 when scored",
+      getDesc() { return "Played Gold cards earn $4 when scored" },
       "rarity": "Common"
     },
     "To the Moon": {
       "rarity": "Uncommon",
-      "text": "Earn an extra $1 of interest for every $5 you have at end of round"
+      getDesc() { return "Earn an extra $1 of interest for every $5 you have at end of round" }
     },
     "To Do List": {
-      "text": "Earn $4 if poker hand is a [poker hand], poker hand changes at end of round",
+      getDesc() { return "Earn $4 if poker hand is a [poker hand], poker hand changes at end of round" },
       "rarity": "Common"
     },
     "Trading Card": {
       "rarity": "Uncommon",
-      "text": "If first discard of round has only 1 card, destroy it and earn $3"
+      getDesc() { return "If first discard of round has only 1 card, destroy it and earn $3" }
     },
     "The Tribe": {
       "rarity": "Rare",
-      "text": "X2 Mult if played hand contains a Flush"
+      getDesc() { return "X2 Mult if played hand contains a Flush" }
     },
     "Triboulet": {
       "rarity": "Legendary",
-      "text": "Played Kings and Queens each give X2 Mult when scored"
+      getDesc() { return "Played Kings and Queens each give X2 Mult when scored" }
     },
     "The Trio": {
       "rarity": "Rare",
-      "text": "X3 Mult if played hand contains a Three of a Kind"
+      getDesc() { return "X3 Mult if played hand contains a Three of a Kind" }
     },
     "Troubadour": {
       "rarity": "Uncommon",
-      "text": "+2 hand size, -1 hand each round"
+      getDesc() { return "+2 hand size, -1 hand each round" }
     },
     "Spare Trousers": {
       "rarity": "Uncommon",
-      "text": "This Joker gains +2 Mult if played hand contains a Two Pair"
+      getDesc() { return "This Joker gains +2 Mult if played hand contains a Two Pair" }
     },
     "Turtle Bean": {
       "rarity": "Uncommon",
-      "text": "+5 hand size, reduces by 1 every round"
+      getDesc() { return "+5 hand size, reduces by 1 every round" }
     },
     "Vagabond": {
       "rarity": "Rare",
-      "text": "Create a Tarot card if hand is played with $4 or less"
+      getDesc() { return "Create a Tarot card if hand is played with $4 or less" }
     },
     "Vampire": {
       "rarity": "Uncommon",
-      "text": "This Joker gains X0.1 Mult per scoring Enhanced card played, removes card Enhancement"
+      getDesc() { return "This Joker gains X0.1 Mult per scoring Enhanced card played, removes card Enhancement" }
     },
     "Walkie Talkie": {
-      "text": "Each played 10 or 4 gives +10 Chips and +4 Mult when scored",
+      getDesc() { return "Each played 10 or 4 gives +10 Chips and +4 Mult when scored" },
       "rarity": "Common"
     },
     "Wee Joker": {
       "rarity": "Rare",
-      "text": "This Joker gains +8 Chips when each played 2 is scored"
+      getDesc() { return "This Joker gains +8 Chips when each played 2 is scored" }
     },
     "Wily Joker": {
-      "text": "+100 Chips if played hand contains a Three of a Kind",
+      getDesc() { return "+100 Chips if played hand contains a Three of a Kind" },
       "rarity": "Common"
     },
     "Wrathful Joker": {
-      "text": "Played cards with Spade suit give +3 Mult when scored",
+      getDesc() { return "Played cards with Spade suit give +3 Mult when scored" },
       "rarity": "Common"
     },
     "Yorick": {
       "rarity": "Legendary",
-      "text": "This Joker gains X1 Mult every 23 cards discarded"
+      getDesc() { return "This Joker gains X1 Mult every 23 cards discarded" }
     },
     "Zany Joker": {
-      "text": "+12 Mult if played hand contains a Three of a Kind",
+      getDesc() { return "+12 Mult if played hand contains a Three of a Kind" },
       "rarity": "Common"
     }
 };
@@ -1223,7 +1378,6 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
         "vouchers": [],
         "anteBlinds": [],
         "blindBases": [300n, 800n, 2000n, 5000n, 11000n, 20000n, 35000n, 50000n],
-        "unlockedSecretHands": [],
         "handLevels": {
           "High Card": 1n,
           "Pair": 1n,
@@ -1237,7 +1391,21 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
           "Five of a Kind": 1n,
           "Flush House": 1n,
           "Flush Five": 1n
-        },    
+        }, 
+        "handPlays": {
+          "High Card": 0,
+          "Pair": 0,
+          "Two Pair": 0,
+          "Three of a Kind": 0,
+          "Straight": 0,
+          "Flush": 0,
+          "Full House": 0,
+          "Four of a Kind": 0,
+          "Straight Flush": 0,
+          "Five of a Kind": 0,
+          "Flush House": 0,
+          "Flush Five": 0
+        },   
         "shopWeights": {
           "Joker": {
             "odds": 20
@@ -1625,16 +1793,16 @@ function newCard(gameState, cardType) {
       const jokersOfRarity = jokers.filter(joker => rarity == joker.rarity);
       do {
         card = jokersOfRarity[Math.floor(Math.random() * jokersOfRarity.length)];
-      } while (jokersOfRarity.length != 0 && !jokerNames.includes("showman") && jokerNames.includes(card.name));
+      } while (jokersOfRarity.length != 0 && jokerCount(gameState, "showman") > 0 && jokerNames.includes(card.name));
     } else if (cardType == "Planet Card") {
       do {
         const pokerHand = Object.keys(pokerHands)[Math.floor(Math.random() * Object.keys(pokerHands).length)];
         card = {name: pokerHands[pokerHand].planet, handType: pokerHand}
-      } while (!pokerHands[card.handType].unlocked && !gameState.unlockedSecretHands.includes(card.handType));
+      } while (!pokerHands[card.handType].unlocked && gameState.handPlays[card.handType] < 1);
     } else {
       let remainingCards = cards[cardType];
       if (cardType != "Playing Cards") {
-        const newCards = remainingCards.filter(card => !gameState.consumables.map(card => card.name).includes(card.name));
+        const newCards = remainingCards.filter(card => !gameState.consumables.map(card => card.name).includes(card.name) || jokerCount(gameState, "showman") > 0);
         remainingCards = newCards.length < 1 ? remainingCards : newCards;
       }
       card = remainingCards[Math.floor(Math.random() * remainingCards.length)];
