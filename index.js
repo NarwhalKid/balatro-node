@@ -3,13 +3,171 @@ const ranks = ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Que
 
 const cards = {
   "Tarot Card": [
-
+    {
+      name: "The Fool",
+      text: "Creates the last Tarot or Planet card used during this run (The Fool excluded)"
+    },
+    {
+      name: "The Magician",
+      text: "Enhances 2 selected cards to Lucky Cards"
+    },
+    {
+      name: "The High Priestess",
+      text: "Creates up to 2 random Planet cards (Must have room)"
+    },
+    {
+      name: "The Empress",
+      text: "Enhances 2 selected cards to Mult Cards"
+    },
+    {
+      name: "The Emperor",
+      text: "Creates up to 2 random Tarot cards (Must have room)"
+    },
+    {
+      name: "The Hierophant",
+      text: "Enhances 2 selected cards to Bonus Cards"
+    },
+    {
+      name: "The Lovers",
+      text: "Enhances 1 selected card into a Wild Card"
+    },
+    {
+      name: "The Chariot",
+      text: "Enhances 1 selected card into a Steel Card"
+    },
+    {
+      name: "Justice",
+      text: "Enhances 1 selected card into a Glass Card"
+    },
+    {
+      name: "The Hermit",
+      text: "Doubles money (Max of $20)"
+    },
+    {
+      name: "The Wheel of Fortune",
+      text: "1 in 4 chance to add Foil, Holographic, or Polychrome edition to a random Joker"
+    },
+    {
+      name: "Strength",
+      text: "Increases rank of up to 2 selected cards by 1"
+    },
+    {
+      name: "The Hanged Man",
+      text: "Destroys up to 2 selected cards"
+    },
+    {
+      name: "Death",
+      text: "Select 2 cards, convert the left card into the right card (Drag to rearrange)" // TODO: decide if i wanna change this
+    },
+    {
+      name: "Temperance",
+      text: "Gives the total sell value of all current Jokers (Max of $50)"
+    },
+    {
+      name: "The Devil",
+      text: "Enhances 1 selected card into a Gold Card"
+    },
+    {
+      name: "The Tower",
+      text: "Enhances 1 selected card into a Stone Card"
+    },
+    {
+      name: "The Star",
+      text: "Converts up to 3 selected cards to Diamonds"
+    },
+    {
+      name: "The Moon",
+      text: "Converts up to 3 selected cards to Clubs"
+    },
+    {
+      name: "The Sun",
+      text: "Converts up to 3 selected cards to Hearts"
+    },
+    {
+      name: "Judgement",
+      text: "Creates a random Joker card (Must have room)"
+    },
+    {
+      name: "The World",
+      text: "Converts up to 3 selected cards to Spades"
+    }
   ],
   "Planet Card": [
 
   ],
   "Spectral Card": [
-
+    {
+      name: "Familiar",
+      text: "Destroy 1 random card in your hand, but add 3 random Enhanced face cards to your hand"
+    },
+    {
+      name: "Grim",
+      text: "Destroy 1 random card in your hand, but add 2 random Enhanced Aces to your hand"
+    },
+    {
+      name: "Incantation",
+      text: "Destroy 1 random card in your hand, but add 4 random Enhanced numbered cards to your hand"
+    },
+    {
+      name: "Talisman",
+      text: "Add a Gold Seal to 1 selected card in your hand"
+    },
+    {
+      name: "Aura",
+      text: "Add Foil, Holographic, or Polychrome effect to 1 selected card in hand"
+    },
+    {
+      name: "Wraith",
+      text: "Creates a random Rare Joker, sets money to $0"
+    },
+    {
+      name: "Sigil",
+      text: "Converts all cards in hand to a single random suit"
+    },
+    {
+      name: "Ouija",
+      text: "Converts all cards in hand to a single random rank\n-1 hand size"
+    },
+    {
+      name: "Ectoplasm",
+      text: "Add Negative to a random Joker.\n-X hand size" // TODO: make hand size update
+    },
+    {
+      name: "Immolate",
+      text: "Destroys 5 random cards in hand, gain $20"
+    },
+    {
+      name: "Ankh",
+      text: "Create a copy of a random Joker, destroy all other Jokers"
+    },
+    {
+      name: "Deja Vu",
+      text: "Add a Red Seal to 1 selected card in your hand"
+    },
+    {
+      name: "Hex",
+      text: "Add Polychrome to a random Joker, and destroy all other Jokers"
+    },
+    {
+      name: "Trance",
+      text: "Add a Blue Seal to 1 selected card in your hand"
+    },
+    {
+      name: "Medium",
+      text: "Add a Purple Seal to 1 selected card card in your hand"
+    },
+    {
+      name: "Cryptid",
+      text: "Create 2 copies of 1 selected card in your hand"
+    },
+    {
+      name: "The Soul",
+      text: "Creates a Legendary Joker (Must have room)"
+    },
+    {
+      name: "Black Hole",
+      text: "Upgrade every poker hand by 1 level"
+    }
   ]
 }
 
