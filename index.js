@@ -1,6 +1,24 @@
 const suits = ['Spades', 'Hearts', 'Diamonds', 'Clubs'];
 const ranks = ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King'];
 
+const seals = {
+  "Red Seal": {},
+  "Gold Seal": {},
+  "Blue Seal": {},
+  "Purple Seal": {}
+}
+
+const enhancements = {
+  "Bonus Card": {},
+  "Mult Card": {},
+  "Wild Card": {},
+  "Glass Card": {},
+  "Steel Card": {},
+  "Stone Card": {},
+  "Gold Card": {},
+  "Lucky Card": {}
+}
+
 const cards = {
   "Tarot Card": [
     {
@@ -92,9 +110,6 @@ const cards = {
       text: "Converts up to 3 selected cards to Spades"
     }
   ],
-  "Planet Card": [
-
-  ],
   "Spectral Card": [
     {
       name: "Familiar",
@@ -180,6 +195,155 @@ cards["Playing Card"] = suits.flatMap(suit =>
       return { rank, suit, chips };
   })
 );
+
+const pokerHands = {
+  "High Card": {
+    base: {
+      mult: 1n,
+      chips: 5n
+    },
+    addition: {
+      mult: 1n,
+      chips: 10n
+    },
+    planet: "Pluto",
+    unlocked: true
+  },
+  "Pair": {
+    base: {
+      mult: 2n,
+      chips: 10n
+    },
+    addition: {
+      mult: 1n,
+      chips: 15n
+    },
+    planet: "Mercury",
+    unlocked: true
+  },
+  "Two Pair": {
+    base: {
+      mult: 2n,
+      chips: 20n
+    },
+    addition: {
+      mult: 1n,
+      chips: 20n
+    },
+    planet: "Uranus",
+    unlocked: true
+  },
+  "Three of a Kind": {
+    base: {
+      mult: 3n,
+      chips: 30n
+    },
+    addition: {
+      mult: 2n,
+      chips: 20n
+    },
+    planet: "Venus",
+    unlocked: true
+  },
+  "Straight": {
+    base: {
+      mult: 4n,
+      chips: 30n
+    },
+    addition: {
+      mult: 3n,
+      chips: 30n
+    },
+    planet: "Saturn",
+    unlocked: true
+  },
+  "Flush": {
+    base: {
+      mult: 4n,
+      chips: 35n
+    },
+    addition: {
+      mult: 2n,
+      chips: 15n
+    },
+    planet: "Jupiter",
+    unlocked: true
+  },
+  "Full House": {
+    base: {
+      mult: 4n,
+      chips: 40n
+    },
+    addition: {
+      mult: 2n,
+      chips: 25n
+    },
+    planet: "Earth",
+    unlocked: true
+  },
+  "Four of a Kind": {
+    base: {
+      mult: 7n,
+      chips: 60n
+    },
+    addition: {
+      mult: 3n,
+      chips: 30n
+    },
+    planet: "Mars",
+    unlocked: true
+  },
+  "Straight Flush": {
+    base: {
+      mult: 8n,
+      chips: 100n
+    },
+    addition: {
+      mult: 4n,
+      chips: 40n
+    },
+    planet: "Neptune",
+    unlocked: true
+  },
+  "Five of a Kind": {
+    base: {
+      mult: 12n,
+      chips: 120n
+    },
+    addition: {
+      mult: 3n,
+      chips: 35n
+    },
+    planet: "Planet X",
+    unlocked: false
+  },
+  "Flush House": {
+    base: {
+      mult: 14n,
+      chips: 140n
+    },
+    addition: {
+      mult: 4n,
+      chips: 40n
+    },
+    planet: "Ceres",
+    unlocked: false
+  },
+  "Flush Five": {
+    base: {
+      mult: 16n,
+      chips: 160n
+    },
+    addition: {
+      mult: 3n,
+      chips: 50n
+    },
+    planet: "Eris",
+    unlocked: false
+  }
+};
+
+
 
 const boosterPacks = [
   {"name": "Arcana Pack", "amount": 3, "choices": 1, "odds": 4},
@@ -1059,6 +1223,21 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
         "vouchers": [],
         "anteBlinds": [],
         "blindBases": [300n, 800n, 2000n, 5000n, 11000n, 20000n, 35000n, 50000n],
+        "unlockedSecretHands": [],
+        "handLevels": {
+          "High Card": 1n,
+          "Pair": 1n,
+          "Two Pair": 1n,
+          "Three of a Kind": 1n,
+          "Straight": 1n,
+          "Flush": 1n,
+          "Full House": 1n,
+          "Four of a Kind": 1n,
+          "Straight Flush": 1n,
+          "Five of a Kind": 1n,
+          "Flush House": 1n,
+          "Flush Five": 1n
+        },    
         "shopWeights": {
           "Joker": {
             "odds": 20
@@ -1132,7 +1311,8 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
         "firstShop": true,
         "bannedPacks": [],
         "bannedBlinds": [],
-        "seenBlinds": []
+        "seenBlinds": [],
+        "bannedCards": []
     };
 
     // Fill default deck
@@ -1432,12 +1612,59 @@ function addVoucher(gameState, voucher) {
   }
 }
 
+function newCard(gameState, cardType) {
+  let card;
+  const rarity = pickByPercentage([
+    {"type": "Common", "odds": 70},
+    {"type": "Uncommon", "odds": 25},
+    {"type": "Rare", "odds": 5},
+  ]);
+  const jokerNames = gameState.jokers.map(joker => joker.name.toLowerCase());
+  do {
+    if (cardType == "Joker") {
+      const jokersOfRarity = jokers.filter(joker => rarity == joker.rarity);
+      do {
+        card = jokersOfRarity[Math.floor(Math.random() * jokersOfRarity.length)];
+      } while (jokersOfRarity.length != 0 && !jokerNames.includes("showman") && jokerNames.includes(card.name));
+    } else if (cardType == "Planet Card") {
+      do {
+        const pokerHand = Object.keys(pokerHands)[Math.floor(Math.random() * Object.keys(pokerHands).length)];
+        card = {name: pokerHands[pokerHand].planet, handType: pokerHand}
+      } while (!pokerHands[card.handType].unlocked && !gameState.unlockedSecretHands.includes(card.handType));
+    } else {
+      let remainingCards = cards[cardType];
+      if (cardType != "Playing Cards") {
+        const newCards = remainingCards.filter(card => !gameState.consumables.map(card => card.name).includes(card.name));
+        remainingCards = newCards.length < 1 ? remainingCards : newCards;
+      }
+      card = remainingCards[Math.floor(Math.random() * remainingCards.length)];
+    }
+  } while (gameState.bannedCards.includes(card.name));
+  if (cardType == "Spectral Card" || cardType == "Tarot Card" || cardType == "Planet Card") return card;
+  if (cardType == "Playing Card") {
+    const hasEdition = Math.random() <= gameState.shopWeights["Playing Card"].edition / 100;
+    const hasEnhancement = Math.random() <= gameState.shopWeights["Playing Card"].enhancement / 100;
+    const hasSeal = Math.random() <= 0.2;
+
+    if (hasEdition) {
+      card.edition = pickByPercentage(gameState.editions, "playingCardOdds");
+    }
+    if (hasEnhancement) {
+      card.enhancement = enhancements[Math.floor(Math.random() * enhancements.length)];
+    }
+    if (hasSeal) {
+      card.seal = seals[Math.floor(Math.random() * seals.length)];
+    }
+  }
+  if (cardType == "Joker") {
+    card.edition = pickByPercentage(gameState.editions);
+  }
+}
+
 function fillCards(gameState) {
   while (gameState.shop.cards.length < gameState.shopSlots) {
     const cardType = pickWeightedRandom(shopWeights);
-    const edition = pickByPercentage(gameState.editions);
-    if (cardType == "Spectral Card") 
-    if (edition) 
+    newCard(gameState, cardType);
   }
 }
 
