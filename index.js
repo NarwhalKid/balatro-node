@@ -520,14 +520,18 @@ function getHandType(gameState, cards) {
 function drawCard(gameState, card = undefined, toHand = true) {
   if (card) {
     if (toHand) {
+      gameState.fullDeck.push(card);
       gameState.blind.hand.push(card);
     } else {
       gameState.fullDeck.push(card);
+      if (gameState.blind)
+        gameState.blind.deck.push(card);
     }
   } else {
     if (gameState.remainingCards.length < 1) return;
     const cardIdx = Math.floor(Math.random() * gameState.remainingCards.length);
     game.blind.hand.push(gameState.remainingCards[cardIdx]);
+    gameState.fullDeck.push(gameState.remainingCards[cardIdx]);
     gameState.remainingCards.splice(cardIdx, 1);
   }
 }
@@ -864,7 +868,7 @@ const jokers = {
       getDesc() { return "Earn $2 per discard if no discards are used by end of the round" },
       "rarity": "Common",
       onRoundEnd(gameState) {
-        if (false && "REPLACEME") return {"money": gameState.discards * 2}; // TODO
+        if (false && "REPLACEME") return {"money": gameState.blind.discards * 2}; // TODO
       }
     },
 
@@ -920,7 +924,7 @@ const jokers = {
       "rarity": "Rare",
       getDesc() { return "X2 Mult if played hand contains a Pair" },
       onScore(gameState, cards) {
-        if (cardsContain(gameState, cards, "Pair")) return {"timesMukt": 2};
+        if (cardsContain(gameState, cards, "Pair")) return {"timesMult": 2};
       }
     },
 
@@ -1177,12 +1181,24 @@ const jokers = {
 
     "Invisible Joker": {
       "rarity": "Rare",
-      getDesc() { return "After 2 rounds, sell this card to Duplicate a random Joker" }
+      getDesc() { return `After 2 rounds, sell this card to Duplicate a random Joker\n(Rounds ${this.properties.roundsRemaining})` }, // TODO: invisible message
+      "properties": {
+        "roundsRemaining": 2
+      },
+      onRoundEnd(gameState) {
+        this.properties.roundsRemaining = Math.max(0, this.properties.roundsRemaining-1);
+      },
+      onSell(gameState) {
+        if (this.properties.roundsRemaining < 1) {
+          // TODO
+        }
+      }
     },
 
     "Joker": {
       getDesc() { return "+4 Mult" },
-      "rarity": "Common"
+      "rarity": "Common",
+      onScore(gameState) {return {"plusMult": 4};}
     },
 
     "Jolly Joker": {
@@ -1195,27 +1211,56 @@ const jokers = {
 
     "Juggler": {
       getDesc() { return "+1 hand size" },
-      "rarity": "Common"
+      "rarity": "Common",
+      onBuy(gameState) {
+        gameState.defaultDiscards++;
+      },
+      onSell(gameState) {
+        gameState.defaultDiscards--;
+      }
     },
 
     "Loyalty Card": {
       "rarity": "Uncommon",
-      getDesc() { return " X4 Mult every 6 hands played" }
+      getDesc() { return `X4 Mult every 6 hands played\n${this.properties.roundsRemaining} rounds left` },
+      "properties": {
+        "roundsRemaining": 6
+      },
+      onScore(gameState, cards) {
+        const oldRounds = this.properties.roundsRemaining;
+        this.properties.roundsRemaining = (oldRounds + 8) % 7;
+        if (oldRounds < 1) {
+          return {"timesMult": 4};
+        }
+      }
     },
 
     "Luchador": {
       "rarity": "Uncommon",
-      getDesc() { return "Sell this card to disable the current Boss Blind" }
+      getDesc() { return "Sell this card to disable the current Boss Blind" },
+      onSell(gameState) {
+        // TODO
+      }
     },
 
     "Lucky Cat": {
       "rarity": "Uncommon",
-      getDesc() { return "This Joker gains X0.25 Mult every time a Lucky card successfully triggers" }
+      getDesc() { return `This Joker gains X0.25 Mult every time a Lucky card successfully triggers\nCurrently ${this.properties.timesMult}` },
+      "properties": {
+        "timesMult": 1
+      },
+      onScore(gameState, cards) {return {"timesMult": this.properties.timesMult};},
+      onLuckyTrigger(gameState) { // TODO
+        this.properties.timesMult += 0.25;
+      }
     },
 
     "Lusty Joker": {
       getDesc() { return "Played cards with Heart suit give +3 Mult when scored" },
-      "rarity": "Common"
+      "rarity": "Common",
+      onCardScored(gameState, card) {
+        if (isSuit(gameState, card, "Hearts")) return {"plusMult": 3};
+      }
     },
 
     "Mad Joker": {
@@ -1228,67 +1273,139 @@ const jokers = {
 
     "Madness": {
       "rarity": "Uncommon",
-      getDesc() { return "When Small Blind or Big Blind is selected, gain X0.5 Mult and destroy a random Joker" }
+      getDesc() { return `When Small Blind or Big Blind is selected, gain X0.5 Mult and destroy a random Joker\n(Currently ${this.timesMult})` },
+      "properties": {
+        "timesMult": 1
+      },
+      onBlindStart(gameState) {
+        this.properties.timesMult += 0.5;
+        // TODO
+      },
+      onScore(gameState, cards) {
+        return {"timesMult": this.properties.timesMult};
+      }
     },
 
     "Mail-In Rebate": {
       getDesc() { return "Earn $5 for each discarded [rank], rank changes every round" },
-      "rarity": "Common"
+      "rarity": "Common",
+      onDiscard(gameState, cards) {
+        cards.forEach(card => {
+          if (card == REPLACEME) { // TODO
+            gameState.money += 5;
+          }
+        })
+      }
     },
 
     "Marble Joker": {
       "rarity": "Uncommon",
-      getDesc() { return "Adds one Stone card to deck when Blind is selected" }
+      getDesc() { return "Adds one Stone card to deck when Blind is selected" },
+      onBlindStart(gameState) {
+        drawCard(gameState, newCard(gameState, "Playing Card", false, true))
+      }
     },
 
     "Matador": {
       "rarity": "Uncommon",
       getDesc() { return "Earn $8 if played hand triggers the Boss Blind ability" }
+      // TODO
     },
 
     "Merry Andy": {
       "rarity": "Uncommon",
-      getDesc() { return "+3 discards each round, -1 hand size" }
+      getDesc() { return "+3 discards each round, -1 hand size" },
+      onBlindStart(gameState) {
+        gameState.blind.discards += 3; // TODO: make sure
+      },
+      onBuy(gameState) {
+        gameState.handSize--;
+      },
+      onSell(gameState) {
+        gameState.handSize++;
+      }
     },
 
     "Midas Mask": {
       "rarity": "Uncommon",
-      getDesc() { return "All played face cards become Gold cards when scored" }
+      getDesc() { return "All played face cards become Gold cards when scored" }, // TODO: make sure this triggers at the right time
+      onCardScored(gameState, card) {
+        if (isFaceCard(card)) {
+          card.enhancement = "Gold Card";
+        }
+      }
     },
 
     "Mime": {
       "rarity": "Uncommon",
-      getDesc() { return "Retrigger all card held in hand abilities" }
+      getDesc() { return "Retrigger all card held in hand abilities" },
+      onCardHeld(gameState, card) {
+        return {"retriggers": 1};
+      },
+      onRoundEnd(gameState, card) { // TODO: make sure this happens at the right time
+        const dupes = jokerCount(gameState, "Blueprint") + jokerCount(gameState, "Brainstorm"); // Auto copy mime at round end
+        return {"retriggers": dupes + 1};
+      }
     },
 
     "Misprint": {
-      getDesc() { return "adds a random Mult value from 0 to 23" },
-      "rarity": "Common"
+      getDesc() { return "adds a random Mult value from 0 to 23" }, // TODO: change description
+      "rarity": "Common",
+      onScore(gameState, cards) {
+        return {"plusMult": Math.floor(Math.random() * 24)};
+      } 
     },
 
     "Mr. Bones": {
       "rarity": "Uncommon",
       getDesc() { return "Prevents Death if chips scored are at least 25% of required chips, self destructs" }
+      // TODO
     },
 
     "Mystic Summit": {
       getDesc() { return "+15 Mult when 0 discards remaining" },
-      "rarity": "Common"
+      "rarity": "Common",
+      onScore(gameState, cards) {
+        if (gameState.blind.discards < 1) {
+          return {"plusMult": 15};
+        }
+      }
     },
 
     "Obelisk": {
       "rarity": "Rare",
-      getDesc() { return "This Joker gains X0.2 Mult per consecutive hand played without playing your most played poker hand" }
+      getDesc() { return `This Joker gains X0.2 Mult per consecutive hand played without playing your most played poker hand\n(Currently X${this.properties.timesMult})` },
+      "properties": {
+        "timesMult": 1
+      },
+      onHandPlayed(gameState, cards) {
+        const mostHandPlays = Math.max(...Object.values(gameState.handPlays));
+        if (gameState.handPlays[getHandType(gameState, cards)] >= mostHandPlays) {
+          this.properties.timesMult = 1;
+        } else {
+          this.properties.timesMult += 0.2;
+        }
+      },
+      onScore(gameState) {
+        return {"timesMult": this.properties.timesMult};
+      }
     },
 
     "Odd Todd": {
       getDesc() { return "Played cards with odd rank give +31 Chips when scored (A, 9, 7, 5, 3)" },
-      "rarity": "Common"
+      "rarity": "Common",
+      onCardScored(gameState, card) {
+      if (isRank(gameState, card, "Ace") || isRank(gameState, card, 9) || isRank(gameState, card, 7) || isRank(gameState, card, 5) || isRank(gameState, card, 3))
+        return {"multChips": 31};
+      }      
     },
 
     "Onyx Agate": {
       "rarity": "Uncommon",
-      getDesc() { return "Played cards with Club suit give +7 Mult when scored" }
+      getDesc() { return "Played cards with Club suit give +7 Mult when scored" },
+      onCardScored(gameState, card) {
+        if (isRank(gameState, card, "Clubs")) return {"plusMult": 7};
+      }
     },
 
     "Oops! All 6s": {
@@ -1312,21 +1429,40 @@ const jokers = {
     "Perkeo": {
       "rarity": "Legendary",
       getDesc() { return "Creates a Negative copy of 1 random consumable card in your possession at the end of the shop" }
+      // TODO: check if cards are more likely if theres more of them
     },
 
     "Photograph": {
       getDesc() { return "First played face card gives X2 Mult when scored" },
-      "rarity": "Common"
+      "rarity": "Common",
+      onCardScored(gameState, card) {
+        if (card.index == 0)
+          return {"timesMult": 2};
+      }
     },
 
     "Popcorn": {
-      getDesc() { return "+20 Mult -4 Mult per round played" },
-      "rarity": "Common"
+      getDesc() { return `+${plusMult} Mult -4 Mult per round played` },
+      "rarity": "Common",
+      "properties": {
+        "plusMult": 20
+      },
+      onScore(gameState, cards) {
+        this.properties.plusMult -= 4;
+        return {
+          "plusMult": this.properties.plusMult + 4,
+          "destroy": this.properties.plusMult <= 0
+        };
+      }
     },
 
     "Raised Fist": {
       getDesc() { return "Adds double the rank of lowest ranked card held in hand to Mult" },
-      "rarity": "Common"
+      "rarity": "Common",
+      onScore(gameState, cards) {
+        let lowCard = 0;
+        lowCard = Math.min(...gameState.hands);
+      }
     },
 
     "Ramen": {
@@ -2255,7 +2391,7 @@ function addVoucher(gameState, voucher) {
   }
 }
 
-function newCard(gameState, cardType, certificate = false) {
+function newCard(gameState, cardType, certificate = false, stone = false) {
   let card;
   const rarity = pickByPercentage([
     {"type": "Common", "odds": 70},
@@ -2292,14 +2428,17 @@ function newCard(gameState, cardType, certificate = false) {
     const hasEnhancement = Math.random() <= gameState.shopWeights["Playing Card"].enhancement / 100;
     const hasSeal = Math.random() <= 0.2;
 
-    if (hasEdition && !certificate) {
+    if (hasEdition && !certificate && !stone) {
       card.edition = pickByPercentage(gameState.editions, "playingCardOdds");
     }
-    if (hasEnhancement && !certificate) {
+    if (hasEnhancement && !certificate && !stone) {
       card.enhancement = enhancements[Math.floor(Math.random() * enhancements.length)];
     }
-    if (hasSeal || certificate) {
+    if (hasSeal || certificate && !stone) {
       card.seal = seals[Math.floor(Math.random() * seals.length)];
+    }
+    if (stone) {
+      card.enhancement = "Stone Card";
     }
   }
   if (cardType == "Joker") {
