@@ -1,5 +1,5 @@
-const suits = ['Spades', 'Hearts', 'Diamonds', 'Clubs'];
-const ranks = ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King'];
+const suits = ['Spades', 'Hearts', 'Clubs', 'Diamonds'];
+const ranks = ['Ace', 'King', 'Queen', 'Jack', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
 
 const seals = {
   "Red Seal": {},
@@ -307,36 +307,36 @@ const pokerHands = {
   },
   "Five of a Kind": {
     base: {
-      mult: 12n,
-      chips: 120n
+      mult: 12,
+      chips: 120
     },
     addition: {
-      mult: 3n,
-      chips: 35n
+      mult: 3,
+      chips: 35
     },
     planet: "Planet X",
     unlocked: false
   },
   "Flush House": {
     base: {
-      mult: 14n,
-      chips: 140n
+      mult: 14,
+      chips: 140
     },
     addition: {
-      mult: 4n,
-      chips: 40n
+      mult: 4,
+      chips: 40
     },
     planet: "Ceres",
     unlocked: false
   },
   "Flush Five": {
     base: {
-      mult: 16n,
-      chips: 160n
+      mult: 16,
+      chips: 160
     },
     addition: {
-      mult: 3n,
-      chips: 50n
+      mult: 3,
+      chips: 50
     },
     planet: "Eris",
     unlocked: false
@@ -394,8 +394,127 @@ function isRank(gameState, card, rank) {
   return card.rank == rank;
 }
 
+function cardsContain(gameState, cards, handType) {
+  handType = handType.toLowerCase().replace(" ", "");
+  const hasFourFingers = jokerCount(gameState, "fourfingers") > 0;
+  const hasShortcut = jokerCount(gameState, "shortcut") > 0;
+  if (handType == "fiveofakind") {
+    for (const rank of ranks) {
+      const returnCards = cards.filter(card => isRank(gameState, card, rank));
+      if (returnCards.length >= 5) return returnCards;
+    } 
+  }
+  if (handType == "fourofakind") {
+    for (const rank of ranks) {
+      const returnCards = cards.filter(card => isRank(gameState, card, rank));
+      if (returnCards.length >= 4) return returnCards;
+    } 
+  }
+  if (handType == "threeofakind") {
+    for (const rank of ranks) {
+      const returnCards = cards.filter(card => isRank(gameState, card, rank));
+      if (returnCards.length >= 3) return returnCards;
+    }    
+  }
+  if (handType == "pair") {
+    for (const rank of ranks) {
+      const returnCards = cards.filter(card => isRank(gameState, card, rank));
+      if (returnCards.length >= 2) return returnCards;
+    }
+  }
+  if (handType == "flush") {
+    let returnCards = [];
+    suits.forEach(suit => {
+      const tempReturnCards = cards.filter(card => isSuit(gameState, card, suit));
+      if (tempReturnCards.length >= hasFourFingers ? 4 : 5) {
+        if (returnCards.length <= tempReturnCards.length) {
+          returnCards = tempReturnCards;
+        }
+      }
+    });
+    return returnCards;
+  }
+  if (handType == "twopair") {
+    let pairs = 0;
+    ranks.forEach(rank => {if (cards.filter(card => isRank(gameState, card, rank)).length >= 2) pairs++});
+    return pairs >= 2
+  }
+  if (handType == "fullhouse") {
+    if (cardsContain(gameState, cards, "Two Pair") && cardsContain(gameState, cards, "Three of a Kind"))
+    return cards;
+  }
+  if (handType == "straight") {
+    if (cards.length < (hasFourFingers ? 4 : 5)) return false;
+
+    const rankToValue = {
+      '2': 2, '3': 3, '4': 4, '5': 5,
+      '6': 6, '7': 7, '8': 8, '9': 9, '10': 10,
+      'Jack': 11, 'Queen': 12, 'King': 13, 'Ace': 14
+    };
+  
+    const valueToCards = {};
+    for (const card of cards) {
+      const val = rankToValue[card.rank];
+      if (!valueToCards[val]) valueToCards[val] = [];
+      valueToCards[val].push(card);
+    }
+  
+    let uniqueValues = Object.keys(valueToCards).map(Number);
+  
+    const hasAce = uniqueValues.includes(14);
+    if (hasAce && uniqueValues.includes(2)) {
+      if (!valueToCards[1]) valueToCards[1] = [...valueToCards[14]];
+      uniqueValues.push(1);
+    }
+  
+    uniqueValues = [...new Set(uniqueValues)].sort((a, b) => a - b);
+    const neededLength = hasFourFingers ? 4 : 5;
+  
+    for (let i = 0; i <= uniqueValues.length - neededLength; i++) {
+      const slice = uniqueValues.slice(i, i + neededLength + (hasShortcut ? 1 : 0));
+  
+      if (slice.includes(1) && slice.includes(14)) continue;
+  
+      let sequence = [slice[0]];
+      for (let j = 1; j < slice.length; j++) {
+        const diff = slice[j] - slice[j - 1];
+        if (diff === 1 || (hasShortcut && diff === 2)) {
+          sequence.push(slice[j]);
+        } else {
+          sequence = [slice[j]];
+        }
+  
+        if (sequence.length >= neededLength) {
+          return sequence.map(val => valueToCards[val][0]);
+        }
+      }
+    }
+  }
+  if (handType == "highcard") return true;
+  if (handType == "straightflush") {
+    if (cardsContain(gameState, cards, "Straight") && cardsContain(gameState, cards, "Flush"))
+    return cards;
+  }
+  if (handType == "flushhouse") {
+    if (cardsContain(gameState, cards, "Full House") && cardsContain(gameState, cards, "Flush"))
+    return cards;
+  }
+  if (handType == "flushfive") {
+    if (cardsContain(gameState, cards, "Flush Five") && cardsContain(gameState, cards, "Flush"))
+    return cards;
+  }
+  return false;
+}
+
 function getHandType(gameState, cards) {
-  // TODO
+  const sort = pokerHands.toSorted((a, b) => (a.base.mult + a.base.chips) - (b.base.mult + b.base.chips));
+  for (const hand of sort) {
+    const contains = cardsContain(gameState, cards, hand);
+    if (contains) return {
+      "handType": hand,
+      "cards": contains
+    };
+  }
 }
 
 function drawCard(gameState, card = undefined, toHand = true) {
@@ -618,7 +737,7 @@ const jokers = {
       "rarity": "Uncommon",
       getDesc() { return " X3 Mult if played poker hand has already been played this round" },
       onScore(gameState, cards) {
-        if (gameState.blind.handPlays.includes(getHandType(gameState, cards))) {
+        if (gameState.blind.handPlays.includes(getHandType(gameState, cards).handType)) {
           return {"timesMult": 3};
         }
       }
@@ -695,7 +814,7 @@ const jokers = {
       getDesc() { return "+80 Chips if played hand contains a Two Pair" },
       "rarity": "Common",
       onScore(gameState, cards) {
-        // TODO
+        if (cardsContain(gameState, cards, "Two Pair")) return {"plusChips": 80};
       }
     },
 
@@ -723,7 +842,7 @@ const jokers = {
       getDesc() { return "+80 Chips if played hand contains a Flush" },
       "rarity": "Common",
       onScore(gameState, cards) {
-        // TODO
+        if (cardsContain(gameState, cards, "Flush")) return {"plusChips": 80};
       }
     },
 
@@ -731,7 +850,7 @@ const jokers = {
       getDesc() { return "+12 Mult if played hand contains a Straight" },
       "rarity": "Common",
       onScore(gameState, cards) {
-        // TODO
+        if (cardsContain(gameState, cards, "Straight")) return {"plusMult": 12};
       }
     },
 
@@ -753,7 +872,7 @@ const jokers = {
       getDesc() { return "+100 Chips if played hand contains a Straight" },
       "rarity": "Common",
       onScore(gameState, cards) {
-        // TODO
+        if (cardsContain(gameState, cards, "Straight")) return {"plusChips": 100};
       }
     },
 
@@ -786,7 +905,7 @@ const jokers = {
       getDesc() { return "+10 Mult if played hand contains a Flush" },
       "rarity": "Common",
       onScore(gameState, cards) {
-        // TODO
+        if (cardsContain(gameState, cards, "Flush")) return {"plusMult": 10};
       }
     },
 
@@ -801,7 +920,7 @@ const jokers = {
       "rarity": "Rare",
       getDesc() { return "X2 Mult if played hand contains a Pair" },
       onScore(gameState, cards) {
-        // TODO
+        if (cardsContain(gameState, cards, "Pair")) return {"timesMukt": 2};
       }
     },
 
@@ -850,7 +969,7 @@ const jokers = {
       "rarity": "Rare",
       getDesc() { return " X4 Mult if played hand contains a Four of a Kind" },
       onScore(gameState, cards) {
-        // TODO
+        if (cardsContain(gameState, cards, "Four of a Kind")) return {"timesMult": 4};
       }
     },
 
@@ -893,7 +1012,6 @@ const jokers = {
     "Four Fingers": {
       "rarity": "Uncommon",
       getDesc() { return "All Flushes and Straights can be made with 4 cards" }
-      // TODO
     },
 
     "Gift Card": {
@@ -1069,7 +1187,10 @@ const jokers = {
 
     "Jolly Joker": {
       getDesc() { return "+8 Mult if played hand contains a Pair" },
-      "rarity": "Common"
+      "rarity": "Common",
+      onScore(gameState, cards) {
+        if (cardsContain(gameState, cards, "Pair")) return {"plusMult": 8};
+      }
     },
 
     "Juggler": {
@@ -1099,7 +1220,10 @@ const jokers = {
 
     "Mad Joker": {
       getDesc() { return "+10 Mult if played hand contains a Two Pair" },
-      "rarity": "Common"
+      "rarity": "Common",
+      onScore(gameState, cards) {
+        if (cardsContain(gameState, cards, "Two Pair")) return {"plusMult": 10};
+      }
     },
 
     "Madness": {
@@ -1174,7 +1298,10 @@ const jokers = {
 
     "The Order": {
       "rarity": "Rare",
-      getDesc() { return " X3 Mult if played hand contains a Straight" }
+      getDesc() { return " X3 Mult if played hand contains a Straight" },
+      onScore(gameState, cards) {
+        if (cardsContain(gameState, cards, "Straight")) return {"timesMult": 3};
+      }
     },
 
     "Pareidolia": {
@@ -1294,7 +1421,10 @@ const jokers = {
 
     "Sly Joker": {
       getDesc() { return "+50 Chips if played hand contains a Pair" },
-      "rarity": "Common"
+      "rarity": "Common",
+      onScore(gameState, cards) {
+        if (cardsContain(gameState, cards, "Pair")) return {"plusChips": 50};
+      }
     },
 
     "Smeared Joker": {
@@ -1389,7 +1519,10 @@ const jokers = {
 
     "The Tribe": {
       "rarity": "Rare",
-      getDesc() { return "X2 Mult if played hand contains a Flush" }
+      getDesc() { return "X2 Mult if played hand contains a Flush" },
+      onScore(gameState, cards) {
+        if (cardsContain(gameState, cards, "Flush")) return {"timesMult": 2};
+      }
     },
 
     "Triboulet": {
@@ -1399,7 +1532,10 @@ const jokers = {
 
     "The Trio": {
       "rarity": "Rare",
-      getDesc() { return "X3 Mult if played hand contains a Three of a Kind" }
+      getDesc() { return "X3 Mult if played hand contains a Three of a Kind" },
+      onScore(gameState, cards) {
+        if (cardsContain(gameState, cards, "Three of a Kind")) return {"timesMult": 3};
+      }
     },
 
     "Troubadour": {
@@ -1439,7 +1575,10 @@ const jokers = {
 
     "Wily Joker": {
       getDesc() { return "+100 Chips if played hand contains a Three of a Kind" },
-      "rarity": "Common"
+      "rarity": "Common",
+      onScore(gameState, cards) {
+        if (cardsContain(gameState, cards, "Three of a Kind")) return {"plusChips": 100};
+      }
     },
 
     "Wrathful Joker": {
@@ -1454,7 +1593,10 @@ const jokers = {
     
     "Zany Joker": {
       getDesc() { return "+12 Mult if played hand contains a Three of a Kind" },
-      "rarity": "Common"
+      "rarity": "Common",
+      onScore(gameState, cards) {
+        if (cardsContain(gameState, cards, "Three of a Kind")) return {"timesMult": 12};
+      }
     }
 };
 
@@ -1463,7 +1605,7 @@ const bossBlinds = [
       "name": "The Hook",
       "debuff": "Discards 2 random\ncards per hand played",
       "minimumAnte": 1,
-      "scoreMult": 2n,
+      "scoreMult": 2,
       "primaryColor": "#9f2909",
       "primaryShadow": "#651200",
       "secondaryColor": "#522a1e",
@@ -1473,7 +1615,7 @@ const bossBlinds = [
       "name": "The Ox",
       "debuff": "Playing a (most played hand)\nsets money to $0",
       "minimumAnte": 6,
-      "scoreMult": 2n,
+      "scoreMult": 2,
       "primaryColor": "#b24700",
       "primaryShadow": "#732700",
       "secondaryColor": "#3c301f",
@@ -1483,7 +1625,7 @@ const bossBlinds = [
       "name": "The House",
       "debuff": "First hand is\ndrawn face down",
       "minimumAnte": 2,
-      "scoreMult": 2n,
+      "scoreMult": 2,
       "primaryColor": "#3c789f",
       "primaryShadow": "#1f4a65",
       "secondaryColor": "#243a44",
@@ -1493,7 +1635,7 @@ const bossBlinds = [
       "name": "The Wall",
       "debuff": "Extra large blind",
       "minimumAnte": 2,
-      "scoreMult": 4n,
+      "scoreMult": 4,
       "primaryColor": "#7d459c",
       "primaryShadow": "#4d2663",
       "secondaryColor": "#302f43",
@@ -1503,7 +1645,7 @@ const bossBlinds = [
       "name": "The Wheel",
       "debuff": "1 in 7 cards get\ndrawn face down",
       "minimumAnte": 2,
-      "scoreMult": 2n,
+      "scoreMult": 2,
       "primaryColor": "#3bb96d",
       "primaryShadow": "#1f7742",
       "secondaryColor": "#24473a",
@@ -1513,7 +1655,7 @@ const bossBlinds = [
       "name": "The Arm",
       "debuff": "Decrease level of\nplayed poker hand",
       "minimumAnte": 2,
-      "scoreMult": 2n,
+      "scoreMult": 2,
       "primaryColor": "#5653f5",
       "primaryShadow": "#322fa1",
       "secondaryColor": "#293355",
@@ -1523,7 +1665,7 @@ const bossBlinds = [
       "name": "The Club",
       "debuff": "All Club cards\nare debuffed",
       "minimumAnte": 1,
-      "scoreMult": 2n,
+      "scoreMult": 2,
       "primaryColor": "#b2c786",
       "primaryShadow": "#738154",
       "secondaryColor": "#3c4a3e",
@@ -1533,7 +1675,7 @@ const bossBlinds = [
       "name": "The Fish",
       "debuff": "Cards drawn face down\nafter each hand played",
       "minimumAnte": 2,
-      "scoreMult": 2n,
+      "scoreMult": 2,
       "primaryColor": "#2677b7",
       "primaryShadow": "#114a76",
       "secondaryColor": "#1f3a48",
@@ -1543,7 +1685,7 @@ const bossBlinds = [
       "name": "The Psychic",
       "debuff": "Must play 5 cards",
       "minimumAnte": 1,
-      "scoreMult": 2n,
+      "scoreMult": 2,
       "primaryColor": "#f0ba24",
       "primaryShadow": "#9e780f",
       "secondaryColor": "#47472b",
@@ -1553,7 +1695,7 @@ const bossBlinds = [
       "name": "The Goad",
       "debuff": "All Spade cards\nare debuffed",
       "minimumAnte": 1,
-      "scoreMult": 2n,
+      "scoreMult": 2,
       "primaryColor": "#b2488b",
       "primaryShadow": "#732957",
       "secondaryColor": "#3c303f",
@@ -1563,7 +1705,7 @@ const bossBlinds = [
       "name": "The Water",
       "debuff": "Start with\n0 discards",
       "minimumAnte": 2,
-      "scoreMult": 2n,
+      "scoreMult": 2,
       "primaryColor": "#c1dfec",
       "primaryShadow": "#7d919b",
       "secondaryColor": "#3e4e53",
@@ -1573,7 +1715,7 @@ const bossBlinds = [
       "name": "The Window",
       "debuff": "All Diamond cards\nare debuffed",
       "minimumAnte": 1,
-      "scoreMult": 2n,
+      "scoreMult": 2,
       "primaryColor": "#a09889",
       "primaryShadow": "#666056",
       "secondaryColor": "#37403f",
@@ -1583,7 +1725,7 @@ const bossBlinds = [
       "name": "The Manacle",
       "debuff": "-1 Hand Size",
       "minimumAnte": 1,
-      "scoreMult": 2n,
+      "scoreMult": 2,
       "primaryColor": "#434343",
       "primaryShadow": "#242424",
       "secondaryColor": "#252f30",
@@ -1593,7 +1735,7 @@ const bossBlinds = [
       "name": "The Eye",
       "debuff": "No repeat hand\ntypes this round",
       "minimumAnte": 3,
-      "scoreMult": 2n,
+      "scoreMult": 2,
       "primaryColor": "#3560e3",
       "primaryShadow": "#1b3a95",
       "secondaryColor": "#233552",
@@ -1603,7 +1745,7 @@ const bossBlinds = [
       "name": "The Mouth",
       "debuff": "Play only 1 hand\ntype this round",
       "minimumAnte": 2,
-      "scoreMult": 2n,
+      "scoreMult": 2,
       "primaryColor": "#a66081",
       "primaryShadow": "#6a3a50",
       "secondaryColor": "#39353d",
@@ -1613,7 +1755,7 @@ const bossBlinds = [
       "name": "The Plant",
       "debuff": "All face cards\nare debuffed",
       "minimumAnte": 4,
-      "scoreMult": 2n,
+      "scoreMult": 2,
       "primaryColor": "#5f8676",
       "primaryShadow": "#395448",
       "secondaryColor": "#2b3d3b",
@@ -1623,7 +1765,7 @@ const bossBlinds = [
       "name": "The Serpent",
       "debuff": "After Play or Discard,\nalways draw 3 cards",
       "minimumAnte": 5,
-      "scoreMult": 2n,
+      "scoreMult": 2,
       "primaryColor": "#2c8f3a",
       "primaryShadow": "#145a1e",
       "secondaryColor": "#213e2f",
@@ -1633,7 +1775,7 @@ const bossBlinds = [
       "name": "The Pillar",
       "debuff": "Cards played previously\nthis Ante are debuffed",
       "minimumAnte": 1,
-      "scoreMult": 2n,
+      "scoreMult": 2,
       "primaryColor": "#6f553d",
       "primaryShadow": "#443221",
       "secondaryColor": "#2e332f",
@@ -1643,7 +1785,7 @@ const bossBlinds = [
       "name": "The Needle",
       "debuff": "Play only 1 hand",
       "minimumAnte": 2,
-      "scoreMult": 1n,
+      "scoreMult": 1,
       "primaryColor": "#485d17",
       "primaryShadow": "#293706",
       "secondaryColor": "#263429",
@@ -1653,7 +1795,7 @@ const bossBlinds = [
       "name": "The Head",
       "debuff": "All Heart cards\nare debuffed",
       "minimumAnte": 1,
-      "scoreMult": 2n,
+      "scoreMult": 2,
       "primaryColor": "#a493ad",
       "primaryShadow": "#685c6f",
       "secondaryColor": "#393f46",
@@ -1663,7 +1805,7 @@ const bossBlinds = [
       "name": "The Tooth",
       "debuff": "Lose $1 per\ncard played",
       "minimumAnte": 3,
-      "scoreMult": 2n,
+      "scoreMult": 2,
       "primaryColor": "#ae1313",
       "primaryShadow": "#6f0303",
       "secondaryColor": "#3b2527",
@@ -1673,7 +1815,7 @@ const bossBlinds = [
       "name": "The Flint",
       "debuff": "Base Chips and\nMult are halved",
       "minimumAnte": 2,
-      "scoreMult": 2n,
+      "scoreMult": 2,
       "primaryColor": "#e55815",
       "primaryShadow": "#963404",
       "secondaryColor": "#453427",
@@ -1683,7 +1825,7 @@ const bossBlinds = [
       "name": "The Mark",
       "debuff": "All face cards are\ndrawn face down",
       "minimumAnte": 2,
-      "scoreMult": 2n,
+      "scoreMult": 2,
       "primaryColor": "#581f30",
       "primaryShadow": "#293706",
       "secondaryColor": "#2a292d",
@@ -1710,20 +1852,20 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
         deck,
         "vouchers": [],
         "anteBlinds": [],
-        "blindBases": [300n, 800n, 2000n, 5000n, 11000n, 20000n, 35000n, 50000n],
+        "blindBases": [300, 800, 2000, 5000, 11000, 20000, 35000, 50000],
         "handLevels": {
-          "High Card": 1n,
-          "Pair": 1n,
-          "Two Pair": 1n,
-          "Three of a Kind": 1n,
-          "Straight": 1n,
-          "Flush": 1n,
-          "Full House": 1n,
-          "Four of a Kind": 1n,
-          "Straight Flush": 1n,
-          "Five of a Kind": 1n,
-          "Flush House": 1n,
-          "Flush Five": 1n
+          "High Card": 1,
+          "Pair": 1,
+          "Two Pair": 1,
+          "Three of a Kind": 1,
+          "Straight": 1,
+          "Flush": 1,
+          "Full House": 1,
+          "Four of a Kind": 1,
+          "Straight Flush": 1,
+          "Five of a Kind": 1,
+          "Flush House": 1,
+          "Flush Five": 1
         }, 
         "handPlays": {
           "High Card": 0,
@@ -1946,8 +2088,8 @@ function newBlinds(gameState) {
     adjustBlinds(gameState);
 }
 
-function powBigInt(base, exp) {
-    let result = 1n;
+function powBigInt(base, exp) { // TODO fix ns and stuff
+    let result = 1;
     base = BigInt(base);
     exp = BigInt(exp);
     while (exp > 0n) {
