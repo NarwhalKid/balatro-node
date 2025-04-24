@@ -1429,11 +1429,7 @@ const jokers = {
       getDesc() { return "Retrigger all card held in hand abilities" },
       onCardHeld(gameState, card) {
         return {"retriggers": 1};
-      },
-      onRoundEnd(gameState, card) { // TODO: make sure this happens at the right time
-        const dupes = jokerCount(gameState, "Blueprint") + jokerCount(gameState, "Brainstorm"); // Auto copy mime at round end
-        return {"retriggers": dupes + 1};
-      },
+      }, // TODO : Auto copy mime at end
       "cost": 5
     },
 
