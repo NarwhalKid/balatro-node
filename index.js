@@ -377,7 +377,10 @@ function random(gameState, odds, outOf) {
 
 function isSuit(gameState, card, suit) {
   if (card.edition.toLowerCase().replaceAll(" ", "") == "stonecard") return false;
-  // TODO: make this work lol
+  if (card.edition.toLowerCase().replaceAll(" ", "") == "wildcard" && !card.debuffed) return true;
+  const redHands = ["hearts", "diamonds"];
+  const blackHands = ["spades", "clubs"];
+  if (jokerCount(gameState, "smearedjoker") && ((redHands.contains(card.suit.toLowerCase()) && redHands.contains(suit.toLowerCase())) || (blackHands.contains(card.suit.toLowerCase()) && blackHands.contains(suit.toLowerCase())))) return true;
   return card.suit.toLowerCase() == suit.toLowerCase();
 }
 
@@ -537,15 +540,20 @@ function drawCard(gameState, card = undefined, toHand = true) {
   }
 }
 
+function addConsumable(gameState, card) {
+  if (gameState.consumableSlots > gameState.consumables.length) {
+    gameState.consumables.push(gameState, card);
+  }
+}
+
 const jokers = {
     "8 Ball": {
-      getDesc() { return "1 in 4 chance for each played 8 to create a Tarot card when scored (Must have room)" },
+      getDesc() { return "1 in 4 chance for each played 8 to create a Tarot card when scored\n(Must have room)" },
       "rarity": "Common",
       onCardScored(gameState, card) {
         if (isRank(gameState, card, "8")) {
           if (random(gameState, 1, 4)) {
-            // TODO "must have room"
-            gameState.consumables.push(newCard(gameState, "Tarot Card"));
+            addConsumable(gameState, newCard(gameState, "Tarot Card"));
           }
         }
       },
@@ -711,7 +719,9 @@ const jokers = {
       "rarity": "Rare",
       getDesc() { return "Upgrade the level of the first discarded poker hand each round" },
       onDiscard(gameState, cards) {
-        // TODO
+        if (gameState.firstDiscard) {
+          gameState.handLevels[getHandType(gameState, cards)]++;
+        }
       },
       "cost": 8
     },
@@ -773,8 +783,7 @@ const jokers = {
     "Cartomancer": {
       "rarity": "Uncommon",
       getDesc() { return "Create a Tarot card when Blind is selected (Must have room)" },
-      // TODO "must have room"
-      onBlindStart(gameState) {gameState.consumables.push(newCard(gameState, "Tarot"))},
+      onBlindStart(gameState) {addConsumable(gameState, newCard(gameState, "Tarot"))},
       "cost": 6
     },
 
@@ -860,7 +869,7 @@ const jokers = {
       getDesc() { return `Earn $1 for each 9 in your full deck at end of round` }, // TODO: ADD CURRENTLY
       onRoundEnd(gameState) {
         return {"money": 
-          gameState.cards.filter(card => isRank(gameState, card, 9)).length
+          gameState.fullDeck.filter(card => isRank(gameState, card, 9)).length
         };
       },
       "cost": 7
@@ -906,7 +915,7 @@ const jokers = {
       getDesc() { return "Earn $2 per discard if no discards are used by end of the round" },
       "rarity": "Common",
       onRoundEnd(gameState) {
-        if (false && "REPLACEME") return {"money": gameState.blind.discards * 2}; // TODO
+        if (gameState.blind.firstDiscard) return {"money": gameState.blind.discards * 2}; // TODO
       },
       "cost": 4
     },
@@ -933,7 +942,11 @@ const jokers = {
     "DNA": {
       "rarity": "Rare",
       getDesc() { return "If first hand of round has only 1 card, add a permanent copy to deck and draw it to hand" },
-      // TODO
+      onHandPlayed(gameState, cards) {
+        if (cards.length == 1 && gameState.blind.firstHand) {
+          drawCard(gameState, structuredClone(cards[0]));
+        }
+      },
       "cost": 8
     },
 
@@ -996,6 +1009,9 @@ const jokers = {
     "Erosion": {
       "rarity": "Uncommon",
       getDesc() { return "+4 Mult for each card below [the deck's starting size] in your full deck" }, // TODO
+      onScore() {
+        return {"plusMult": 4*(gameState.deckStartSize - gameState.fullDeck.size)}
+      },
       "cost": 6
     },
 
@@ -1054,7 +1070,16 @@ const jokers = {
       "rarity": "Uncommon",
       getDesc() { return " X3 Mult if poker hand contains a Diamond card, Club card, Heart card, and Spade card" },
       onScore(gameState, cards) {
-        // TODO: figure out exactly how this works
+        let tempSuits = structuredClone(suits);
+        let wilds = 0;
+        getHandType(gameState, cards).cards.forEach(card => {
+          if (card.enhancement.toLowerCase() == "wildcard" && card.disabled) {
+            wilds++;
+          } else {
+            if (tempSuits.contains(card.suit)) tempSuits.splice(tempSuits.indexOf(card.suit), 1);
+          }
+        })
+        if (tempSuits.length - wilds < 1) return {"timesMult": 3}
       },
       "cost": 6
     },
@@ -1171,7 +1196,7 @@ const jokers = {
       "rarity": "Common",
       onBoosterPack(gameState) {
         if (random(gameState, 1, 2))
-          consumables.push(newCard(gameState, "Tarot Card")); // TODO: must have room
+          addConsumable(gameState, newCard(gameState, "Tarot Card"));
       },
       "cost": 4
     },
@@ -1190,7 +1215,8 @@ const jokers = {
       "rarity": "Uncommon",
       getDesc() { return "Every played card permanently gains +5 Chips when scored" },
       onCardScored(gameState, card) {
-        card.chips += 5; // TODO: figure out how it works with stone cards
+        if (!card.extraChips) card.extraChips = 0;
+        card.extraChips += 5;
       },
       "cost": 5
     },
@@ -1238,14 +1264,14 @@ const jokers = {
       getDesc() { return `Each played ${card.rank} of ${card.suit} gives X2 Mult when scored, Card changes every round` },
       "properties": {
         "card": gameState.fullDeck.filter(card => card.enhancement.toLowerCase().replaceAll(" ", "") != "stonecard").length > 0 ? gameState.fullDeck.filter(card => card.enhancement.toLowerCase().replaceAll(" ", "") != "stonecard")[Math.floor(Math.random() * gameState.fullDeck.filter(card => card.enhancement.toLowerCase().replaceAll(" ", "") != "stonecard").length)] : {"rank": "Ace", "suit": "Spades"}
-      },
+      }, // TODO: fix this to make all idols sync their periods
       onRoundEnd(gameState) {
         const possibleCards = gameState.fullDeck.filter(card => card.enhancement.toLowerCase().replaceAll(" ", "") != "stonecard");
         if (possibleCards.length < 1) return;
         this.properties.card = possibleCards[Math.floor(Math.random() * possibleCards.length)];
       },
       onCardScored(gameState, card) {
-        if (isSuit(gameState, card, this.properties.card.suit) && isRank(gameState, card, this.properties.card.rank)) { // TODO: see if it works like this
+        if (isSuit(gameState, card, this.properties.card.suit) && isRank(gameState, card, this.properties.card.rank)) {
           return {"timesMult": 2};
         }
       },
@@ -1710,7 +1736,7 @@ const jokers = {
       "rarity": "Uncommon",
       getDesc() { return "If poker hand is a Straight Flush, create a random Spectral card (Must have room)" },
       onHandPlayed(gameState, cards) {
-        if (getHandType(cards).handType == "Straight Flush") this.consumables.push(newCard(gameState, "Spectral Card"));
+        if (getHandType(cards).handType == "Straight Flush") addConsumable(gameState, newCard(gameState, "Spectral Card"));
       },
       "cost": 6
     },
@@ -1761,7 +1787,7 @@ const jokers = {
       getDesc() { return "If first hand of round is a single 6, destroy it and create a Spectral card (Must have room)" },
       onHandPlayed(gameState, cards) {
         if (cards.length == 1 && isRank(gameState, cards[0], "6")) {
-          gameState.consumables.push(newCard(gameState, "Spectral Card"));
+          addConsumable(gameState, newCard(gameState, "Spectral Card"));
           gameState.fullDeck.forEach((card, idx) => {
             if (card == cards[0]) gameState.fullDeck.splice(idx, 1);
           });
@@ -1895,7 +1921,7 @@ const jokers = {
       "rarity": "Common",
       onHandPlayed(gameState, cards) { // TODO: check if aces are counted if they arent scored
         if (getHandType(gameState).cards.filter(card => card.rank).length > 0 && cardsContain(gameState, cards, "Straight")) {
-          gameState.consumables.push(newCard(gameState, "Tarot Card"));
+          addConsumable(gameState, newCard(gameState, "Tarot Card"));
         }
       },
       "cost": 4
@@ -2027,7 +2053,7 @@ const jokers = {
       "rarity": "Rare",
       getDesc() { return "Create a Tarot card if hand is played with $4 or less" },
       onHandPlayed(gameState, cards) { // TODO: (must have room)
-        if (gameState.money <= 4) gameState.consumables.push(newCard(gameState, "Tarot Card"));
+        if (gameState.money <= 4) addConsumable(gameState, newCard(gameState, "Tarot Card"));
       },
       "cost": 8
     },
@@ -2374,7 +2400,6 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
         "consumableSlots": 2,
         "consumables": [],
         "handSize": 8,
-        "deckSize": 52,
         "tags": [],
         deck,
         "vouchers": [],
@@ -2585,6 +2610,8 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
     }
 
     newBlinds(game);
+
+    game.deckStartSize = game.fullDeck.length;
 
     return game;
 }
