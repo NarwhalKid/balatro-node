@@ -3042,6 +3042,48 @@ function blindSetup(gameState) {
   fillHand(gameState);
 }
 
+function handleJokers(gameState, func, params) {
+  let returnArray = [];
+  gameState.jokers.filter(joker => !joker.debuffed).forEach(joker => {
+    let response;
+    const edition = joker.edition.toLowerCase().replaceAll(" ", "");
+    if (func == "onScore" && edition == "foil") returnArray.push({"plusChips": 50});
+    if (func == "onScore" && edition == "holographic") returnArray.push({"plusMult": 10});
+    if (joker[func]) response = joker[func](gameState, ...params);
+    if (func == "onScore" && edition == "polychrome") returnArray.push({"timesMult": 1.5});
+    if (response && response.length) returnArray.push(response);
+  })
+  return returnArray.filter(Boolean);
+}
+
+function handleMult(gameState, mult, chips, responseArray) {
+  responseArray.forEach(response => {
+    if (response.plusMult && response.plusMult > 0) mult += BigInt(response.plusMult);
+    if (response.plusChips && response.plusChips > 0) chips += BigInt(response.plusChips);
+    if (response.timesMult && response.timesMult > 1) mult * BigInt(response.plusMult*100) / 100;
+  })
+  
+  return {chips, mult};
+}
+
+function playHand(gameState, indexes) { // Pass the indexes starting at 0
+  if (gameState.state != "blind" || !indexes.length || [...new Set(indexes)].length != indexes.length || Math.min(...indexes) < 0 || Math.max(...indexes) > gameState.hand.length-1) return;
+  let cards = [];
+  indexes.forEach(index => {
+    cards.push(gameState.hand[index]);
+    delete gameState.hand[index];
+  })
+  cards.filter(Boolean);
+
+  const handType = getHandType(gameState, cards).handType;
+  const pokerHand = pokerHands[handType]
+
+  let chips = pokerHand.base.chips + pokerHand.addition.chips * BigInt(handLevels[handType]);
+  let mult = pokerHand.base.chips + pokerHand.addition.chips * BigInt(handLevels[handType]);
+
+  handleJokers(gameState, "onHandPlayed");
+}
+
 module.export = {
     newGame,
     rerollShop,
