@@ -1220,7 +1220,7 @@ const jokers = {
       getDesc(gameState) { return "Retrigger first played card used in scoring 2 additional times" },
       "rarity": "Common",
       onCardScored(gameState, card) {
-        if (card.index == 0) // TODO: card index
+        if (card.index == 0)
           return {"retriggers": 2};
       },
       "cost": 4
@@ -1304,7 +1304,21 @@ const jokers = {
       },
       onSell(gameState) {
         if (this.properties.roundsRemaining < 1) {
-          // TODO
+          let invis = false;
+          let jokers = [];
+          gameState.jokers.forEach(joker => {
+            if (joker.name.toLowerCase().replaceAll(" ", "") == "invisiblejoker" && !invis) {
+              invis = true;
+            } else {
+              jokers.push(structuredClone(joker));
+            }
+          });
+          if (jokers.length) {
+            const randomJoker = jokers[Math.floor(Math.random() * jokers.length)];
+            if (randomJoker.name.toLowerCase().replaceAll(" ", "") == "invisiblejoker") randomJoker.properties.roundsRemaining = 2;
+            if (randomJoker.edition.toLowerCase().replaceAll(" ", "") == "negative") delete randomJoker.edition;
+            gameState.jokers.push(randomJoker);
+          }
         }
       },
       "cost": 8
