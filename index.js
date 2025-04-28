@@ -516,7 +516,7 @@ function cardsContain(gameState, cards, handType) {
   return false;
 }
 
-function getHandType(gameState, cards) {
+function getHandType(gameState, cards) { // TODO: go through all uses and check if should include debuffed cards
   const sort = pokerHands.toSorted((a, b) => (a.base.mult + a.base.chips) - (b.base.mult + b.base.chips));
   for (const hand of sort) {
     const contains = cardsContain(gameState, cards, hand);
@@ -1317,6 +1317,7 @@ const jokers = {
             const randomJoker = jokers[Math.floor(Math.random() * jokers.length)];
             if (randomJoker.name.toLowerCase().replaceAll(" ", "") == "invisiblejoker") randomJoker.properties.roundsRemaining = 2;
             if (randomJoker.edition.toLowerCase().replaceAll(" ", "") == "negative") delete randomJoker.edition;
+            randomJoker.copied = true;
             gameState.jokers.push(randomJoker);
           }
         }
@@ -1489,7 +1490,7 @@ const jokers = {
     },
 
     "Misprint": {
-      getDesc(gameState) { return "adds a random Mult value from 0 to 23" }, // TODO: change description
+      getDesc(gameState) { return "+? Mult" }, // TODO: decide if i wanna change description
       "rarity": "Common",
       onScore(gameState, cards) {
         return {"plusMult": Math.floor(Math.random() * 24)};
@@ -1716,7 +1717,7 @@ const jokers = {
         "money": 1
       },
       onRoundEnd(gameState) {
-        if (blindName != "smallblind" && blindName != "bigblind") // TODO: find out order
+        if (blindName != "smallblind" && blindName != "bigblind") // TODO: find out order & replace "blindName"
           this.properties.money += 2;
         return {"money": this.properties.money};
       },
