@@ -195,8 +195,8 @@ const cards = {
 cards["Playing Card"] = suits.flatMap(suit =>
   ranks.map(rank => {
       let chips = 0;
-      if (rank === 'Ace') chips = 11;
-      else if (['Jack', 'Queen', 'King'].includes(rank)) chips = 10;
+      if (rank === 'Ace') chips = 11n;
+      else if (['Jack', 'Queen', 'King'].includes(rank)) chips = 10n;
       else chips = BigInt(rank);
       return { rank, suit, chips };
   })
@@ -3072,7 +3072,7 @@ function blindChoose(gameState, skip = false) {
 }
 
 function fillHand(gameState) {
-  for (let i = 0; i < gameState.handSize; i++) {
+  for (let i = gameState.blind.hand.length; i <= gameState.handSize; i++) {
     drawCard(gameState);
   }
 }
@@ -3088,7 +3088,7 @@ function blindSetup(gameState) {
   gameState.blind.roundScore = 0n;
   gameState.blind.hand = [];
   gameState.blind.handPlays = 0;
-  gameState.remainingCards = [...gameState.fullDeck];
+  gameState.blind.remainingCards = [...gameState.fullDeck];
   fillHand(gameState);
 }
 
@@ -3142,13 +3142,13 @@ function destroyJoker(gameState, joker) {
 
 function playHand(gameState, indices) { // Pass the indices starting at 0
   if (gameState.state != "blind") return "Not in blind";
-  if (!indices.length || [...new Set(indices)].length != indices.length || Math.min(...indices) < 0 || Math.max(...indices) > gameState.hand.length-1) return "Invalid indices";
+  if (!indices.length || [...new Set(indices)].length != indices.length || Math.min(...indices) < 0 || Math.max(...indices) > gameState.blind.hand.length-1) return "Invalid indices";
 
   let cards = [];
   indices.forEach(index => {
-    cards.push(gameState.hand[index]);
+    cards.push(gameState.blind.hand[index]);
   })
-  gameState.hand = gameState.hand.filter((card, idx) => !indices.includes(idx));
+  gameState.blind.hand = gameState.blind.hand.filter((card, idx) => !indices.includes(idx));
   cards = cards.filter(Boolean);
   this.gameState.blind.cards = cards;
 
@@ -3269,13 +3269,13 @@ function gameLose(gameState) {
 function discardCards(gameState, indices) { // Pass the indices starting at 0
   if (gameState.state != "blind") return "Not in blind";
   if (gameState.blind.discards < 1) return "No discards remaining";
-  if (!indices.length || [...new Set(indices)].length != indices.length || Math.min(...indices) < 0 || Math.max(...indices) > gameState.hand.length-1) return "Invalid indices";
+  if (!indices.length || [...new Set(indices)].length != indices.length || Math.min(...indices) < 0 || Math.max(...indices) > gameState.blind.hand.length-1) return "Invalid indices";
 
   let cards = [];
   indices.forEach(index => {
-    cards.push(gameState.hand[index]);
+    cards.push(gameState.blind.hand[index]);
   })
-  gameState.hand = gameState.hand.filter((card, idx) => !indices.includes(idx));
+  gameState.blind.hand = gameState.blind.hand.filter((card, idx) => !indices.includes(idx));
   cards = cards.filter(Boolean);
 
   handleJokers(gameState, "onDiscard", [cards]);
