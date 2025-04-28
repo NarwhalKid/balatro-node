@@ -2,10 +2,10 @@ const suits = ['Spades', 'Hearts', 'Clubs', 'Diamonds'];
 const ranks = ['Ace', 'King', 'Queen', 'Jack', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
 
 const seals = {
-  "Red Seal": {},
-  "Gold Seal": {},
-  "Blue Seal": {},
-  "Purple Seal": {}
+  "Red Seal": {onCardScored(gameState, card) {return {"retriggers": 1}}},
+  "Gold Seal": {onCardScored(gameState, card) {gameState.money += 4}},
+  "Blue Seal": {onCardHeld(gameState, card) {}}, // TODO
+  "Purple Seal": {} // TODO
 }
 
 const enhancements = {
@@ -15,7 +15,7 @@ const enhancements = {
   "Glass Card": {onCardScored(gameState, card) {return {"plusChips": 2, "destroy": random(gameState, 1, 4)};}},
   "Steel Card": {onCardHeld(gameState, card) {return {"timesMult": 1.5};}},
   "Stone Card": {onCardScored(gameState, card) {return {"plusChips": 50};}},
-  "Gold Card": {onGoldCard(gameState, card) {return {"plusChips": 30};}}, // TODO
+  "Gold Card": {onGoldCard(gameState, card) {gameState.money += 3}}, // TODO
   "Lucky Card": {onCardScored(gameState, card) {
     const money = random(gameState, 1, 15);
     const mult = random(gameState, 1, 5);
@@ -382,8 +382,8 @@ function random(gameState, odds, outOf) {
 }
 
 function isSuit(gameState, card, suit) {
-  if (card.edition.toLowerCase().replaceAll(" ", "") == "stonecard") return false;
-  if (card.edition.toLowerCase().replaceAll(" ", "") == "wildcard" && !card.debuffed) return true;
+  if (card.edition?.toLowerCase()?.replaceAll(" ", "") == "stonecard") return false;
+  if (card.edition?.toLowerCase()?.replaceAll(" ", "") == "wildcard" && !card.debuffed) return true;
   const redHands = ["hearts", "diamonds"];
   const blackHands = ["spades", "clubs"];
   if (jokerCount(gameState, "smearedjoker") && ((redHands.contains(card.suit.toLowerCase()) && redHands.contains(suit.toLowerCase())) || (blackHands.contains(card.suit.toLowerCase()) && blackHands.contains(suit.toLowerCase())))) return true;
@@ -391,7 +391,7 @@ function isSuit(gameState, card, suit) {
 }
 
 function isFaceCard(gameState, card) {
-  if (card.edition.toLowerCase().replaceAll(" ", "") == "stonecard") return false;
+  if (card.edition?.toLowerCase()?.replaceAll(" ", "") == "stonecard") return false;
   if (jokerCount(gameState, "pareidolia") > 0) {
     return true;
   }
@@ -399,7 +399,7 @@ function isFaceCard(gameState, card) {
 }
 
 function isRank(gameState, card, rank) {
-  if (card.edition.toLowerCase().replaceAll(" ", "") == "stonecard") return false;
+  if (card.edition?.toLowerCase()?.replaceAll(" ", "") == "stonecard") return false;
   return card.rank == rank;
 }
 
@@ -593,10 +593,6 @@ const jokers = {
         if (isSuit(gameState, card, gameState.jokerProperties.ancient.suit)) {
           return {"timesMult": 1.5};
         }
-      },
-      onRoundEnd(gameState) { // TODO: remove this from ancient joker so it doesnt trigger for each one
-        const newSuits = suits.filter(suit => suit != gameState.jokerProperties.ancient.suit);
-        gameState.jokerProperties.ancient.suit = newSuits[Math.floor(Math.random() * newSuits.length)]
       },
       "cost": 8
     },
@@ -802,11 +798,6 @@ const jokers = {
             this.properties.plusChips += 3;
           }
         });
-      },
-      onRoundEnd(gameState) { // TODO: move this out of joker so its the same
-        const possibleCards = gameState.fullDeck.filter(card => card.enhancement.toLowerCase().replaceAll(" ", "") != "stonecard");
-        if (possibleCards.length < 1) return;
-        gameState.jokerProperties.castle.suit = structuredClone(possibleCards[Math.floor(Math.random() * possibleCards.length)]);
       },
       "cost": 6
     },
@@ -1279,11 +1270,6 @@ const jokers = {
       getDesc(gameState) { return `Each played ${gameState.jokerProperties.idol.card.rank} of ${gameState.jokerProperties.idol.card.suit} gives X2 Mult when scored, Card changes every round` },
       "properties": {
         "card": {"rank": "Ace", "suit": "Spades"}
-      }, // TODO: fix this to make all idols sync their periods
-      onRoundEnd(gameState) {
-        const possibleCards = gameState.fullDeck.filter(card => card.enhancement.toLowerCase().replaceAll(" ", "") != "stonecard");
-        if (possibleCards.length < 1) return;
-        gameState.jokerProperties.idol.card = structuredClone(possibleCards[Math.floor(Math.random() * possibleCards.length)]);
       },
       onCardScored(gameState, card) {
         if (isSuit(gameState, card, gameState.jokerProperties.idol.card.suit) && isRank(gameState, card, gameState.jokerProperties.idol.card.rank)) {
@@ -1430,7 +1416,7 @@ const jokers = {
       "rarity": "Common",
       onDiscard(gameState, cards) {
         cards.forEach(card => {
-          if (isSuit(gameState, card, this.jokerProperties.rebate.rank)) { // TODO
+          if (isSuit(gameState, card, this.jokerProperties.rebate.rank)) {
             gameState.money += 5;
           }
         })
@@ -1752,7 +1738,7 @@ const jokers = {
       "rarity": "Uncommon",
       getDesc(gameState) { return "Earn $1 at end of round per unique Planet card used this run" },
       onRoundEnd(gameState) {
-        return {"money": gameState.jokerProperties.satellite}; // TODO: jokerProperties
+        return {"money": gameState.jokerProperties.satellite.planets.length}; // TODO: jokerProperties
       },
       "cost": 6
     },
@@ -1929,7 +1915,7 @@ const jokers = {
       "rarity": "Uncommon",
       getDesc(gameState) { return "Gives +25 Chips for each Stone Card in your full deck" },
       onScore(gameState, cards) {
-        const stoneCards = gameState.fullDeck.filter(card => card.enhancement == "Stone Card").length;
+        const stoneCards = gameState.fullDeck.filter(card => card.enhancement?.toLowerCase()?.replaceAll(" ", "") == "stonecard").length;
         return {"plusChips": 25*stoneCards}
       },
       "cost": 6
@@ -2004,9 +1990,6 @@ const jokers = {
     "To the Moon": {
       "rarity": "Uncommon",
       getDesc(gameState) { return "Earn an extra $1 of interest for every $5 you have at end of round" },
-      onBlindEnd() {
-        return {"money": Math.floor(gameState.money/5)};
-      },
       "cost": 5
     },
 
@@ -2197,6 +2180,24 @@ const jokers = {
 };
 
 const blinds = [
+  {
+    "name": "Small Blind",
+    "minimumAnte": 1,
+    "scoreMult": 1,
+    "primaryColor": "#0068ad",
+    "primaryShadow": "#003f6f",
+    "secondaryColor": "#0e435f",
+    "tertiaryColor": "#0e435f"
+  },
+  {
+    "name": "Big Blind",
+    "minimumAnte": 1,
+    "scoreMult": 1.5,
+    "primaryColor": "#0068ad", // TODO: set these colors
+    "primaryShadow": "#003f6f",
+    "secondaryColor": "#0e435f",
+    "tertiaryColor": "#0e435f"
+  },
   {
       "name": "The Hook",
       "debuff": "Discards 2 random\ncards per hand played",
@@ -2471,7 +2472,7 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
         deck,
         "vouchers": [],
         "anteBlinds": [],
-        "blindBases": [300, 800, 2000, 5000, 11000, 20000, 35000, 50000],
+        "blindBases": [300n, 800n, 2000n, 5000n, 11000n, 20000n, 35000n, 50000n],
         "handLevels": {
           "High Card": 1,
           "Pair": 1,
@@ -2552,6 +2553,23 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
           "cards": [],
           "packs": [],
           "vouchers": []
+        },
+        "jokerProperties": {
+          "ancient": {
+            "suit": ""
+          },
+          "castle": {
+            "suit": ""
+          },
+          "idol": {
+            "card": {"rank": "Ace", "suit": "Spades"}
+          },
+          "rebate": {
+            "rank": "Ace"
+          },
+          "satellite": {
+            "planets": []
+          }
         },
         "possibleVouchers": [
           "Overstock",
@@ -2656,7 +2674,7 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
             throw new Error("Invalid deck");
     }
 
-    switch (stake.toLowerCase()) {
+    switch (stake.toLowerCase().replaceAll(" ", "")) {
         case "goldstake":
         case "orangestake":
         case "purplestake":
@@ -2678,7 +2696,11 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
 
     newBlinds(game);
 
+    updateJokerProps(game);
+
     game.deckStartSize = game.fullDeck.length;
+
+    blindSetup(game);
 
     return game;
 }
@@ -2693,10 +2715,10 @@ function bigIntToScientific(n, significantDigits = 3) {
 
 function newBlinds(gameState) {
   const bossKey = gameState.ante > 0 && gameState.ante % 8 == 0 ? "isFinisherBoss" : "isNormalBoss" 
-  let allowedBlinds = blinds.filter(blind => blind[bossKey] && blind.minimumAnte <= gameState.blind && !gameState.seenBlinds.includes(blind.name) && !gameState.bannedBlinds.includes(blind.name));
+  let allowedBlinds = blinds.filter(blind => blind[bossKey] && blind.minimumAnte <= gameState.ante && !gameState.seenBlinds.includes(blind.name) && !gameState.bannedBlinds.includes(blind.name));
   if (allowedBlinds.length < 1) {
       gameState.seenBlinds = [];
-      allowedBlinds = blinds.filter(blind => blind[bossKey] && blind.minimumAnte <= gameState.blind && !gameState.bannedBlinds.includes(blind.name));
+      allowedBlinds = blinds.filter(blind => blind[bossKey] && blind.minimumAnte <= gameState.ante && !gameState.bannedBlinds.includes(blind.name));
   }
   
   const newBlind = allowedBlinds[Math.floor(Math.random() * allowedBlinds.length)];
@@ -2752,9 +2774,9 @@ function adjustBlinds(gameState) {
         const roundingFactor = powBigInt(10n, digits);
         base -= result % roundingFactor;
     }
-    gameState.currentBlinds[0] = base;
-    gameState.currentBlinds[1] = base * 15n / 10n;
-    gameState.currentBlinds[2] = base * gameState.currentBlinds[2].scoreMult;
+    gameState.currentBlinds[0].blindScore = base;
+    gameState.currentBlinds[1].blindScore = base * 15n / 10n;
+    gameState.currentBlinds[2].blindScore = base * BigInt(gameState.currentBlinds[2].scoreMult*10) / 10n; // Multiply and divide to multiply by decimal
 }
 
 function addVoucher(gameState, voucher) {
@@ -2835,10 +2857,10 @@ function addVoucher(gameState, voucher) {
       break;
     case "seedmoney":
       gameState.possibleVouchers.push("Money Tree");
-      gameState.interestcap = 10;
+      gameState.interestCap = 10;
       break;
     case "moneytree":
-      gameState.interestcap = 20;
+      gameState.interestCap = 20;
       break;
     case "blank":
       gameState.possibleVouchers.push("Antimatter");
@@ -2934,7 +2956,7 @@ function newCard(gameState, cardType, certificate = false, stone = false) {
   return card;
 }
 
-function fillCards(gameState) {
+function fillShopCards(gameState) {
   while (gameState.shop.cards.length < gameState.shopSlots) {
     const cardType = pickWeightedRandom(shopWeights);
     game.shop.cards.push(newCard(gameState, cardType));
@@ -2947,7 +2969,7 @@ function rerollShop(gameState) {
     gameState.money -= gameState.currentReroll;
     gameState.currentReroll++;
   }
-  fillCards(gameState);
+  fillShopCards(gameState);
 }
 
 function pickByPercentage(input, value = 'odds') {
@@ -3058,6 +3080,7 @@ function fillHand(gameState) {
 function blindSetup(gameState) {
   const blindIdx = gameState.currentBlinds.filter(blind => blind.completed).length;
   gameState.blind = structuredClone(blinds.filter(blind => blind.name == gameState.currentBlinds[blindIdx].name)[0]); // TODO: blindScore, reward
+  console.log(gameState.currentBlinds[blindIdx]);
   gameState.blind.hands = gameState.defaultHands;
   gameState.blind.discards = gameState.defaultDiscards;
   gameState.blind.firstDiscard = true;
@@ -3069,16 +3092,27 @@ function blindSetup(gameState) {
   fillHand(gameState);
 }
 
-function handleJoker(gameState, joker, func, params) {
+function handleJoker(gameState, joker, func, params = []) {
   let response;
+  let copied = false;
   if (joker[func]) response = joker[func](gameState, ...params);
+  if (joker.name.toLowerCase().replaceAll(" ", "") == "blueprint" && gameState.jokers[idx+1]?.canCopy) {
+    response = handleJoker(gameState, gameState.jokers[idx+1], func, params);
+    copied = true;
+  }
+  if (joker.name.toLowerCase().replaceAll(" ", "") == "brainstorm" && gameState.jokers[0]?.canCopy) {
+    response = handleJoker(gameState, gameState.jokers[0], func, params);
+    copied = true;
+  }
+  if (copied) response.destroy = false;
+  if (response.destroy) destroyJoker(gameState, joker);
   return response;
 }
 
 function handleJokers(gameState, func, params = []) {
   let returnArray = [];
   let retriggers = 0;
-  gameState.jokers.filter(joker => !joker.debuffed).forEach(joker => {
+  gameState.jokers.filter((joker, idx) => !joker.debuffed).forEach(joker => {
     let response = handleJoker(gameState, joker, func, params);
     if (response && response.length) returnArray.push(response);
     if (response.retriggers) retriggers += response.retriggers;
@@ -3089,7 +3123,7 @@ function handleJokers(gameState, func, params = []) {
 const decimalAccuracy = 100000000;
 
 function handleMult(gameState, chips, mult, responseArray) {
-  responseArray.forEach(response => {
+  responseArray.filter(Boolean).forEach(response => {
     if (response.plusChips && response.plusChips > 0) chips += BigInt(response.plusChips);
     if (response.plusMult && response.plusMult > 0) mult += BigInt(response.plusMult * decimalAccuracy);
     if (response.timesMult && response.timesMult > 1) mult = mult * BigInt(Math.round(response.timesMult * 100)) / 100n;
@@ -3098,22 +3132,27 @@ function handleMult(gameState, chips, mult, responseArray) {
   return {chips, mult};
 }
 
-function destroyJoker(gameState, jokerIdx) {
-  const joker = gameState.jokers[jokerIdx];
+function destroyJoker(gameState, joker) {
   if (joker.onDestroy) joker.onDestroy(gameState);
   if (joker.edition.toLowerCase().replaceAll(" ", "") == "negative") gameState.jokerSlots--;
-  gameState.jokers.splice(jokerIdx, 1);
+  gameState.jokers.forEach((loopJoker, idx) => {
+    if (loopJoker == joker) gameState.jokers.splice(idx, 1);
+  })
 }
 
-function playHand(gameState, indexes) { // Pass the indexes starting at 0
-  if (gameState.state != "blind" || !indexes.length || [...new Set(indexes)].length != indexes.length || Math.min(...indexes) < 0 || Math.max(...indexes) > gameState.hand.length-1) return;
+function playHand(gameState, indices) { // Pass the indices starting at 0
+  if (gameState.state != "blind") return "Not in blind";
+  if (!indices.length || [...new Set(indices)].length != indices.length || Math.min(...indices) < 0 || Math.max(...indices) > gameState.hand.length-1) return "Invalid indices";
+
   let cards = [];
-  indexes.forEach(index => {
+  indices.forEach(index => {
     cards.push(gameState.hand[index]);
-    delete gameState.hand[index];
   })
+  gameState.hand = gameState.hand.filter((card, idx) => !indices.includes(idx));
   cards = cards.filter(Boolean);
   this.gameState.blind.cards = cards;
+
+  gameState.blind.hands--;
 
   const handType = getHandType(gameState, cards).handType;
   const pokerHand = pokerHands[handType]
@@ -3121,7 +3160,7 @@ function playHand(gameState, indexes) { // Pass the indexes starting at 0
   let chips = pokerHand.base.chips + pokerHand.addition.chips * BigInt(handLevels[handType]); // Base chips & mult
   let mult = (pokerHand.base.chips + pokerHand.addition.chips * BigInt(handLevels[handType])) * BigInt(decimalAccuracy); // Multiply all mult by decimalAccuracy, reset at the final calculation
 
-  const handPlayedResponses = handleJokers(gameState, "onHandPlayed", cards).responses; // Hand played jokers
+  const handPlayedResponses = handleJokers(gameState, "onHandPlayed", [cards]).responses; // Hand played jokers
   ({ chips, mult } = handleMult(gameState, chips, mult, handPlayedResponses));
 
   cards.forEach((card, idx) => { // Loop through played cards
@@ -3131,6 +3170,10 @@ function playHand(gameState, indexes) { // Pass the indexes starting at 0
     let retriggers = 0;
     let trigger = 0;
     while (trigger <= retriggers) {
+      // Handle rank chips and any extra chips from Hiker
+      if (!card.enhancement || card.enhancement.toLowerCase().replaceAll(" ", "") != "stonecard") playedCardResponses.push({"plusChips": card.chips});
+      if (card.extraChips) playedCardResponses.push({"plusChips": card.extraChips});
+
       if (card.enhancement && enhancements[card.enhancement].onCardScored) { // Handle enhancement
         playedCardResponses.push(enhancements[card.enhancement].onCardScored(gameState, card));
       }
@@ -3142,7 +3185,7 @@ function playHand(gameState, indexes) { // Pass the indexes starting at 0
         if (card.edition.toLowerCase().replaceAll(" ", "") == "holographic") playedCardResponses.push({"plusMult": 10});
         if (card.edition.toLowerCase().replaceAll(" ", "") == "polychrome") playedCardResponses.push({"timesMult": 1.5});
       }
-      const handledJokers = handleJokers(gameState, "onCardScored", card);
+      const handledJokers = handleJokers(gameState, "onCardScored", [card]);
       retriggers = handledJokers.retriggers;
       playedCardResponses.push(...handledJokers.responses); // Handle jokers
       trigger++;
@@ -3180,7 +3223,7 @@ function playHand(gameState, indexes) { // Pass the indexes starting at 0
             throw new Error("Invalid edition")
         }
       }
-      const handledJokers = handleJokers(gameState, "onCardHeld", card);
+      const handledJokers = handleJokers(gameState, "onCardHeld", [card]);
       retriggers = handledJokers.retriggers;
       heldCardResponses.push(...handledJokers.responses); // Handle jokers
       trigger++;
@@ -3199,28 +3242,102 @@ function playHand(gameState, indexes) { // Pass the indexes starting at 0
     if (joker.debuffed) return;
     if (joker.edition && joker.edition.toLowerCase.replaceAll(" ", "") == "foil") jokerResponses.push({"plusChips": 50});
     if (joker.edition && joker.edition.toLowerCase.replaceAll(" ", "") == "holographic") jokerResponses.push({"plusMult": 10});
-    const handledJoker = handleJoker(gameState, joker, "onScore", cards);
+    const handledJoker = handleJoker(gameState, joker, "onScore", [cards]);
     jokerResponses.push(handledJoker);
     if (joker.edition && joker.edition.toLowerCase.replaceAll(" ", "") == "polychrome") jokerResponses.push({"timesMult": 1.5});
-    if (handledJoker.destroy) destroyJoker(gameState, idx); // TODO: make sure it doesnt happen with bp/bs
   })
 
   gameState.blind.roundScore += Math.floor(chips * mult / decimalAccuracy);
   gameState.blind.firstHand = false;
-  if (gameState.blind.roundScore >= gameState.blind.blindScore) blindEnd(gameState);
+  if (gameState.blind.roundScore >= gameState.blind.blindScore) {
+    blindEnd(gameState);
+    return;
+  }
+  if (gameState.blind.hands < 1) {
+    if (gameState.blind.roundScore >= gameState.blind.blindScore/4n && jokerCount(gameState, "mr.bones") > 0) { // TODO: check how it works with multiple mr. bones
+      blindEnd(gameState, true);
+    } else {
+      gameLose(gameState);
+    }
+  }
 }
 
-function blindEnd(gameState) {
+function gameLose(gameState) {
+  gameState = "lose";
+}
+
+function discardCards(gameState, indices) { // Pass the indices starting at 0
+  if (gameState.state != "blind") return "Not in blind";
+  if (gameState.blind.discards < 1) return "No discards remaining";
+  if (!indices.length || [...new Set(indices)].length != indices.length || Math.min(...indices) < 0 || Math.max(...indices) > gameState.hand.length-1) return "Invalid indices";
+
+  let cards = [];
+  indices.forEach(index => {
+    cards.push(gameState.hand[index]);
+  })
+  gameState.hand = gameState.hand.filter((card, idx) => !indices.includes(idx));
+  cards = cards.filter(Boolean);
+
+  handleJokers(gameState, "onDiscard", [cards]);
+  fillHand(gameState);
+  gameState.firstDiscard = false;
+  gameState.blind.discards--;
+}
+
+function blindEnd(gameState, isMrBones = false) {
+  gameState.state = "blindWin";
+  let currentBlindIdx = gameState.currentBlinds.filter(blind => blind.completed).length;
+  gameState.currentBlinds[currentBlindIdx].completed = true;
+  let moneySources = [];
+  if (!isMrBones) moneySources.push(["Blind Reward", gameState.currentBlinds[currentBlindIdx].reward]); // TODO: Figure out order
+  moneySources.push(["Interest", Math.min(Math.floor(gameState.money / 5), gameState.interestCap) + (jokerCount("tothemoon")*Math.floor(gameState.money/5))]); // TODO: check if to the moon works like this
   gameState.jokers.forEach((joker, idx) => {
-    const handledJoker = handleJoker(gameState, joker, "onScore", cards);
-    if (handledJoker.destroy) destroyJoker(gameState, idx); // TODO: make sure it doesnt happen with bp/bs
+    const handledJoker = handleJoker(gameState, joker, "onRoundEnd");
+    if (handledJoker.money) moneySources.push(joker.name, handledJoker.money);
   });
+  if (currentBlindIdx == 2) { // Boss blind
+    gameState.tags.forEach((tag, idx) => {
+      if (tag.toLowerCase().replaceAll(" ", "") == "investmenttag") moneySources.push("Investment Tag", 25);
+      gameState.tags.splice(idx, 1);
+    })
+    if (gameState.ante >= 8) gameState.endless = true;
+    gameState.ante++;
+    newBlinds(gameState);
+  }
+
+  moneySources.forEach(source => {
+    gameState.money += source[1];
+  })
+
+  updateJokerProps(gameState);
 }
 
-module.export = {
+function updateJokerProps(gameState) {
+  // Ancient Joker
+  const newSuits = suits.filter(suit => suit != gameState.jokerProperties.ancient.suit);
+  gameState.jokerProperties.ancient.suit = newSuits[Math.floor(Math.random() * newSuits.length)];
+  
+  // Castle
+  const possibleCastleCards = gameState.fullDeck.filter(card => !card.enhancement || card.enhancement.toLowerCase().replaceAll(" ", "") != "stonecard");
+  if (possibleCastleCards.length >= 1) 
+    gameState.jokerProperties.castle.suit = possibleCastleCards[Math.floor(Math.random() * possibleCastleCards.length)].suit;
+
+  // The Idol
+  const possibleIdolCards = gameState.fullDeck.filter(card => !card.enhancement || card.enhancement.toLowerCase().replaceAll(" ", "") != "stonecard");
+  if (possibleIdolCards.length >= 1)
+    gameState.jokerProperties.idol.card = structuredClone(possibleIdolCards[Math.floor(Math.random() * possibleIdolCards.length)]);
+
+  // Mail-In Rebate
+  const possibleRebateCards = gameState.fullDeck.filter(card => !card.enhancement || card.enhancement.toLowerCase().replaceAll(" ", "") != "stonecard");
+  if (possibleRebateCards.length >= 1)
+    gameState.jokerProperties.rebate.rank = possibleCastleCards[Math.floor(Math.random() * possibleCastleCards.length)].rank;
+}
+
+module.exports = {
     newGame,
     rerollShop,
     goNext,
     blindChoose,
-    playHand
+    playHand,
+    discardCards
 }
