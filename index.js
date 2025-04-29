@@ -20,7 +20,7 @@ function objectClone(obj) {
 const seals = {
   "Red Seal": {onCardScored(gameState, card) {return {"retriggers": 1}}},
   "Gold Seal": {onCardScored(gameState, card) {gameState.money += 4}},
-  "Blue Seal": {onCardHeld(gameState, card) {}}, // TODO
+  "Blue Seal": {onEndCards(gameState, card) {}}, // TODO
   "Purple Seal": {} // TODO
 }
 
@@ -31,7 +31,7 @@ const enhancements = {
   "Glass Card": {onCardScored(gameState, card) {return {"plusChips": 2, "destroy": random(gameState, 1, 4)};}},
   "Steel Card": {onCardHeld(gameState, card) {return {"timesMult": 1.5};}},
   "Stone Card": {onCardScored(gameState, card) {return {"plusChips": 50};}},
-  "Gold Card": {onGoldCard(gameState, card) {gameState.money += 3}}, // TODO
+  "Gold Card": {onEndCards(gameState, card) {gameState.money += 3}}, // TODO
   "Lucky Card": {onCardScored(gameState, card) {
     const money = random(gameState, 1, 15);
     const mult = random(gameState, 1, 5);
@@ -135,77 +135,196 @@ const cards = {
   "Spectral Card": [
     {
       name: "Familiar",
-      text: "Destroy 1 random card in your hand, but add 3 random Enhanced face cards to your hand"
+      text: "Destroy 1 random card in your hand, but add 3 random Enhanced face cards to your hand",
+      onUse(gameState, cards) {
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        deleteCard(gameState.cardArea[Math.floor(Math.random() * gameState.cardArea.length)]);
+        for (let i = 0; i < 3; i++) {
+          drawCard(gameState, newCard(gameState, "Playing Card", false, false, undefined, true, true, "Face"));
+        }
+      }
     },
     {
       name: "Grim",
-      text: "Destroy 1 random card in your hand, but add 2 random Enhanced Aces to your hand"
+      text: "Destroy 1 random card in your hand, but add 2 random Enhanced Aces to your hand",
+      onUse(gameState, cards) {
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        deleteCard(gameState.cardArea[Math.floor(Math.random() * gameState.cardArea.length)]);
+        for (let i = 0; i < 2; i++) {
+          drawCard(gameState, newCard(gameState, "Playing Card", false, false, undefined, true, true, "Ace"));
+        }
+      }
     },
     {
       name: "Incantation",
-      text: "Destroy 1 random card in your hand, but add 4 random Enhanced numbered cards to your hand"
+      text: "Destroy 1 random card in your hand, but add 4 random Enhanced numbered cards to your hand",
+      onUse(gameState, cards) {
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        deleteCard(gameState.cardArea[Math.floor(Math.random() * gameState.cardArea.length)]);
+        for (let i = 0; i < 4; i++) {
+          drawCard(gameState, newCard(gameState, "Playing Card", false, false, undefined, true, true, "Number"));
+        }
+      }
     },
     {
       name: "Talisman",
-      text: "Add a Gold Seal to 1 selected card in your hand"
+      text: "Add a Gold Seal to 1 selected card in your hand",
+      onUse(gameState, cards) {
+        if (cards.length != 1) return {"error": "Select exactly one card"};
+        cards[0].seal = "Gold Seal";
+      }
     },
     {
       name: "Aura",
-      text: "Add Foil, Holographic, or Polychrome effect to 1 selected card in hand"
+      text: "Add Foil, Holographic, or Polychrome effect to 1 selected card in hand",
+      onUse(gameState, cards) {
+        const possibleCards = gameState.cardArea.filter(card => !card.edition);
+        if (!possibleCards?.length) return {"error": "No valid cards"};
+        const targetCard = possibleCards[Math.floor(Math.random() * possibleCards.length)];
+        targetCard.edition = pickWeightedRandom(gameState.editions);
+      }
     },
     {
       name: "Wraith",
-      text: "Creates a random Rare Joker, sets money to $0"
+      text: "Creates a random Rare Joker (must have room), sets money to $0", // TODO: check if you can use without joker slots
+      onUse(gameState, cards) {
+        if (gameState.jokers.length >= gameState.jokerSlots) return {"error": "No joker slots"};
+        gameState.money = 0;
+        gameState.jokers.push(newCard(gameState, "Joker", false, false, "Rare"));
+      }
     },
     {
       name: "Sigil",
-      text: "Converts all cards in hand to a single random suit"
+      text: "Converts all cards in hand to a single random suit",
+      onUse(gameState, cards) {
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        const suit = suits[Math.floor(Math.random() * suits.length)];
+        gameState.cardArea.forEach(card => card.suit = suit);
+      }
     },
     {
       name: "Ouija",
-      text: "Converts all cards in hand to a single random rank\n-1 hand size"
+      text: "Converts all cards in hand to a single random rank\n-1 hand size",
+      onUse(gameState, cards) {
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        const rank = ranks[Math.floor(Math.random() * ranks.length)];
+        gameState.cardArea.forEach(card => card.rank = rank);
+        gameState.handSize--;
+      }
     },
     {
       name: "Ectoplasm",
-      text: "Add Negative to a random Joker.\n-X hand size" // TODO: make hand size update
+      text: `Add Negative to a random Joker.\n-TODO hand size`, // TODO: make hand size update
+      "properties": {
+        "handSize": 1
+      },
+      onUse(gameState, cards) {
+        const possibleJokers = gameState.jokers.filter(joker => !joker.edition);
+        if (possibleJokers.length < 1) return {"error": "No valid Jokers"};
+        possibleJokers[Math.floor(Math.random() * possibleJokers.length)].edition = "Negative";
+        gameState.handSize -= this.properties.handSize;
+        this.properties.handSize += this.properties.handSize + 1;
+      }
     },
     {
       name: "Immolate",
-      text: "Destroys 5 random cards in hand, gain $20"
+      text: "Destroys 5 random cards in hand, gain $20",
+      onUse(gameState, cards) {
+        const cardArea = gameState.cardArea;
+        if (!cardArea?.length) return {"error": "No cards"};
+        for (let i = 0; i < 5; i++) {
+          deleteCard(cardArea[Math.floor(Math.random() * cardArea.length)]);
+          if (cardArea.length < 1) break;
+        }
+        gameState.money += 20;
+      }
     },
     {
       name: "Ankh",
-      text: "Create a copy of a random Joker, destroy all other Jokers"
+      text: "Create a copy of a random Joker, destroy all other Jokers",
+      onUse(gameState, cards) {
+        if (!gameState.jokers.length) return {"error": "No Jokers"};
+        const targetJoker = gameState.jokers[Math.floor(Math.random() * gameState.jokers.length)];
+        gameState.jokers = [];
+        gameState.jokers.push(targetJoker);
+        const jokerClone = objectClone(targetJoker);
+        if (jokerClone.edition.toLowerCase().replaceAll(" ", "") == "negative") delete jokerClone.edition;
+        gameState.jokers.push(jokerClone);
+      }
     },
     {
       name: "Deja Vu",
-      text: "Add a Red Seal to 1 selected card in your hand"
+      text: "Add a Red Seal to 1 selected card in your hand",
+      onUse(gameState, cards) {
+        if (cards.length != 1) return {"error": "Select exactly one card"};
+        cards[0].seal = "Red Seal";
+      }
     },
     {
       name: "Hex",
-      text: "Add Polychrome to a random Joker, and destroy all other Jokers"
+      text: "Add Polychrome to a random Joker, and destroy all other Jokers",
+      onUse(gameState, cards) {
+        const possibleJokers = gameState.jokers.filter(joker => !joker.edition);
+        if (!possibleJokers?.length) return {"error": "No valid jokers"};
+        const targetJoker = possibleJokers[Math.floor(Math.random() * possibleJokers.length)];
+        targetJoker.edition = "Polychrome";
+        gameState.jokers = [];
+        gameState.jokers.push(targetJoker);
+      }
     },
     {
       name: "Trance",
-      text: "Add a Blue Seal to 1 selected card in your hand"
+      text: "Add a Blue Seal to 1 selected card in your hand",
+      onUse(gameState, cards) {
+        if (cards.length != 1) return {"error": "Select exactly one card"};
+        cards[0].seal = "Blue Seal";
+      }
     },
     {
       name: "Medium",
-      text: "Add a Purple Seal to 1 selected card card in your hand"
+      text: "Add a Purple Seal to 1 selected card card in your hand",
+      onUse(gameState, cards) {
+        if (cards.length != 1) return {"error": "Select exactly one card"};
+        cards[0].seal = "Purple Seal";
+      }
     },
     {
       name: "Cryptid",
-      text: "Create 2 copies of 1 selected card in your hand"
+      text: "Create 2 copies of 1 selected card in your hand",
+      onUse(gameState, cards) {
+        if (cards.length != 1) return {"error": "Select exactly one card"};
+        drawCard(gameState, cards[0]);
+        drawCard(gameState, cards[0]);
+      }
     },
     {
       name: "The Soul",
-      text: "Creates a Legendary Joker (Must have room)"
+      text: "Creates a Legendary Joker (Must have room)",
+      onUse(gameState, cards) {
+        if (gameState.jokers.length >= gameState.jokerSlots) return {"error": "No joker slots"};
+        gameState.jokers.push(newCard(gameState, "Joker", false, false, "Legendary"));
+      }
     },
     {
       name: "Black Hole",
-      text: "Upgrade every poker hand by 1 level"
+      text: "Upgrade every poker hand by 1 level",
+      onUse(gameState, card) {
+        Object.keys(gameState.handLevels).forEach(hand => gameState.handLevels[hand]++);
+      }
     }
   ]
+}
+
+function deleteCard(gameState, card) {
+  gameState.cardArea?.forEach((loopCard, idx) => {
+    if (loopCard == card) gameState.cardArea.splice(idx, 1);
+  })
+  gameState.fullDeck.forEach((loopCard, idx) => {
+    if (loopCard == card) gameState.fullDeck.splice(idx, 1);
+  })
+  gameState.blind?.remainingCards.forEach((loopCard, idx) => {
+    if (loopCard == card) gameState.blind.remainingCards.splice(idx, 1);
+  })
 }
 
 cards["Playing Card"] = suits.flatMap(suit =>
@@ -555,8 +674,8 @@ function drawCard(gameState, card = undefined, toHand = true) {
   if (card) {
     if (toHand) {
       gameState.fullDeck.push(card);
-      if (gameState.state == "blind")
-        gameState.blind.hand.push(card);
+      if (gameState.cardArea)
+        gameState.cardArea.push(card);
     } else {
       gameState.fullDeck.push(card);
       if (gameState.state == "blind")
@@ -1788,9 +1907,7 @@ const jokers = [
     onHandPlayed(gameState, cards) {
       if (cards.length == 1 && isRank(gameState, cards[0], "6")) {
         addConsumable(gameState, newCard(gameState, "Spectral Card"));
-        gameState.fullDeck.forEach((card, idx) => {
-          if (card == cards[0]) gameState.fullDeck.splice(idx, 1);
-        });
+        deleteCard(gameState, cards[0]);
       }
     },
     "cost": 6,
@@ -1972,9 +2089,7 @@ const jokers = [
       // TODO: check if first discard
       if (cards.length == 1) {
         gameState.money += 3;
-        gameState.fullDeck.forEach((card, idx) => {
-          if (card == cards[0]) gameState.fullDeck.splice(idx, 1);
-        });
+        deleteCard(gameState, cards[0]);
       }
     },
     "cost": 6,
@@ -2545,8 +2660,7 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
           "Hieroglyph",
           "Director's Cut",
           "Paint Brush"
-        ], 
-        "firstShop": true,
+        ],
         "bannedPacks": [],
         "bannedBlinds": [],
         "seenBlinds": [],
@@ -2864,13 +2978,14 @@ function addVoucher(gameState, voucher) {
   }
 }
 
-function newCard(gameState, cardType, certificate = false, stone = false) {
+function newCard(gameState, cardType, certificate = false, stone = false, jokerRarity = undefined, forceEnhancement = false, blockEdition = false, playingCardType = undefined) {
   let card;
-  const rarity = pickByPercentage([
+  let rarity = pickByPercentage([
     {"type": "Common", "odds": 70},
     {"type": "Uncommon", "odds": 25},
     {"type": "Rare", "odds": 5},
   ]).type;
+  if (jokerRarity) rarity = jokerRarity;
   const jokerNames = gameState.jokers.map(joker => joker.name.toLowerCase());
   do {
     if (cardType == "Joker") {
@@ -2888,6 +3003,31 @@ function newCard(gameState, cardType, certificate = false, stone = false) {
       if (cardType != "Playing Card") {
         const newCards = remainingCards.filter(card => !gameState.consumables.map(card => card.name).includes(card.name) || jokerCount(gameState, "showman") > 0);
         remainingCards = newCards.length < 1 ? remainingCards : newCards;
+      } else if (playingCardType == "Number") {
+        remainingCards.filter(card => {
+          switch (card.rank.toLowerCase()) {
+            case "ace":
+            case "king":
+            case "queen":
+            case "jack":
+              return false;
+            default:
+              return true;
+          }
+        })
+      } else if (playingCardType == "Ace") {
+        remainingCards.filter(card => card.rank.toLowerCase() == "ace");
+      } else if (playingCardType == "Face") {
+        remainingCards.filter(card => {
+          switch (card.rank.toLowerCase()) {
+            case "king":
+            case "queen":
+            case "jack":
+              return true;
+            default:
+              return true;
+          }
+        })
       }
       card = remainingCards[Math.floor(Math.random() * remainingCards.length)];
     }
@@ -2897,11 +3037,10 @@ function newCard(gameState, cardType, certificate = false, stone = false) {
   if (cardType == "Tarot Card" || "Planet Card") card.cost = 3;
   if (cardType == "Spectral Card") card.cost = 4;
 
-  card.cost = calcCost(gameState, base, card.edition, cardType == "Planet Card");
-
-
-
   card = objectClone(card); // Seperate card object from where it got it from
+
+  card.cost = calcCost(gameState, card.cost, card.edition, cardType == "Planet Card");
+
 
   if (cardType == "Spectral Card" || cardType == "Tarot Card" || cardType == "Planet Card") return card;
   if (cardType == "Playing Card") {
@@ -2909,10 +3048,10 @@ function newCard(gameState, cardType, certificate = false, stone = false) {
     const hasEnhancement = Math.random() <= gameState.shopWeights["Playing Card"].enhancement / 100;
     const hasSeal = Math.random() <= 0.2;
 
-    if (hasEdition && !certificate && !stone) {
+    if (hasEdition && !certificate && !stone && !blockEdition) {
       card.edition = pickByPercentage(gameState.editions, "playingCardOdds");
     }
-    if (hasEnhancement && !certificate && !stone) {
+    if (hasEnhancement && !certificate && !stone || forceEnhancement) {
       card.enhancement = enhancements[Math.floor(Math.random() * enhancements.length)];
     }
     if (hasSeal || certificate && !stone) {
@@ -3010,7 +3149,7 @@ function calcCost(gameState, base, edition = undefined, isPlanet = false, isRent
   if (isPlanet && jokerCount(gameState, "astronomer")) return 0;
   if (isRental) return 1;
 
-  return Math.min(1, roundHalfDown(base + (gameState.editions[capitalize(edition)] || 0) * gameState.discount));
+  return Math.max(1, roundHalfDown(base + (gameState.editions[capitalize(edition)] || 0) * gameState.discount));
 }
 
 function newShop(gameState) {
@@ -3018,11 +3157,10 @@ function newShop(gameState) {
   gameState.shop.packs = [];
 
   // Reroll voucher if new ante
-  if (currentBlindIdx == 0 || !hadShop) {
+  if (currentBlindIdx == 0 || !gameState.hadShop) {
     gameState.shop.vouchers = [];
     addVoucherToShop(gameState);
   }
-  gameState.hadShop = true;
 
   // Reset to last voucher if had more than one
   if (gameState.shop.vouchers.length > 1) {
@@ -3039,10 +3177,12 @@ function newShop(gameState) {
 
   // Fill booster packs
   const allowedPacks = boosterPacks.filter(pack => !gameState.bannedPacks.includes(pack.name));
-  if (gameState.firstShop && !gameState.bannedPacks.includes("Buffoon Pack")) gameState.shop.packs[0] = {"name": "Buffoon Pack", "amount": 2, "choices": 1, "odds": 1.2};
+  if (!gameState.hadShop && !gameState.bannedPacks.includes("Buffoon Pack")) gameState.shop.packs[0] = {"name": "Buffoon Pack", "amount": 2, "choices": 1, "odds": 1.2, "cost": 4};
   while (gameState.shop.packs.length < 2) {
     gameState.shop.packs.push(pickWeightedRandom(allowedPacks));
   }
+
+  gameState.hadShop = true;
 
   gameState.shop.packs.forEach(pack => pack.cost = calcCost(gameState, pack.cost, undefined, pack.name.toLowerCase().includes("celestial")));
   
