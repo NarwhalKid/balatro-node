@@ -17,6 +17,11 @@ function objectClone(obj) {
   return clone;
 }
 
+const tags = [ // TODO
+  "Double Tag",
+  "Economy Tag"
+]
+
 const seals = {
   "Red Seal": {onCardScored(gameState, card) {return {"retriggers": 1}}},
   "Gold Seal": {onCardScored(gameState, card) {gameState.money += 4}},
@@ -39,6 +44,14 @@ const enhancements = {
     if (money || mult) handleJokers(gameState, onLuckyTrigger);
     return {"plusMult": mult ? 20 : 0};
   }}
+}
+
+const packTypes = {
+  "Arcana Pack": {"Tarot Card": {"odds": 1}, "Spectral Card": {"odds": 0}},
+  "Celestial Pack": {"Planet Card": {"odds": 1}},
+  "Standard Pack": {"Playing Card": {"odds": 1}},
+  "Buffoon Pack": {"Joker": {"odds": 1}},
+  "Spectral Pack": {"Spectral Card": {"odds": 1}},
 }
 
 const cards = {
@@ -222,6 +235,7 @@ const cards = {
         const possibleJokers = gameState.jokers.filter(joker => !joker.edition);
         if (possibleJokers.length < 1) return {"error": "No valid Jokers"};
         possibleJokers[Math.floor(Math.random() * possibleJokers.length)].edition = "Negative";
+        gameState.jokerSlots++;
         gameState.handSize -= this.properties.handSize;
         this.properties.handSize += this.properties.handSize + 1;
       }
@@ -2525,146 +2539,147 @@ const blinds = [
 
 function newGame(deck = "Red Deck", stake = "White Stake") {
     let game = {
-        "endless": false,
-        stake,
-        "state": "blind",
-        "defaultDiscards": 3,
-        "defaultHands": 4,
-        "money": 4,
-        "ante": 1,
-        "round": 0,
-        "jokerSlots": 5,
-        "jokers": [],
-        "consumableSlots": 2,
-        "consumables": [],
-        "handSize": 8,
-        "tags": [],
-        deck,
-        "sortByRank": true,
-        "vouchers": [],
-        "anteBlinds": [],
-        "blindBases": [300n, 800n, 2000n, 5000n, 11000n, 20000n, 35000n, 50000n],
-        "handLevels": {
-          "High Card": 1,
-          "Pair": 1,
-          "Two Pair": 1,
-          "Three of a Kind": 1,
-          "Straight": 1,
-          "Flush": 1,
-          "Full House": 1,
-          "Four of a Kind": 1,
-          "Straight Flush": 1,
-          "Five of a Kind": 1,
-          "Flush House": 1,
-          "Flush Five": 1
-        }, 
-        "blackHolesUsed": 0,
-        "handPlays": {
-          "High Card": 0,
-          "Pair": 0,
-          "Two Pair": 0,
-          "Three of a Kind": 0,
-          "Straight": 0,
-          "Flush": 0,
-          "Full House": 0,
-          "Four of a Kind": 0,
-          "Straight Flush": 0,
-          "Five of a Kind": 0,
-          "Flush House": 0,
-          "Flush Five": 0
-        },   
-        "shopWeights": {
-          "Joker": {
-            "odds": 20
-          },
-          "Tarot Card": {
-            "odds": 4
-          },
-          "Planet Card": {
-            "odds": 4
-          },
-          "Playing Card": {
-            "odds": 0,
-            "enhancement": 0,
-            "edition": 0
-          },
-          "Spectral Card": {
-            "odds": 0
-          }
+      "endless": false,
+      stake,
+      "state": "blind",
+      "defaultDiscards": 3,
+      "defaultHands": 4,
+      "money": 4,
+      "ante": 1,
+      "round": 0,
+      "jokerSlots": 5,
+      "jokers": [],
+      "consumableSlots": 2,
+      "consumables": [],
+      "handSize": 8,
+      "tags": [],
+      deck,
+      "sortByRank": true,
+      "vouchers": [],
+      "anteBlinds": [],
+      "blindBases": [300n, 800n, 2000n, 5000n, 11000n, 20000n, 35000n, 50000n],
+      "handLevels": {
+        "High Card": 1,
+        "Pair": 1,
+        "Two Pair": 1,
+        "Three of a Kind": 1,
+        "Straight": 1,
+        "Flush": 1,
+        "Full House": 1,
+        "Four of a Kind": 1,
+        "Straight Flush": 1,
+        "Five of a Kind": 1,
+        "Flush House": 1,
+        "Flush Five": 1
+      }, 
+      "blackHolesUsed": 0,
+      "handPlays": {
+        "High Card": 0,
+        "Pair": 0,
+        "Two Pair": 0,
+        "Three of a Kind": 0,
+        "Straight": 0,
+        "Flush": 0,
+        "Full House": 0,
+        "Four of a Kind": 0,
+        "Straight Flush": 0,
+        "Five of a Kind": 0,
+        "Flush House": 0,
+        "Flush Five": 0
+      },   
+      "shopWeights": {
+        "Joker": {
+          "odds": 20
         },
-        "editions": {
-          "Foil": {
-            "cost": 2,
-            "odds": 2,
-            "playingCardOdds": 4
-          },
-          "Holographic": {
-            "cost": 2,
-            "odds": 1.4,
-            "playingCardOdds": 8
-          },
-          "Polychrome": {
-            "cost": 2,
-            "odds": 0.3,
-            "playingCardOdds": 1.2
-          },
-          "Negative": {
-            "cost": 2,
-            "odds": 0.3,
-            "playingCardOdds": 0 
-          },
+        "Tarot Card": {
+          "odds": 4
         },
-        "shopSlots": 2,
-        "discount": 1,
-        "rerollBase": 5,
-        "currentReroll": 5,
-        "interestCap": 5,
-        "shop": {
-          "filled": false,
-          "cards": [],
-          "packs": [],
-          "vouchers": []
+        "Planet Card": {
+          "odds": 4
         },
-        "jokerProperties": {
-          "ancient": {
-            "suit": ""
-          },
-          "castle": {
-            "suit": ""
-          },
-          "idol": {
-            "card": {"rank": "Ace", "suit": "Spades"}
-          },
-          "rebate": {
-            "rank": "Ace"
-          },
-          "satellite": {
-            "planets": []
-          }
+        "Playing Card": {
+          "odds": 0,
+          "enhancement": 0,
+          "edition": 0
         },
-        "hadShop": false,
-        "possibleVouchers": [
-          "Overstock",
-          "Clearance Sale",
-          "Hone",
-          "Reroll Surplus",
-          "Crystal Ball",
-          "Telescope",
-          "Grabber",
-          "Wasteful",
-          "Tarot Merchant",
-          "Planet Merchant",
-          "Seed Money",
-          "Blank",
-          "Magic Trick",
-          "Hieroglyph",
-          "Director's Cut",
-          "Paint Brush"
-        ],
-        "bannedPacks": [],
-        "bannedBlinds": [],
-        "seenBlinds": [],
-        "bannedCards": ["Cavendish"]
+        "Spectral Card": {
+          "odds": 0
+        }
+      },
+      "editions": {
+        "Foil": {
+          "cost": 2,
+          "odds": 2,
+          "playingCardOdds": 4
+        },
+        "Holographic": {
+          "cost": 2,
+          "odds": 1.4,
+          "playingCardOdds": 8
+        },
+        "Polychrome": {
+          "cost": 2,
+          "odds": 0.3,
+          "playingCardOdds": 1.2
+        },
+        "Negative": {
+          "cost": 2,
+          "odds": 0.3,
+          "playingCardOdds": 0 
+        },
+      },
+      "shopSlots": 2,
+      "discount": 1,
+      "rerollBase": 5,
+      "currentReroll": 5,
+      "interestCap": 5,
+      "shop": {
+        "filled": false,
+        "cards": [],
+        "packs": [],
+        "vouchers": []
+      },
+      "jokerProperties": {
+        "ancient": {
+          "suit": ""
+        },
+        "castle": {
+          "suit": ""
+        },
+        "idol": {
+          "card": {"rank": "Ace", "suit": "Spades"}
+        },
+        "rebate": {
+          "rank": "Ace"
+        },
+        "satellite": {
+          "planets": []
+        }
+      },
+      "hadShop": false,
+      "possibleVouchers": [
+        "Overstock",
+        "Clearance Sale",
+        "Hone",
+        "Reroll Surplus",
+        "Crystal Ball",
+        "Telescope",
+        "Grabber",
+        "Wasteful",
+        "Tarot Merchant",
+        "Planet Merchant",
+        "Seed Money",
+        "Blank",
+        "Magic Trick",
+        "Hieroglyph",
+        "Director's Cut",
+        "Paint Brush"
+      ],
+      "bannedPacks": [],
+      "bannedBlinds": [],
+      "seenBlinds": [],
+      "bannedTags": [],
+      "bannedCards": ["Cavendish"]
     };
 
     // Fill default deck
@@ -2730,17 +2745,18 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
         case "plasmadeck":
             break;
         case "erraticdeck":
-            for (let i = 0; i < 52; i++) {
-                let card = {};
-                card.suit = suits[Math.floor(Math.random() * suits.length)];
-                card.rank = ranks[Math.floor(Math.random() * ranks.length)];
-                card.chips = card.rank;
-                if (["Jack", "Queen", "King"].includes(card.rank)) card.chips = 10;
-                if (card.rank == "Ace") card.chips = 11;
-                card.chips = BigInt(card.chips);
-                return card;
-            }
-            break;
+            game.fullDeck = [];
+          for (let i = 0; i < 52; i++) {
+              let card = {};
+              card.suit = suits[Math.floor(Math.random() * suits.length)];
+              card.rank = ranks[Math.floor(Math.random() * ranks.length)];
+              card.chips = card.rank;
+              if (["Jack", "Queen", "King"].includes(card.rank)) card.chips = 10n;
+              if (card.rank == "Ace") card.chips = 11n;
+              card.chips = BigInt(card.chips);
+              game.fullDeck.push(card);
+          }
+          break;
         default:
             throw new Error("Invalid deck");
     }
@@ -2801,10 +2817,15 @@ function newBlinds(gameState) {
 
   const smallReward = gameState.stake.toLowerCase().replaceAll(" ", "") == "whitestake" ? 3 : 0;
 
+  const randomTag = () => {
+    const possibleTags = tags.filter(tag => !gameState.bannedTags.includes(tag));
+    return possibleTags[Math.floor(Math.random() * possibleTags.length)];
+  }
+
   gameState.currentBlinds = [
-      {"name": "Small Blind", "reward": smallReward},
-      {"name": "Big Blind", "reward": 5},
-      newBlind
+    {"name": "Small Blind", "tag": randomTag(), "reward": smallReward},
+    {"name": "Big Blind", "tag": randomTag(), "reward": 5},
+    newBlind
   ];
 
   adjustBlinds(gameState);
@@ -2815,9 +2836,9 @@ function powBigInt(base, exp) { // TODO fix ns and stuff
   base = BigInt(base);
   exp = BigInt(exp);
   while (exp > 0n) {
-      if (exp % 2n === 1n) result *= base;
-      base *= base;
-      exp /= 2n;
+    if (exp % 2n === 1n) result *= base;
+    base *= base;
+    exp /= 2n;
   }
   return result;
 }
@@ -2825,36 +2846,48 @@ function powBigInt(base, exp) { // TODO fix ns and stuff
 function log10BigInt(n) {
   let digits = 0n;
   while (n >= 10n) {
-      n /= 10n;
-      digits++;
+    n /= 10n;
+    digits++;
   }
   return digits;
 }
 
 function adjustBlinds(gameState) {
-    let base;
-    if (gameState.ante < 1) {
-        base = 100n;
-    } else if (gameState.ante <= 8) {
-        base = gameState.blindBases[gameState.ante-1];
-    } else {
-        const a = gameState.blindBases[7];
-        const c = gameState.ante - 8;
-        const d = 1 + 0.2 * c;
-        const b = 1.6;
+  let base;
+  if (gameState.ante < 1) {
+      base = 100n;
+  } else if (gameState.ante <= 8) {
+      base = gameState.blindBases[gameState.ante-1];
+  } else {
+      const a = gameState.blindBases[7];
+      const c = gameState.ante - 8;
+      const d = 1 + 0.2 * c;
+      const b = 1.6;
 
-        const inner = b + Math.pow(k * c, d);
-        const exponent = Math.pow(inner, c);
-        base = BigInt(Math.floor(Number(a) * exponent));
+      const inner = b + Math.pow(k * c, d);
+      const exponent = Math.pow(inner, c);
+      base = BigInt(Math.floor(Number(a) * exponent));
 
-        const digits = log10BigInt(result) - 1n;
-        const roundingFactor = powBigInt(10n, digits);
-        base -= result % roundingFactor;
-    }
-    const plasmaMult = gameState.deck.toLowerCase().replaceAll(" ", "") == "plasmadeck" ? 2n : 1n;
-    gameState.currentBlinds[0].blindScore = base * plasmaMult;
-    gameState.currentBlinds[1].blindScore = base * 15n / 10n * plasmaMult;
-    gameState.currentBlinds[2].blindScore = base * BigInt(gameState.currentBlinds[2].scoreMult*10) / 10n * plasmaMult; // Multiply and divide to multiply by decimal
+      const digits = log10BigInt(result) - 1n;
+      const roundingFactor = powBigInt(10n, digits);
+      base -= result % roundingFactor;
+  }
+  const plasmaMult = gameState.deck.toLowerCase().replaceAll(" ", "") == "plasmadeck" ? 2n : 1n;
+  gameState.currentBlinds[0].blindScore = base * plasmaMult;
+  gameState.currentBlinds[1].blindScore = base * 15n / 10n * plasmaMult;
+  gameState.currentBlinds[2].blindScore = base * BigInt(gameState.currentBlinds[2].scoreMult*10) / 10n * plasmaMult; // Multiply and divide to multiply by decimal
+}
+
+function sellCard(gameState, section, index) { // Pass index starting with 0
+  section = section.toLowerCase().replaceAll(" ", "");
+  if (section == "consumables" || section == "jokers") return "Invalid section";
+  const card = gameState[section][index];
+  if (!card) return "Invalid index";
+  if (card.stickers.includes("Eternal")) return "Joker is eternal";
+  gameState.money += Math.max(1, roundHalfDown(card.cost/2)); // TODO: switch from cost
+  handleJokers(gameState, "onCardSold");
+  if (card.onSell) card.onSell(gameState);
+  gameState[section].splice(index, 1);
 }
 
 function addVoucher(gameState, voucher) {
@@ -2978,7 +3011,7 @@ function addVoucher(gameState, voucher) {
   }
 }
 
-function newCard(gameState, cardType, certificate = false, stone = false, jokerRarity = undefined, forceEnhancement = false, blockEdition = false, playingCardType = undefined) {
+function newCard(gameState, cardType, certificate = false, stone = false, jokerRarity = undefined, forceEnhancement = false, blockEdition = false, playingCardType = undefined, isBoosterPack = false) {
   let card;
   let rarity = pickByPercentage([
     {"type": "Common", "odds": 70},
@@ -3033,11 +3066,11 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
     }
   } while (gameState.bannedCards.includes(card.name));
 
-  if (cardType == "Playing Card") card.cost = 1;
-  if (cardType == "Tarot Card" || "Planet Card") card.cost = 3;
-  if (cardType == "Spectral Card") card.cost = 4;
-
   card = objectClone(card); // Seperate card object from where it got it from
+
+  if (cardType == "Playing Card") card.cost = 1;
+  if (cardType == "Tarot Card" || cardType == "Planet Card") card.cost = 3;
+  if (cardType == "Spectral Card") card.cost = 4;
 
   card.cost = calcCost(gameState, card.cost, card.edition, cardType == "Planet Card");
 
@@ -3149,7 +3182,103 @@ function calcCost(gameState, base, edition = undefined, isPlanet = false, isRent
   if (isPlanet && jokerCount(gameState, "astronomer")) return 0;
   if (isRental) return 1;
 
-  return Math.max(1, roundHalfDown(base + (gameState.editions[capitalize(edition)] || 0) * gameState.discount));
+  return Math.max(1, roundHalfDown(base + (gameState.editions[capitalize(edition)]?.cost || 0) * gameState.discount));
+}
+
+function buyCard(gameState, index) {
+  const target = gameState.shop.cards[index];
+  if (!target) return "Invalid index";
+  if (target.cost > target.money-gameState.moneyLimit) return "Not enough money";
+  if (target.rarity) { // Joker
+    if (gameState.jokers.length >= gameState.jokerSlots) return "No empty joker slots";
+    gameState.jokers.push(target);
+  } else if (!target.rank) { // Consumable
+    if (gameState.consumables.length >= gameState.consumableSlots) return "No empty consumable slots";
+    gameState.consumables.push(target);
+  } else { // Playing Card
+    drawCard(gameState, target);
+  }
+  gameState.shop.cards.splice(index, 1);
+}
+
+function buyPack(gameState, index) {
+  const target = gameState.shop.packs[index];
+  if (!target) return "Invalid index";
+  if (target.cost > target.money-gameState.moneyLimit) "Not enough money";
+  gameState.state = "openingPack";
+  target.contents = [];
+  const packOdds = packTypes[target.name.replace("Mega").replace("Jumbo").trim()];
+  for (let i = 0; i < target.amount; i++) {
+    const cardType = pickWeightedRandom(packOdds);
+    target.contents.push(newCard(gameState, cardType, false, false, undefined, false, false, undefined, true));
+  }
+  gameState.currentPack = target;
+  delete gameState.cardArea;
+  if (target.name.toLowerCase().includes("spectral") || target.name.toLowerCase().includes("arcana")) {
+    gameState.cardArea = [];
+    let tempDeck = objectClone(gameState.fullDeck);
+    for (let i = gameState.cardArea.length; i < gameState.handSize; i++) {
+      const cardIdx = Math.floor(Math.random() * tempDeck.length);
+      drawCard(gameState, tempDeck[cardIdx]);
+      tempDeck.splice(cardIdx, 1);
+    }
+  }
+  gameState.shop.packs.splice(index, 1);
+}
+
+function usePlanet(gameState, card) {
+  gameState.handLevels[card.handType]++;
+  handleJokers(gameState, "onPlanetCardUsed");
+  if (!gameState.jokerProperties.satellite.planets.includes(card.name))
+    gameState.jokerProperties.satellite.planets.push(card.name);
+}
+
+function packSelect(gameState, index, cards = []) {
+  if (gameState.state != "openingPack") return "Not opening Pack";
+  const target = gameState.currentPack.contents[index];
+  if (!target) return "Invalid index";
+  if (target.rarity) { // Joker
+    if (gameState.jokers.length >= gameState.jokerSlots) return "No empty joker slots";
+    gameState.jokers.push(target);
+  } else if (!target.rank) { // Consumable
+    if (target.onUse) { // Spectral or Tarot
+      const response = target.onUse(gameState, cards);
+      if (response.error) return response.error;
+    } else { // Planet Card
+      usePlanet(gameState, target);
+    }
+  } else { // Playing Card
+    drawCard(gameState, target);
+  }
+  gameState.currentPack.choices--;
+  if (gameState.currentPack.choices < 1) gameState.state = "shop";
+}
+
+function skipPack(gameState) {
+  if (gameState.state != "openingPack") return "Not opening pack";
+  handleJokers(gameState, "onBoosterPackSkipped");
+  gameState.state = "shop";
+}
+
+function buyVoucher(gameState, index) {
+  const target = gameState.shop.vouchers[index];
+  if (!target) return "Invalid index";
+  if (target.cost > target.money-gameState.moneyLimit) return "Not enough money";
+  addVoucher(gameState, target.name);
+  gameState.shop.vouchers.splice(index, 1);
+}
+
+function shopBuy(gameState, section, index) { // Pass index starting at 0
+  switch (section.toLowerCase().replaceAll(" ", "")) {
+    case "cards":
+      return buyCard(gameState, index);
+    case "packs":
+      return buyPack(gameState, index);
+    case "vouchers":
+      return buyVoucher(gameState, index);
+    default:
+      throw new Error("Invalid section");
+  }
 }
 
 function newShop(gameState) {
@@ -3200,7 +3329,8 @@ function goNext(gameState) {
 function blindChoose(gameState, skip = false) {
   if (gameState.state != "blindSelect") return "Not selecting Blind";
   const blindIdx = gameState.currentBlinds.filter(blind => blind.completed).length;
-  if (skip && blindIdx != 2) {
+  if (skip && blindIdx == 2) return "Cannot skip Boss Blind";
+  if (skip) {
     gameState.currentBlinds[blindIdx].completed = true;
     gameState.currentBlinds[blindIdx].skipped = true;
   } else {
@@ -3242,6 +3372,7 @@ function blindSetup(gameState) {
   gameState.blind.firstHand = true;
   gameState.blind.roundScore = 0n;
   gameState.blind.hand = [];
+  gameState.cardArea = gameState.blind.hand;
   gameState.blind.handPlays = 0;
   gameState.blind.remainingCards = [...gameState.fullDeck];
   gameState.blind.blindScore = gameState.currentBlinds[blindIdx].blindScore;
@@ -3426,7 +3557,7 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
 }
 
 function gameLose(gameState) {
-  gameState = "lose";
+  gameState.state = "lose";
 }
 
 function discardCards(gameState, indices) { // Pass the indices starting at 0
@@ -3449,6 +3580,7 @@ function discardCards(gameState, indices) { // Pass the indices starting at 0
 
 function blindEnd(gameState, isMrBones = false) {
   gameState.state = "blindWin";
+  delete gameState.cardArea;
   let currentBlindIdx = gameState.currentBlinds.filter(blind => blind.completed).length;
   gameState.currentBlinds[currentBlindIdx].completed = true;
   gameState.moneySources = [];
@@ -3501,7 +3633,20 @@ function cashOut(gameState) {
   gameState.moneySources.filter(Boolean).forEach(source => {
     gameState.money += source[1] || 0;
   })
+  delete gameState.blind;
   newShop(gameState);
+}
+
+function useConsumable(gameState, index) { // Pass the index starting at 0
+  const card = gameState.consumables[index];
+  if (!card) return "Invalid index";
+  const cards = gameState.cardArea?.filter(card => card.selected) || [];
+  let response;
+  if (card.onUse) response = card.onUse(gameState, cards);
+  if (response?.error) return response.error;
+  gameState.consumables.splice(index, 1);
+  if (consumable.edition.toLowerCase() == "negative") gameState.consumableSlots--;
+  if (card.handType) usePlanet(gameState, card.name);
 }
 
 function jokerToText(gameState, joker) {
@@ -3609,8 +3754,48 @@ function gameToText(gameState) {
       gameState.shop.vouchers.forEach(voucher => {
         returnString += `\n$${voucher.cost} ${voucher.name}`;
       })
+      break;
+    case "openingPack":
+      returnString += `${gameState.currentPack.name}\n`;
+      gameState.currentPack.contents.forEach(card => {
+        if (card.rarity) { // Joker
+          returnString += `\n${jokerToText(gameState, card)}`;
+        } else if (card.rank) { // Playing Card
+          returnString += `\n${cardToText(gameState, card)}`;
+        } else { // Consumable
+          returnString += `\n${consumableToText(gameState, card)}`;
+        }
+      })
+      returnString += `\n\nChoose ${gameState.currentPack.choices}`;
+      break;
+    case "blindSelect":
+      returnString += blindsToText(gameState);
+      break;
+    case "lose":
+      returnString += `YOU LOSE`; // TODO
   }
   return returnString;
+}
+
+function blindsToText(gameState) {
+  gameState.currentBlinds.forEach(blind => {
+    let returnArray = [];
+    returnArray += `${blind.name}\n`;
+    if (blind.debuff) returnArray += `${blind.debuff}\n`;
+    returnArray += `${bigIntToSci(blind.blindScore)}\n`;
+    if (blind.reward) {
+      returnArray += `Reward: ${"$".repeat(blind.reward)}\n`;
+    } else {
+      returnArray += `No Reward\n`;
+    }
+    if (blind.tag) returnArray += `Skip Tag: ${blind.tag}\n`;
+    if (blind.skipped) {
+      returnArray += "SKIPPED\n";
+    } else if (blind.completed) {
+      returnArray += "COMPLETED\n";
+    }
+  })
+  return returnArray.join("\n\n");
 }
 
 module.exports = {
@@ -3622,5 +3807,10 @@ module.exports = {
   discardCards,
   setHandSort,
   gameToText,
-  cashOut
+  cashOut,
+  shopBuy,
+  packSelect,
+  skipPack,
+  blindsToText,
+  sellCard
 }
