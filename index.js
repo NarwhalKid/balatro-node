@@ -3778,22 +3778,24 @@ function gameToText(gameState) {
 }
 
 function blindsToText(gameState) {
+  let returnArray = [];
   gameState.currentBlinds.forEach(blind => {
-    let returnArray = [];
-    returnArray += `${blind.name}\n`;
-    if (blind.debuff) returnArray += `${blind.debuff}\n`;
-    returnArray += `${bigIntToSci(blind.blindScore)}\n`;
+    let tempReturnString = "";
+    tempReturnString += `${blind.name}\n`;
+    if (blind.debuff) tempReturnString += `${blind.debuff}\n`;
+    tempReturnString += `${bigIntToSci(blind.blindScore)}\n`;
     if (blind.reward) {
-      returnArray += `Reward: ${"$".repeat(blind.reward)}\n`;
+      tempReturnString += `Reward: ${"$".repeat(blind.reward)}\n`;
     } else {
-      returnArray += `No Reward\n`;
+      tempReturnString += `No Reward\n`;
     }
-    if (blind.tag) returnArray += `Skip Tag: ${blind.tag}\n`;
+    if (blind.tag) tempReturnString += `Skip Tag: ${blind.tag}\n`;
     if (blind.skipped) {
-      returnArray += "SKIPPED\n";
+      tempReturnString += "SKIPPED\n";
     } else if (blind.completed) {
-      returnArray += "COMPLETED\n";
+      tempReturnString += "COMPLETED\n";
     }
+    returnArray.push(tempReturnString);
   })
   return returnArray.join("\n\n");
 }
