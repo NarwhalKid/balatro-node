@@ -279,7 +279,9 @@ const cards = {
       name: "Hex",
       text: "Add Polychrome to a random Joker, and destroy all other Jokers",
       onUse(gameState, cards) {
+        console.log(gameState.jokers);
         const possibleJokers = gameState.jokers.filter(joker => !joker.edition);
+        console.log(possibleJokers);
         if (!possibleJokers?.length) return {"error": "No valid jokers"};
         const targetJoker = possibleJokers[Math.floor(Math.random() * possibleJokers.length)];
         targetJoker.edition = "Polychrome";
@@ -2830,7 +2832,7 @@ function newBlinds(gameState) {
 
   gameState.currentBlinds = [
     {"name": "Small Blind", "tag": randomTag(), "reward": smallReward},
-    {"name": "Big Blind", "tag": randomTag(), "reward": 5},
+    {"name": "Big Blind", "tag": randomTag(), "reward": 4},
     newBlind
   ];
 
@@ -3031,7 +3033,7 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
       const jokersOfRarity = jokers.filter(joker => rarity == joker.rarity);
       do {
         card = jokersOfRarity[Math.floor(Math.random() * jokersOfRarity.length)];
-      } while (jokersOfRarity.length != 0 && jokerCount(gameState, "showman") > 0 && jokerNames.includes(card.name));
+      } while (jokersOfRarity.length != 0 && jokerCount(gameState, "showman") > 0 && (jokerNames.includes(card.name) || gameState.shop.card.find(joker => joker.name == card.name)));
     } else if (cardType == "Planet Card") {
       do {
         const pokerHand = Object.keys(pokerHands)[Math.floor(Math.random() * Object.keys(pokerHands).length)];
@@ -3040,7 +3042,7 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
     } else {
       let remainingCards = cards[cardType];
       if (cardType != "Playing Card") {
-        const newCards = remainingCards.filter(card => !gameState.consumables.map(card => card.name).includes(card.name) || jokerCount(gameState, "showman") > 0);
+        const newCards = remainingCards.filter(card => (!gameState.consumables.map(card => card.name).includes(card.name) && !deepFind(gameState, thing => thing.name == card.name)) || jokerCount(gameState, "showman") > 0);
         remainingCards = newCards.length < 1 ? remainingCards : newCards;
       } else if (playingCardType == "Number") {
         remainingCards.filter(card => {
@@ -3323,6 +3325,8 @@ function restoreGameFunctions(game) {
       }
     }
   })
+
+  return game;
 }
 
 function newShop(gameState) {
@@ -3350,7 +3354,7 @@ function newShop(gameState) {
 
   // Fill booster packs
   const allowedPacks = boosterPacks.filter(pack => !gameState.bannedPacks.includes(pack.name));
-  if (!gameState.hadShop && !gameState.bannedPacks.includes("Buffoon Pack")) gameState.shop.packs[0] = {"name": "Buffoon Pack", "amount": 2, "choices": 1, "odds": 1.2, "cost": 4};
+  if (!gameState.hadShop && !gameState.bannedPacks.includes("Buffoon Pack")) gameState.shop.packs[0] = {"name": "Buffoon Pack", "amount": 2, "choices": 1, "odds": 1.2, "cost": 4, "types": 2};
   while (gameState.shop.packs.length < 2) {
     gameState.shop.packs.push(pickWeightedRandom(allowedPacks));
   }
@@ -3358,7 +3362,7 @@ function newShop(gameState) {
   gameState.hadShop = true;
 
   gameState.shop.packs.forEach(pack => pack.cost = calcCost(gameState, pack.cost, undefined, pack.name.toLowerCase().includes("celestial")));
-  gameState.shop.packs.forEach(pack => pack.type = Math.floor(Math.random() * pack.types));
+  gameState.shop.packs.forEach(pack => pack.type = Math.floor(Math.random() * pack.types + 1));
 
   // Fill cards
   gameState.shop.filled = false;
@@ -3437,7 +3441,7 @@ function handleJoker(gameState, joker, func, params = []) {
     copied = true;
   }
   if (copied) response.destroy = false;
-  if (response.destroy) destroyJoker(gameState, joker);
+  if (response?.destroy) destroyJoker(gameState, joker);
   return response;
 }
 
@@ -3716,7 +3720,7 @@ function jokerToText(gameState, joker) {
   return returnString;
 }
 
-function cardToText(gameState, card) {
+function playingCardToText(gameState, card) {
   if (card.flipped) return "Flipped card";
   let returnString = "";
   if (card.selected) returnString += "Selected ";
@@ -3737,7 +3741,7 @@ function consumableToText(gameState, consumable) {
   return returnString;
 }
 
-function gameToText(gameState) {
+function gameToText(gameState) { // TODO: Tags
   let returnString = `${gameState.stake} | ${gameState.deck}`;
   returnString += "\nJokers:";
   gameState.jokers?.forEach(joker => returnString += `\n${jokerToText(gameState, joker)}`);
@@ -3761,7 +3765,7 @@ function gameToText(gameState) {
       }
       returnString += `\nRound score: ${bigIntToSci(gameState.blind.roundScore)}\n`;
 
-      gameState.blind.hand.forEach(card => returnString += `\n${cardToText(gameState, card)}`);
+      gameState.blind.hand.forEach(card => returnString += `\n${playingCardToText(gameState, card)}`);
       returnString += `\n\nHand: ${gameState.blind.hand.length}/${gameState.handSize}`;
       break;
     case "blindWin":
@@ -3783,7 +3787,7 @@ function gameToText(gameState) {
         if (card.rarity) { // Joker
           returnString += jokerToText(gameState, card);
         } else if (card.rank) { // Playing Card
-          returnString += cardToText(gameState, card);
+          returnString += playingCardToText(gameState, card);
         } else { // Consumable
           returnString += consumableToText(gameState, card);
         }
@@ -3802,13 +3806,7 @@ function gameToText(gameState) {
     case "openingPack":
       returnString += `${gameState.currentPack.name}\n`;
       gameState.currentPack.contents.forEach(card => {
-        if (card.rarity) { // Joker
-          returnString += `\n${jokerToText(gameState, card)}`;
-        } else if (card.rank) { // Playing Card
-          returnString += `\n${cardToText(gameState, card)}`;
-        } else { // Consumable
-          returnString += `\n${consumableToText(gameState, card)}`;
-        }
+        returnString += cardToText(gameState, card);
       })
       returnString += `\n\nChoose ${gameState.currentPack.choices}`;
       break;
@@ -3819,6 +3817,16 @@ function gameToText(gameState) {
       returnString += `YOU LOSE`; // TODO
   }
   return returnString;
+}
+
+function cardToText(gameState, card) {
+  if (card.rarity) { // Joker
+    return `\n${jokerToText(gameState, card)}`;
+  } else if (card.rank) { // Playing Card
+    return `\n${playingCardToText(gameState, card)}`;
+  } else { // Consumable
+    return `\n${consumableToText(gameState, card)}`;
+  }
 }
 
 function blindsToText(gameState) {
@@ -3860,7 +3868,6 @@ module.exports = {
   blindsToText,
   sellCard,
   cardToText,
-  consumableToText,
   useConsumable,
-  restoreGameFunctions
+  restoreGameFunctions,
 }
