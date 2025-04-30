@@ -18,8 +18,30 @@ function objectClone(obj) {
 }
 
 const tags = [ // TODO
-  "Double Tag",
-  "Economy Tag"
+  {"name": "Uncommon Tag", "desc": "Shop has a free Uncommon Joker"},
+  {"name": "Rare Tag", "desc": "Shop has a free Rare Joker"},
+  {"name": "Negative Tag", "desc": "Next base edition shop Joker is free and becomes Negative"},
+  {"name": "Foil Tag", "desc": "Next base edition shop Joker is free and becomes Foil"},
+  {"name": "Holographic Tag", "desc": "Next base edition shop Joker is free and becomes Holographic"},
+  {"name": "Polychrome Tag", "desc": "Next base edition shop Joker is free and becomes Polychrome"},
+  {"name": "Investment Tag", "desc": "After defeating the Boss Blnd, gain $25"},
+  {"name": "Voucher Tag", "desc": "Adds one Voucher to the next shop"},
+  {"name": "Boss Tag", "desc": "Rerolls the Boss Blind"},
+  {"name": "Standard Tag", "desc": "Gives a free Mega Standard Pack"},
+  {"name": "Charm Tag", "desc": "Gives a free Mega Arcana Pack"},
+  {"name": "Meteor Tag", "desc": "Gives a free Mega Celestial Pack"},
+  {"name": "Buffoon Tag", "desc": "Gives a free Mega Buffoon Pack"},
+  {"name": "Handy Tag", getDesc(gameState) {`Gives $1 per played hand this run (Will give $${0})`}},
+  {"name": "Garbage Tag", getDesc(gameState) {`Gives $1 per unused discard this run (Will give $${0})`}},
+  {"name": "Ethereal Tag", "desc": "Gives a free Spectral Pack"},
+  {"name": "Coupon Tag", "desc": "Initial cards and booster packs in next shop are free"},
+  {"name": "Double Tag", "desc": "Gives a copy of the next selected Tag Double Tag excluded"},
+  {"name": "Juggle Tag", "desc": "+3 hand size next round"},
+  {"name": "D6 Tag", "desc": "Rerolls in next shop start at $0"},
+  {"name": "Top-Up Tag", "desc": "Create up to 2 Common Jokers (Must have room)"},
+  {"name": "Speed Tag", getDesc(gameState) {`Gives $5 per skipped blind this run (Will give $${0})`}},
+  {"name": "Orbital Tag", getDesc(gameState) {`Upgrade ${0} by 3 levels`}},
+  {"name": "Economy Tag", "desc": "Doubles your money (Max of $40)"}
 ]
 
 const seals = {
@@ -27,6 +49,41 @@ const seals = {
   "Gold Seal": {onCardScored(gameState, card) {gameState.money += 4}},
   "Blue Seal": {onEndCards(gameState, card) {}}, // TODO
   "Purple Seal": {} // TODO
+}
+
+const voucherDescs = {
+  "Overstock": "+1 card slot available in shop",
+  "Overstock Plus": "+1 card slot available in shop",
+  "Hone": "Foil, Holographic, and Polychrome cards appear 2x more often",
+  "Glow Up": "Foil, Holographic, and Polychrome cards appear 4x more often",
+  "Clearance Sale": "All cards and packs in shop are 25% off",
+  "Liquidation": "All cards and packs in shop are 50% off",
+  "Reroll Surplus": "Rerolls cost $2 less",
+  "Reroll Glut": "Rerolls cost $2 less",
+  "Crystal Ball": "+1 consumable slot",
+  "Omen Globe": "Spectral cards may appear in any of the Arcana Packs",
+  "Grabber": "Permanently gain +1 hand per round",
+  "Nacho Tong": "Permanently gain +1 hand per round",
+  "Telescope": "Celestial Packs always contain the Planet card for your most played poker hand",
+  "Observatory": "Planet cards in your consumable area give X1.5 Mult for their specified poker hand",
+  "Wasteful": "Permanently gain +1 discard each round",
+  "Recyclomancy": "Permanently gain +1 discard each round",
+  "Tarot Merchant": "Tarot cards appear 2X more frequently in the shop",
+  "Tarot Tycoon": "Tarot cards appear 4X more frequently in the shop",
+  "Seed Money": "Raise the cap on interest earned in each round to $10",
+  "Money Tree": "Raise the cap on interest earned in each round to $20",
+  "Planet Merchant": "Planet cards appear 2X more frequently in the shop",
+  "Planet Tycoon": "Planet cards appear 4X more frequently in the shop",
+  "Blank": "Does nothing?",
+  "Antimatter": "+1 Joker Slot",
+  "Magic Trick": "Playing cards can be purchased from the shop",
+  "Illusion": "Playing cards in shop may have an Enhancement, Edition, and/or a Seal",
+  "Director's Cut": "Reroll Boss Blind 1 time per Ante. $10 per roll",
+  "Retcon": "Reroll Boss Blind unlimited times. $10 per roll",
+  "Hieroglyph": "-1 Ante. -1 hand each round",
+  "Petroglyph": "-1 Ante. -1 discard each round",
+  "Paint Brush": "+1 hand size",
+  "Palette": "+1 hand size"
 }
 
 const enhancements = {
@@ -58,97 +115,97 @@ const cards = {
   "Tarot Card": [
     {
       name: "The Fool",
-      text: "Creates the last Tarot or Planet card used during this run (The Fool excluded)"
+      desc: "Creates the last Tarot or Planet card used during this run (The Fool excluded)"
     },
     {
       name: "The Magician",
-      text: "Enhances 2 selected cards to Lucky Cards"
+      desc: "Enhances 2 selected cards to Lucky Cards"
     },
     {
       name: "The High Priestess",
-      text: "Creates up to 2 random Planet cards (Must have room)"
+      desc: "Creates up to 2 random Planet cards (Must have room)"
     },
     {
       name: "The Empress",
-      text: "Enhances 2 selected cards to Mult Cards"
+      desc: "Enhances 2 selected cards to Mult Cards"
     },
     {
       name: "The Emperor",
-      text: "Creates up to 2 random Tarot cards (Must have room)"
+      desc: "Creates up to 2 random Tarot cards (Must have room)"
     },
     {
       name: "The Hierophant",
-      text: "Enhances 2 selected cards to Bonus Cards"
+      desc: "Enhances 2 selected cards to Bonus Cards"
     },
     {
       name: "The Lovers",
-      text: "Enhances 1 selected card into a Wild Card"
+      desc: "Enhances 1 selected card into a Wild Card"
     },
     {
       name: "The Chariot",
-      text: "Enhances 1 selected card into a Steel Card"
+      desc: "Enhances 1 selected card into a Steel Card"
     },
     {
       name: "Justice",
-      text: "Enhances 1 selected card into a Glass Card"
+      desc: "Enhances 1 selected card into a Glass Card"
     },
     {
       name: "The Hermit",
-      text: "Doubles money (Max of $20)"
+      desc: "Doubles money (Max of $20)"
     },
     {
       name: "The Wheel of Fortune",
-      text: "1 in 4 chance to add Foil, Holographic, or Polychrome edition to a random Joker"
+      desc: "1 in 4 chance to add Foil, Holographic, or Polychrome edition to a random Joker"
     },
     {
       name: "Strength",
-      text: "Increases rank of up to 2 selected cards by 1"
+      desc: "Increases rank of up to 2 selected cards by 1"
     },
     {
       name: "The Hanged Man",
-      text: "Destroys up to 2 selected cards"
+      desc: "Destroys up to 2 selected cards"
     },
     {
       name: "Death",
-      text: "Select 2 cards, convert the left card into the right card (Drag to rearrange)" // TODO: decide if i wanna change this
+      desc: "Select 2 cards, convert the left card into the right card (Drag to rearrange)" // TODO: decide if i wanna change this
     },
     {
       name: "Temperance",
-      text: "Gives the total sell value of all current Jokers (Max of $50)"
+      desc: "Gives the total sell value of all current Jokers (Max of $50)"
     },
     {
       name: "The Devil",
-      text: "Enhances 1 selected card into a Gold Card"
+      desc: "Enhances 1 selected card into a Gold Card"
     },
     {
       name: "The Tower",
-      text: "Enhances 1 selected card into a Stone Card"
+      desc: "Enhances 1 selected card into a Stone Card"
     },
     {
       name: "The Star",
-      text: "Converts up to 3 selected cards to Diamonds"
+      desc: "Converts up to 3 selected cards to Diamonds"
     },
     {
       name: "The Moon",
-      text: "Converts up to 3 selected cards to Clubs"
+      desc: "Converts up to 3 selected cards to Clubs"
     },
     {
       name: "The Sun",
-      text: "Converts up to 3 selected cards to Hearts"
+      desc: "Converts up to 3 selected cards to Hearts"
     },
     {
       name: "Judgement",
-      text: "Creates a random Joker card (Must have room)"
+      desc: "Creates a random Joker card (Must have room)"
     },
     {
       name: "The World",
-      text: "Converts up to 3 selected cards to Spades"
+      desc: "Converts up to 3 selected cards to Spades"
     }
   ],
   "Spectral Card": [
     {
       name: "Familiar",
-      text: "Destroy 1 random card in your hand, but add 3 random Enhanced face cards to your hand",
+      desc: "Destroy 1 random card in your hand, but add 3 random Enhanced face cards to your hand",
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         deleteCard(gameState.cardArea[Math.floor(Math.random() * gameState.cardArea.length)]);
@@ -159,7 +216,7 @@ const cards = {
     },
     {
       name: "Grim",
-      text: "Destroy 1 random card in your hand, but add 2 random Enhanced Aces to your hand",
+      desc: "Destroy 1 random card in your hand, but add 2 random Enhanced Aces to your hand",
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         deleteCard(gameState.cardArea[Math.floor(Math.random() * gameState.cardArea.length)]);
@@ -170,7 +227,7 @@ const cards = {
     },
     {
       name: "Incantation",
-      text: "Destroy 1 random card in your hand, but add 4 random Enhanced numbered cards to your hand",
+      desc: "Destroy 1 random card in your hand, but add 4 random Enhanced numbered cards to your hand",
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         deleteCard(gameState.cardArea[Math.floor(Math.random() * gameState.cardArea.length)]);
@@ -181,7 +238,7 @@ const cards = {
     },
     {
       name: "Talisman",
-      text: "Add a Gold Seal to 1 selected card in your hand",
+      desc: "Add a Gold Seal to 1 selected card in your hand",
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length != 1) return {"error": "Select exactly one card", "cardMax": 1};
@@ -190,7 +247,7 @@ const cards = {
     },
     {
       name: "Aura",
-      text: "Add Foil, Holographic, or Polychrome effect to 1 selected card in hand",
+      desc: "Add Foil, Holographic, or Polychrome effect to 1 selected card in hand",
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length != 1) return {"error": "Select exactly one card", "cardMax": 1};
@@ -199,7 +256,7 @@ const cards = {
     },
     {
       name: "Wraith",
-      text: "Creates a random Rare Joker (must have room), sets money to $0", // TODO: check if you can use without joker slots
+      desc: "Creates a random Rare Joker (must have room), sets money to $0", // TODO: check if you can use without joker slots
       onUse(gameState, cards) {
         if (gameState.jokers.length >= gameState.jokerSlots) return {"error": "No joker slots"};
         gameState.money = 0;
@@ -208,7 +265,7 @@ const cards = {
     },
     {
       name: "Sigil",
-      text: "Converts all cards in hand to a single random suit",
+      desc: "Converts all cards in hand to a single random suit",
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         const suit = suits[Math.floor(Math.random() * suits.length)];
@@ -217,7 +274,7 @@ const cards = {
     },
     {
       name: "Ouija",
-      text: "Converts all cards in hand to a single random rank\n-1 hand size",
+      desc: "Converts all cards in hand to a single random rank\n-1 hand size",
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         const rank = ranks[Math.floor(Math.random() * ranks.length)];
@@ -227,7 +284,7 @@ const cards = {
     },
     {
       name: "Ectoplasm",
-      text: `Add Negative to a random Joker.\n-TODO hand size`, // TODO: make hand size update
+      getDesc(gameState) { return `Add Negative to a random Joker.\n-${handSize} hand size` },
       "properties": {
         "handSize": 1
       },
@@ -242,7 +299,7 @@ const cards = {
     },
     {
       name: "Immolate",
-      text: "Destroys 5 random cards in hand, gain $20",
+      desc: "Destroys 5 random cards in hand, gain $20",
       onUse(gameState, cards) {
         const cardArea = gameState.cardArea;
         if (!cardArea?.length) return {"error": "No cards"};
@@ -255,7 +312,7 @@ const cards = {
     },
     {
       name: "Ankh",
-      text: "Create a copy of a random Joker, destroy all other Jokers",
+      desc: "Create a copy of a random Joker, destroy all other Jokers",
       onUse(gameState, cards) {
         if (!gameState.jokers.length) return {"error": "No Jokers"};
         const targetJoker = gameState.jokers[Math.floor(Math.random() * gameState.jokers.length)];
@@ -268,7 +325,7 @@ const cards = {
     },
     {
       name: "Deja Vu",
-      text: "Add a Red Seal to 1 selected card in your hand",
+      desc: "Add a Red Seal to 1 selected card in your hand",
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length != 1) return {"error": "Select exactly one card", "cardMax": 1};
@@ -277,7 +334,7 @@ const cards = {
     },
     {
       name: "Hex",
-      text: "Add Polychrome to a random Joker, and destroy all other Jokers",
+      desc: "Add Polychrome to a random Joker, and destroy all other Jokers",
       onUse(gameState, cards) {
         console.log(gameState.jokers);
         const possibleJokers = gameState.jokers.filter(joker => !joker.edition);
@@ -291,7 +348,7 @@ const cards = {
     },
     {
       name: "Trance",
-      text: "Add a Blue Seal to 1 selected card in your hand",
+      desc: "Add a Blue Seal to 1 selected card in your hand",
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length != 1) return {"error": "Select exactly one card", "cardMax": 1};
@@ -300,7 +357,7 @@ const cards = {
     },
     {
       name: "Medium",
-      text: "Add a Purple Seal to 1 selected card card in your hand",
+      desc: "Add a Purple Seal to 1 selected card card in your hand",
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length != 1) return {"error": "Select exactly one card", "cardMax": 1};
@@ -309,7 +366,7 @@ const cards = {
     },
     {
       name: "Cryptid",
-      text: "Create 2 copies of 1 selected card in your hand",
+      desc: "Create 2 copies of 1 selected card in your hand",
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length != 1) return {"error": "Select exactly one card", "cardMax": 1};
@@ -319,7 +376,7 @@ const cards = {
     },
     {
       name: "The Soul",
-      text: "Creates a Legendary Joker (Must have room)",
+      desc: "Creates a Legendary Joker (Must have room)",
       onUse(gameState, cards) {
         if (gameState.jokers.length >= gameState.jokerSlots) return {"error": "No joker slots"};
         gameState.jokers.push(newCard(gameState, "Joker", false, false, "Legendary"));
@@ -327,7 +384,7 @@ const cards = {
     },
     {
       name: "Black Hole",
-      text: "Upgrade every poker hand by 1 level",
+      desc: "Upgrade every poker hand by 1 level",
       onUse(gameState, card) {
         Object.keys(gameState.handLevels).forEach(hand => gameState.handLevels[hand]++);
       }
@@ -1079,7 +1136,8 @@ const jokers = [
     getDesc(gameState) { return "Sell this card to create a free Double Tag" },
     onSell(gameState) {
       if (!gameState.bannedTags.includes("Double Tag"))
-        gameState.tags.push("Double Tag");
+        const tag = tags.find(tag => ) // amogus
+        gameState.tags.push();
     },
     "cost": 6,
   },
@@ -3177,7 +3235,8 @@ function roundHalfDown(n) {
 function addVoucherToShop(gameState) {
   const newVouchers = gameState.possibleVouchers.filter(voucher => !gameState.shop.vouchers.includes(voucher));
   if (newVouchers.length < 1) return;
-  gameState.shop.vouchers.push({"name": newVouchers[Math.floor(Math.random() * newVouchers.length)], "cost": calcCost(gameState, 10)});
+  const voucherType = newVouchers[Math.floor(Math.random() * newVouchers.length)];
+  gameState.shop.vouchers.push({"name": voucherType, "cost": calcCost(gameState, 10), "desc": voucherDescs[voucherType]});
 }
 
 function capitalize(str) {
@@ -3450,8 +3509,8 @@ function handleJokers(gameState, func, params = []) {
   let retriggers = 0;
   gameState.jokers?.filter((joker, idx) => !joker.debuffed).forEach(joker => {
     let response = handleJoker(gameState, joker, func, params);
-    if (response && response.length) returnArray.push(response);
-    if (response.retriggers) retriggers += response.retriggers;
+    if (response?.length) returnArray.push(response);
+    if (response?.retriggers) retriggers += response.retriggers;
   })
   return {"responses": returnArray.filter(Boolean), retriggers };
 }
@@ -3741,12 +3800,14 @@ function consumableToText(gameState, consumable) {
   return returnString;
 }
 
-function gameToText(gameState) { // TODO: Tags
+function gameToText(gameState) {
   let returnString = `${gameState.stake} | ${gameState.deck}`;
   returnString += "\nJokers:";
-  gameState.jokers?.forEach(joker => returnString += `\n${jokerToText(gameState, joker)}`);
+  gameState.jokers.forEach(joker => returnString += `\n${jokerToText(gameState, joker)}`);
   returnString += "\n\nConsumables:";
-  gameState.consumables?.forEach(consumable => returnString += `\n${consumableToText(gameState, consumable)}`);
+  gameState.consumables.forEach(consumable => returnString += `\n${consumableToText(gameState, consumable)}`);
+  returnString += "\n\nTags:";
+  gameState.tags.forEach(tag => returnString += `\n${tag}`);
   returnString += `\n\nHands: ${gameState.blind ? gameState.blind.hands : gameState.defaultHands} | Discards: ${gameState.blind ? gameState.blind.discards : gameState.defaultDiscards}`;
   returnString += `\n$${gameState.money}`;
   returnString += `\nAnte: ${gameState.ante}/8`;
