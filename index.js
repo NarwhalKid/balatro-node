@@ -3287,6 +3287,44 @@ function shopBuy(gameState, section, index) { // Pass index starting at 0
   }
 }
 
+function deepFind(obj, predicate) {
+  if (typeof obj !== 'object' || obj === null) return;
+
+  for (const [key, value] of Object.entries(obj)) {
+    if (predicate(value, key)) {
+      return value;
+    }
+
+    if (typeof value === 'object' && value !== null) {
+      const result = deepFind(value, predicate);
+      if (result !== undefined) return result;
+    }
+  }
+}
+
+
+function restoreGameFunctions(game) {
+  game.jokers.forEach(joker => {
+    const ogJoker = jokers.find(findJoker => findJoker.name == joker.name);
+    if (!ogJoker) return;
+    for (const [key, value] of Object.entries(ogJoker)) {
+      if (typeof value === "function") {
+        joker[key] = value;
+      }
+    }
+  })
+
+  game.consumables.forEach(consumable => {
+    const ogConsumable = deepFind(cards, findConsumable => findConsumable.name == consumable.name);
+    if (!ogConsumable) return;
+    for (const [key, value] of Object.entries(ogConsumable)) {
+      if (typeof value === "function") {
+        consumable[key] = value;
+      }
+    }
+  })
+}
+
 function newShop(gameState) {
   let currentBlindIdx = gameState.currentBlinds.filter(blind => blind.completed).length;
   gameState.shop.packs = [];
@@ -3320,7 +3358,8 @@ function newShop(gameState) {
   gameState.hadShop = true;
 
   gameState.shop.packs.forEach(pack => pack.cost = calcCost(gameState, pack.cost, undefined, pack.name.toLowerCase().includes("celestial")));
-  
+  gameState.shop.packs.forEach(pack => pack.type = Math.floor(Math.random() * pack.types));
+
   // Fill cards
   gameState.shop.filled = false;
   rerollShop(gameState);
@@ -3822,5 +3861,6 @@ module.exports = {
   sellCard,
   cardToText,
   consumableToText,
-  useConsumable
+  useConsumable,
+  restoreGameFunctions
 }
