@@ -183,7 +183,8 @@ const cards = {
       name: "Talisman",
       text: "Add a Gold Seal to 1 selected card in your hand",
       onUse(gameState, cards) {
-        if (cards.length != 1) return {"error": "Select exactly one card"};
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        if (cards.length != 1) return {"error": "Select exactly one card", "cardMax": 1};
         cards[0].seal = "Gold Seal";
       }
     },
@@ -191,10 +192,9 @@ const cards = {
       name: "Aura",
       text: "Add Foil, Holographic, or Polychrome effect to 1 selected card in hand",
       onUse(gameState, cards) {
-        const possibleCards = gameState.cardArea.filter(card => !card.edition);
-        if (!possibleCards?.length) return {"error": "No valid cards"};
-        const targetCard = possibleCards[Math.floor(Math.random() * possibleCards.length)];
-        targetCard.edition = pickWeightedRandom(gameState.editions);
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        if (cards.length != 1) return {"error": "Select exactly one card", "cardMax": 1};
+        cards[0].edition = pickWeightedRandom(gameState.editions);
       }
     },
     {
@@ -270,7 +270,8 @@ const cards = {
       name: "Deja Vu",
       text: "Add a Red Seal to 1 selected card in your hand",
       onUse(gameState, cards) {
-        if (cards.length != 1) return {"error": "Select exactly one card"};
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        if (cards.length != 1) return {"error": "Select exactly one card", "cardMax": 1};
         cards[0].seal = "Red Seal";
       }
     },
@@ -290,7 +291,8 @@ const cards = {
       name: "Trance",
       text: "Add a Blue Seal to 1 selected card in your hand",
       onUse(gameState, cards) {
-        if (cards.length != 1) return {"error": "Select exactly one card"};
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        if (cards.length != 1) return {"error": "Select exactly one card", "cardMax": 1};
         cards[0].seal = "Blue Seal";
       }
     },
@@ -298,7 +300,8 @@ const cards = {
       name: "Medium",
       text: "Add a Purple Seal to 1 selected card card in your hand",
       onUse(gameState, cards) {
-        if (cards.length != 1) return {"error": "Select exactly one card"};
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        if (cards.length != 1) return {"error": "Select exactly one card", "cardMax": 1};
         cards[0].seal = "Purple Seal";
       }
     },
@@ -306,7 +309,8 @@ const cards = {
       name: "Cryptid",
       text: "Create 2 copies of 1 selected card in your hand",
       onUse(gameState, cards) {
-        if (cards.length != 1) return {"error": "Select exactly one card"};
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        if (cards.length != 1) return {"error": "Select exactly one card", "cardMax": 1};
         drawCard(gameState, cards[0]);
         drawCard(gameState, cards[0]);
       }
@@ -501,25 +505,25 @@ const pokerHands = {
 
 
 const boosterPacks = [
-  {"name": "Arcana Pack", "amount": 3, "choices": 1, "odds": 4, "cost": 4},
-  {"name": "Jumbo Arcana Pack", "amount": 5, "choices": 1, "odds": 2, "cost": 6},
-  {"name": "Mega Arcana Pack", "amount": 5, "choices": 2, "odds": 0.5, "cost": 8},
+  {"name": "Arcana Pack", "amount": 3, "choices": 1, "odds": 4, "cost": 4, "types": 4},
+  {"name": "Jumbo Arcana Pack", "amount": 5, "choices": 1, "odds": 2, "cost": 6, "types": 2},
+  {"name": "Mega Arcana Pack", "amount": 5, "choices": 2, "odds": 0.5, "cost": 8, "types": 2},
   
-  {"name": "Celestial Pack", "amount": 3, "choices": 1, "odds": 4, "cost": 4},
-  {"name": "Jumbo Celestial Pack", "amount": 5, "choices": 1, "odds": 2, "cost": 6},
-  {"name": "Mega Celestial Pack", "amount": 5, "choices": 2, "odds": 0.5, "cost": 8},
+  {"name": "Celestial Pack", "amount": 3, "choices": 1, "odds": 4, "cost": 4, "types": 4},
+  {"name": "Jumbo Celestial Pack", "amount": 5, "choices": 1, "odds": 2, "cost": 6, "types": 2},
+  {"name": "Mega Celestial Pack", "amount": 5, "choices": 2, "odds": 0.5, "cost": 8, "types": 2},
   
-  {"name": "Standard Pack", "amount": 3, "choices": 1, "odds": 4, "cost": 4},
-  {"name": "Jumbo Standard Pack", "amount": 5, "choices": 1, "odds": 2, "cost": 6},
-  {"name": "Mega Standard Pack", "amount": 5, "choices": 2, "odds": 0.5, "cost": 8},
+  {"name": "Standard Pack", "amount": 3, "choices": 1, "odds": 4, "cost": 4, "types": 4},
+  {"name": "Jumbo Standard Pack", "amount": 5, "choices": 1, "odds": 2, "cost": 6, "types": 2},
+  {"name": "Mega Standard Pack", "amount": 5, "choices": 2, "odds": 0.5, "cost": 8, "types": 2},
 
-  {"name": "Buffoon Pack", "amount": 2, "choices": 1, "odds": 1.2, "cost": 4},
-  {"name": "Jumbo Buffoon Pack", "amount": 4, "choices": 1, "odds": 0.6, "cost": 4, "cost": 6},
-  {"name": "Mega Buffoon Pack", "amount": 4, "choices": 2, "odds": 0.15, "cost": 8},
+  {"name": "Buffoon Pack", "amount": 2, "choices": 1, "odds": 1.2, "cost": 4, "types": 2},
+  {"name": "Jumbo Buffoon Pack", "amount": 4, "choices": 1, "odds": 0.6, "cost": 4, "cost": 6, "types": 1},
+  {"name": "Mega Buffoon Pack", "amount": 4, "choices": 2, "odds": 0.15, "cost": 8, "types": 1},
 
-  {"name": "Spectral Pack", "amount": 2, "choices": 1, "odds": 0.6, "cost": 4},
-  {"name": "Jumbo Spectral Pack", "amount": 4, "choices": 1, "odds": 0.3, "cost": 6},
-  {"name": "Mega Spectral Pack", "amount": 4, "choices": 2, "odds": 0.07, "cost": 8}
+  {"name": "Spectral Pack", "amount": 2, "choices": 1, "odds": 0.6, "cost": 4, "types": 2},
+  {"name": "Jumbo Spectral Pack", "amount": 4, "choices": 1, "odds": 0.3, "cost": 6, "types": 1},
+  {"name": "Mega Spectral Pack", "amount": 4, "choices": 2, "odds": 0.07, "cost": 8, "types": 1}
 ];
 
 function jokerCount(gameState, jokerName) {
@@ -2705,15 +2709,17 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
             break;
         case "magicdeck":
             addVoucher(game, "Crystal Ball");
-            game.consumables.push({"name": "The Fool"});
-            game.consumables.push({"name": "The Fool"});
+            const fool = cards["Tarot Card"].find(card => card.name == "The Fool");
+            game.consumables.push(objectClone(fool));
+            game.consumables.push(objectClone(fool));
             break;
         case "nebuladeck":
             addVoucher(game, "Telescope");
             game.consumableSlots--;
             break;
         case "ghostdeck":
-            game.consumables.push({"name": "Hex"});
+            const hex = cards["Spectral Card"].find(card => card.name == "Hex");
+            game.consumables.push(objectClone(hex));
             game.shopWeights["Spectral Card"].odds = 2;
             break;
         case "abandoneddeck":
@@ -3104,7 +3110,7 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
 function fillShopCards(gameState) {
   while (gameState.shop.cards.length < gameState.shopSlots) {
     const cardType = pickWeightedRandom(gameState.shopWeights);
-    game.shop.cards.push(newCard(gameState, cardType));
+    gameState.shop.cards.push(newCard(gameState, cardType));
   }
 }
 
@@ -3364,7 +3370,7 @@ function setHandSort(gameState, sortByRank) {
 
 function blindSetup(gameState) {
   const blindIdx = gameState.currentBlinds.filter(blind => blind.completed).length;
-  gameState.blind = objectClone(blinds.filter(blind => blind.name == gameState.currentBlinds[blindIdx].name)[0]);
+  gameState.blind = objectClone(blinds.find(blind => blind.name == gameState.currentBlinds[blindIdx].name));
 
   gameState.blind.hands = gameState.defaultHands;
   gameState.blind.discards = gameState.defaultDiscards;
@@ -3637,15 +3643,14 @@ function cashOut(gameState) {
   newShop(gameState);
 }
 
-function useConsumable(gameState, index) { // Pass the index starting at 0
+function useConsumable(gameState, index, cards) { // Pass the index starting at 0
   const card = gameState.consumables[index];
   if (!card) return "Invalid index";
-  const cards = gameState.cardArea?.filter(card => card.selected) || [];
   let response;
   if (card.onUse) response = card.onUse(gameState, cards);
-  if (response?.error) return response.error;
+  if (response?.error) return response;
   gameState.consumables.splice(index, 1);
-  if (consumable.edition.toLowerCase() == "negative") gameState.consumableSlots--;
+  if (card.edition?.toLowerCase() == "negative") gameState.consumableSlots--;
   if (card.handType) usePlanet(gameState, card.name);
 }
 
@@ -3699,7 +3704,7 @@ function gameToText(gameState) {
   gameState.jokers?.forEach(joker => returnString += `\n${jokerToText(gameState, joker)}`);
   returnString += "\n\nConsumables:";
   gameState.consumables?.forEach(consumable => returnString += `\n${consumableToText(gameState, consumable)}`);
-  returnString += `\n\nHands: ${gameState.blind?.hands || gameState.defaultHands} | Discards: ${gameState.blind?.discards || gameState.defaultDiscards}`;
+  returnString += `\n\nHands: ${gameState.blind ? gameState.blind.hands : gameState.defaultHands} | Discards: ${gameState.blind ? gameState.blind.discards : gameState.defaultDiscards}`;
   returnString += `\n$${gameState.money}`;
   returnString += `\nAnte: ${gameState.ante}/8`;
   returnString += `\nRound: ${gameState.round}`;
@@ -3814,5 +3819,8 @@ module.exports = {
   packSelect,
   skipPack,
   blindsToText,
-  sellCard
+  sellCard,
+  cardToText,
+  consumableToText,
+  useConsumable
 }
