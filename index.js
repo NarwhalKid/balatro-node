@@ -3749,7 +3749,7 @@ function newShop(gameState) {
 
   // Fill booster packs
   const allowedPacks = boosterPacks.filter(pack => !gameState.bannedPacks.includes(pack.name));
-  if (!gameState.hadShop && !gameState.bannedPacks.includes("Buffoon Pack")) gameState.shop.packs[0] = {"name": "Buffoon Pack", "amount": 2, "choices": 1, "odds": 1.2, "cost": 4, "types": 1};
+  if (!gameState.hadShop && !gameState.bannedPacks.includes("Buffoon Pack")) gameState.shop.packs[0] = {"name": "Arcana Pack", "amount": 10, "choices": 1, "odds": 1.2, "cost": 4, "types": 1};
   while (gameState.shop.packs.length < 2) {
     gameState.shop.packs.push(pickWeightedRandom(allowedPacks));
   }
