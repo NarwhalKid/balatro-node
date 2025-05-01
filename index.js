@@ -3830,7 +3830,9 @@ function handleJoker(gameState, joker, func, params = []) {
   let copied = false;
   console.log("doing the thing!");
   if (joker[func]) response = joker[func](gameState, ...params);
+  console.log("a");
   console.log(response);
+  console.log("b");
   let idx;
   gameState.jokers.forEach((loopJoker, index) => {
     if (loopJoker == joker)
