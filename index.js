@@ -72,11 +72,11 @@ const tags = [
   },
   {
     "name": "Handy Tag", 
-    getDesc(gameState) {return `Gives $1 per played hand this run (Will give $${0})`} // TODO
+    getDesc(gameState) {return `Gives $1 per played hand this run (Will give $${gameState.playedHands})`} // TODO
   }, 
   {
     "name": "Garbage Tag", 
-    getDesc(gameState) {return `Gives $1 per unused discard this run (Will give $${0})`}
+    getDesc(gameState) {return `Gives $1 per unused discard this run (Will give $${gameState.unusedDiscards})`}
   },
   {
     "name": "Ethereal Tag", 
@@ -104,7 +104,7 @@ const tags = [
   },
   {
     "name": "Speed Tag", 
-    getDesc(gameState) {return `Gives $5 per skipped blind this run (Will give $${0})`}
+    getDesc(gameState) {return `Gives $5 per skipped blind this run (Will give $${gameState.skippedBlinds * 5})`}
   },
   {
     "name": "Orbital Tag", 
@@ -1010,7 +1010,7 @@ const jokers = [
     "rarity": "Rare",
     getDesc(gameState) { return "Upgrade the level of the first discarded poker hand each round" },
     onDiscard(gameState, cards) {
-      if (gameState.firstDiscard) {
+      if (gameState.blind.firstDiscard) {
         gameState.handLevels[getHandType(gameState, cards)]++;
       }
     },
@@ -1200,7 +1200,7 @@ const jokers = [
     getDesc(gameState) { return "Earn $2 per discard if no discards are used by end of the round" },
     "rarity": "Common",
     onRoundEnd(gameState) {
-      if (gameState.blind.firstDiscard) return {"money": gameState.blind.discards * 2}; // TODO: blind.firstDiscard
+      if (gameState.blind.firstDiscard) return {"money": gameState.blind.discards * 2};
     },
     "cost": 4,
     "noCopy": true,
@@ -2252,19 +2252,24 @@ const jokers = [
   {
     "name": "Swashbuckler",
     getDesc(gameState) { return "Adds the sell value of all other owned Jokers to Mult" },
+    onScore(gameState, cards) {
+      let sellValue = 0;
+      gameState.jokers.forEach(joker => {
+        if (joker != this) {
+          sellValue += roundHalfDown(calcCost(gameState, joker)/2) + +(joker.addedSellValue || 0);
+        }
+      })
+      return {"plusMult": sellValue};
+    },
     "rarity": "Common",
     "cost": 4,
   },
   {
     "name": "Throwback",
     "rarity": "Uncommon",
-    getDesc(gameState) { return `X0.25 Mult for each Blind skipped this run\n(Currently X${this.properties.timesMult})` },
-    "properties": {"timesMult":1},
-    onBlindSkipped() {
-      this.timesMult += 0.25
-    },
+    getDesc(gameState) { return `X0.25 Mult for each Blind skipped this run\n(Currently X${gameState.skippedBlinds * 0.25 + 1})` },
     onScore(gameState, cards) {
-      return {"timesMult": this.properties.timesMult}
+      return {"timesMult": gameState.skippedBlinds * 0.25 + 1}
     },
     "cost": 6,
   },
@@ -2286,8 +2291,11 @@ const jokers = [
   },
   {
     "name": "To Do List",
-    getDesc(gameState) { return "Earn $4 if poker hand is a [poker hand], poker hand changes at end of round" },
+    getDesc(gameState) { return `Earn $4 if poker hand is a ${gameState.jokerProperties.todo.handType}, poker hand changes at end of round` }, // TODO: ha fitting
     "rarity": "Common",
+    onHandPlayed(gameState, cards) {
+      if (getHandType(gameState, cards).handType == gameState.jokerProperties.todo.handType) gameState.money += 4;
+    },
     "cost": 4,
   },
   {
@@ -2295,8 +2303,7 @@ const jokers = [
     "rarity": "Uncommon",
     getDesc(gameState) { return "If first discard of round has only 1 card, destroy it and earn $3" },
     onDiscard(gameState, cards) {
-      // TODO: check if first discard
-      if (cards.length == 1) {
+      if (cards.length == 1 && gameState.blind.firstDiscard) {
         gameState.money += 3;
         deleteCard(gameState, cards[0]);
       }
@@ -2753,6 +2760,9 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
       "jokers": [],
       // "jokers": [objectClone(jokers.find(card => card.name == "Crafty Joker"))],
       "consumableSlots": 2,
+      "playedHands": 0,
+      "unusedDiscards": 0,
+      "skippedBlinds": 0,
       "consumables": [],
       "handSize": 8,
       "tags": [],
@@ -2857,6 +2867,9 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
         },
         "satellite": {
           "planets": []
+        },
+        "todo": {
+          "handType": ""
         }
       },
       "hadShop": false,
@@ -3100,7 +3113,7 @@ function sellCard(gameState, section, index) { // Pass index starting with 0
   const card = gameState[section][index];
   if (!card) return "Invalid index";
   if (card.stickers?.includes("Eternal")) return "Joker is eternal";
-  gameState.money += Math.max(1, roundHalfDown(calcCost(gameState, card)/2));
+  gameState.money += Math.max(1, roundHalfDown(calcCost(gameState, card)/2)+(card.addedSellValue || 0));
   handleJokers(gameState, "onCardSold");
   if (card.onSell) card.onSell(gameState);
   gameState[section].splice(index, 1);
@@ -3475,7 +3488,7 @@ function packSelect(gameState, index, cards = []) {
   } else if (!target.rank) { // Consumable
     if (target.onUse) { // Spectral or Tarot
       const response = target.onUse(gameState, cards);
-      if (response.error) return response.error;
+      if (response) return response.error || response;
     } else { // Planet Card
       usePlanet(gameState, target);
     }
@@ -3601,6 +3614,7 @@ function blindChoose(gameState, skip = false) {
   if (skip) {
     gameState.currentBlinds[blindIdx].completed = true;
     gameState.currentBlinds[blindIdx].skipped = true;
+    gameState.skippedBlinds++;
   } else {
     gameState.state = "blind";
     blindSetup(gameState);
@@ -3710,6 +3724,7 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
   gameState.blind.cards = cards;
 
   gameState.blind.hands--;
+  gameState.playedHands++;
 
   const handType = getHandType(gameState, cards).handType;
   const pokerHand = pokerHands[handType];
@@ -3847,7 +3862,7 @@ function discardCards(gameState, indices) { // Pass the indices starting at 0
 
   handleJokers(gameState, "onDiscard", [cards]);
   fillHand(gameState);
-  gameState.firstDiscard = false;
+  gameState.blind.firstDiscard = false;
   gameState.blind.discards--;
 }
 
@@ -3874,6 +3889,7 @@ function blindEnd(gameState, isMrBones = false) {
     newBlinds(gameState);
   }
   delete gameState.blind.remainingCards;
+  gameState.unusedDiscards += gameState.blind.discards;
 
   updateJokerProps(gameState);
 }
@@ -3897,6 +3913,11 @@ function updateJokerProps(gameState) {
   const possibleRebateCards = gameState.fullDeck.filter(card => !card.enhancement || card.enhancement.toLowerCase().replaceAll(" ", "") != "stonecard");
   if (possibleRebateCards.length >= 1)
     gameState.jokerProperties.rebate.rank = possibleCastleCards[Math.floor(Math.random() * possibleCastleCards.length)].rank;
+
+  // To Do List
+  // TODO: check if hand has to be different every round
+  const possibleHandTypes = Object.keys(gameState.pokerHands).filter(handType => handType.unlocked || gameState.handPlays[handType]);
+  gameState.jokerProperties.todo.handType = possibleHandTypes[Math.floor(Math.random() * possibleHandTypes.length)];
 }
 
 function cashOut(gameState) {
