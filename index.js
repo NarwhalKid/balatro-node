@@ -3414,8 +3414,6 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
     } else {
       let remainingCards = cards[cardType];
       if (cardType != "Playing Card") {
-        console.log(cardType);
-        console.log(remainingCards);
         const newCards = remainingCards.filter(card => (!gameState.consumables.map(card => card.name).includes(card.name) && !deepFind(gameState, (thing) => thing?.name == card.name)) || jokerCount(gameState, "showman") > 0);
         remainingCards = newCards.length < 1 ? remainingCards : newCards;
       } else if (playingCardType == "Number") {
@@ -3926,7 +3924,7 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
         if (card.edition.toLowerCase().replaceAll(" ", "") == "holographic") playedCardResponses.push({"plusMult": 10});
         if (card.edition.toLowerCase().replaceAll(" ", "") == "polychrome") playedCardResponses.push({"timesMult": 1.5});
       }
-      const handledJokers = handleJokers(gameState, "onCardScored", [card]);
+      const handledJokers = handleJokers(gameState, "onCardScored", card);
       retriggers = handledJokers.retriggers;
       playedCardResponses.push(...handledJokers.responses); // Handle jokers
       trigger++;
