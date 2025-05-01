@@ -3828,7 +3828,9 @@ function blindSetup(gameState) {
 function handleJoker(gameState, joker, func, params = []) {
   let response;
   let copied = false;
+  console.log("doing the thing!");
   if (joker[func]) response = joker[func](gameState, ...params);
+  console.log(response);
   let idx;
   gameState.jokers.forEach((loopJoker, index) => {
     if (loopJoker == joker)
@@ -3852,11 +3854,9 @@ function handleJokers(gameState, func, params = []) {
   let retriggers = 0;
   gameState.jokers?.filter((joker, idx) => !joker.debuffed).forEach(joker => {
     let response = handleJoker(gameState, joker, func, params);
-    console.log(response);
     if (response?.length) returnArray.push(response);
     if (response?.retriggers) retriggers += response.retriggers;
   })
-  console.log(returnArray);
   return {"responses": returnArray.filter(Boolean), retriggers };
 }
 
