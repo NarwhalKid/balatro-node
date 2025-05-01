@@ -3916,7 +3916,7 @@ function updateJokerProps(gameState) {
 
   // To Do List
   // TODO: check if hand has to be different every round
-  const possibleHandTypes = Object.keys(gameState.pokerHands).filter(handType => handType.unlocked || gameState.handPlays[handType]);
+  const possibleHandTypes = Object.keys(pokerHands).filter(handType => handType.unlocked || gameState.handPlays[handType]);
   gameState.jokerProperties.todo.handType = possibleHandTypes[Math.floor(Math.random() * possibleHandTypes.length)];
 }
 
