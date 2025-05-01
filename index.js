@@ -187,91 +187,238 @@ const cards = {
   "Tarot Card": [
     {
       name: "The Fool",
-      desc: "Creates the last Tarot or Planet card used during this run (The Fool excluded)"
+      desc: "Creates the last Tarot or Planet card used during this run (The Fool excluded)",
+      onUse(gameState, cards) {
+        if (gameState.theFool && gameState.theFool.name != "The Fool") {
+          gameState.consumables.push(objectClone(gameState.theFool));
+        }
+      }
     },
     {
       name: "The Magician",
-      desc: "Enhances 2 selected cards to Lucky Cards"
+      desc: "Enhances 2 selected cards to Lucky Cards",
+      onUse(gameState, cards) {
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        if (cards.length < 1 || cards.length > 2) return {"error": "Select 1-2 cards", "cardMax": 2};
+        cards.forEach(card => {
+          card.enhancement = "Lucky Card";
+        })
+      }
     },
     {
       name: "The High Priestess",
-      desc: "Creates up to 2 random Planet cards (Must have room)"
+      desc: "Creates up to 2 random Planet cards (Must have room)",
+      onUse(gameState, cards) {
+        for (let i = 0; i < 2; i++) {
+          if (gameState.consumables.length < gameState.consumableSlots) {
+            gameState.consumables.push(newCard(gameState, "Planet Card"));
+          }
+        }
+      }
     },
     {
       name: "The Empress",
-      desc: "Enhances 2 selected cards to Mult Cards"
+      desc: "Enhances 2 selected cards to Mult Cards",
+      onUse(gameState, cards) {
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        if (cards.length < 1 || cards.length > 2) return {"error": "Select 1-2 cards", "cardMax": 2};
+        cards.forEach(card => {
+          card.enhancement = "Mult Card";
+        })
+      }
     },
     {
       name: "The Emperor",
-      desc: "Creates up to 2 random Tarot cards (Must have room)"
+      desc: "Creates up to 2 random Tarot cards (Must have room)",
+      onUse(gameState, cards) {
+        for (let i = 0; i < 2; i++) {
+          if (gameState.consumables.length < gameState.consumableSlots) {
+            gameState.consumables.push(newCard(gameState, "Tarot Card"));
+          }
+        }
+      }
     },
     {
       name: "The Hierophant",
-      desc: "Enhances 2 selected cards to Bonus Cards"
+      desc: "Enhances 2 selected cards to Bonus Cards",
+      onUse(gameState, cards) {
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        if (cards.length < 1 || cards.length > 2) return {"error": "Select 1-2 cards", "cardMax": 2};
+        cards.forEach(card => {
+          card.enhancement = "Bonus Card";
+        })
+      }
     },
     {
       name: "The Lovers",
-      desc: "Enhances 1 selected card into a Wild Card"
+      desc: "Enhances 1 selected card into a Wild Card",
+      onUse(gameState, cards) {
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        if (cards.length != 1) return {"error": "Select 1 card", "cardMax": 1};
+        cards.forEach(card => {
+          card.enhancement = "Wild Card";
+        })
+      }
     },
     {
       name: "The Chariot",
-      desc: "Enhances 1 selected card into a Steel Card"
+      desc: "Enhances 1 selected card into a Steel Card",
+      onUse(gameState, cards) {
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        if (cards.length != 1) return {"error": "Select 1 card", "cardMax": 1};
+        cards.forEach(card => {
+          card.enhancement = "Steel Card";
+        })
+      }
     },
     {
       name: "Justice",
-      desc: "Enhances 1 selected card into a Glass Card"
+      desc: "Enhances 1 selected card into a Glass Card",
+      onUse(gameState, cards) {
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        if (cards.length != 1) return {"error": "Select 1 card", "cardMax": 1};
+        cards.forEach(card => {
+          card.enhancement = "Glass Card";
+        })
+      }
     },
     {
       name: "The Hermit",
-      desc: "Doubles money (Max of $20)"
+      desc: "Doubles money (Max of $20)",
+      onUse(gameState, cards) {
+        gameState.money += Max.max(Math.min(gameState.money, 20), 0);
+      }
     },
     {
       name: "The Wheel of Fortune",
-      desc: "1 in 4 chance to add Foil, Holographic, or Polychrome edition to a random Joker"
+      desc: "1 in 4 chance to add Foil, Holographic, or Polychrome edition to a random Joker",
+      onUse(gameState, cards) {
+        const possibleJokers = gameState.jokers.filter(joker => !joker.edition);
+        if (!possibleJokers?.length) return {"error": "No valid jokers"};
+        if (!random(gameState, 1, 4)) return; // Nope!
+        const targetJoker = possibleJokers[Math.floor(Math.random() * possibleJokers.length)];
+        let tempEditions = objectClone(gameState.editions);
+        delete tempEditions.negative;
+        targetJoker.edition = pickWeightedRandom(tempEditions);
+        gameState.jokers.push(targetJoker);
+      }
     },
     {
       name: "Strength",
-      desc: "Increases rank of up to 2 selected cards by 1"
+      desc: "Increases rank of up to 2 selected cards by 1",
+      onUse(gameState, cards) {
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        if (cards.length < 1 || cards.length > 2) return {"error": "Select 1-2 cards", "cardMax": 2};
+        cards.forEach(card => {
+          let newIdx = ranks.indexOf(card.rank)-1;
+          if (newIdx < 0) newIdx = ranks.length-1;
+          card.rank = ranks[newIdx];
+        })
+      }
     },
     {
       name: "The Hanged Man",
-      desc: "Destroys up to 2 selected cards"
+      desc: "Destroys up to 2 selected cards",
+      onUse(gameState, cards) {
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        if (cards.length < 1 || cards.length > 2) return {"error": "Select 1-2 cards", "cardMax": 2};
+        cards.forEach(card => {
+          deleteCard(gameState, card);
+        })
+      }
     },
     {
       name: "Death",
-      desc: "Select 2 cards, convert the left card into the right card (Drag to rearrange)" // TODO: decide if i wanna change this
+      desc: "Select 2 cards, convert the left card into the right card (Drag to rearrange)", // TODO: decide if i wanna change this
+      onUse(gameState, cards) {
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        if (cards.length != 2) return {"error": "Select 2 cards", "cardMax": 2};
+        for (const key in cards[0]) delete cards[0][key];
+        Object.assign(cards[0], objectClone(cards[1]));
+      }
     },
     {
       name: "Temperance",
-      desc: "Gives the total sell value of all current Jokers (Max of $50)"
+      desc: "Gives the total sell value of all current Jokers (Max of $50)",
+      onUse(gameState, cards) {
+        let total = 0;
+        gameState.jokers.map(joker => roundHalfDown(calcCost(gameState, joker)/2) + +(joker.addedSellValue || 0)).forEach(cost => total += cost);
+        gameState.money += Max.max(Math.min(total, 50), 0);
+      }
     },
     {
       name: "The Devil",
-      desc: "Enhances 1 selected card into a Gold Card"
+      desc: "Enhances 1 selected card into a Gold Card",
+      onUse(gameState, cards) {
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        if (cards.length != 1) return {"error": "Select 1 card", "cardMax": 1};
+        cards.forEach(card => {
+          card.enhancement = "Gold Card";
+        })
+      }
     },
     {
       name: "The Tower",
-      desc: "Enhances 1 selected card into a Stone Card"
+      desc: "Enhances 1 selected card into a Stone Card",
+      onUse(gameState, cards) {
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        if (cards.length != 1) return {"error": "Select 1 card", "cardMax": 1};
+        cards.forEach(card => {
+          card.enhancement = "Stone Card";
+        })
+      }
     },
     {
       name: "The Star",
-      desc: "Converts up to 3 selected cards to Diamonds"
+      desc: "Converts up to 3 selected cards to Diamonds",
+      onUse(gameState, cards) {
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        if (cards.length < 1 || cards.length > 3) return {"error": "Select 1-3 cards", "cardMax": 3};
+        cards.forEach(card => {
+          card.suit = "Diamonds";
+        })
+      }
     },
     {
       name: "The Moon",
-      desc: "Converts up to 3 selected cards to Clubs"
+      desc: "Converts up to 3 selected cards to Clubs",
+      onUse(gameState, cards) {
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        if (cards.length < 1 || cards.length > 3) return {"error": "Select 1-3 cards", "cardMax": 3};
+        cards.forEach(card => {
+          card.suit = "Clubs";
+        })
+      }
     },
     {
       name: "The Sun",
-      desc: "Converts up to 3 selected cards to Hearts"
+      desc: "Converts up to 3 selected cards to Hearts",
+      onUse(gameState, cards) {
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        if (cards.length < 1 || cards.length > 3) return {"error": "Select 1-3 cards", "cardMax": 3};
+        cards.forEach(card => {
+          card.suit = "Hearts";
+        })
+      }
     },
     {
       name: "Judgement",
-      desc: "Creates a random Joker card (Must have room)"
+      desc: "Creates a random Joker card (Must have room)",
+      onUse(gameState, cards) {
+        if (gameState.jokers.length >= gameState.jokerSlots) return {"error": "No empty joker slots"};
+        addNewJoker(gameState, )
+      }
     },
     {
       name: "The World",
-      desc: "Converts up to 3 selected cards to Spades"
+      desc: "Converts up to 3 selected cards to Spades",
+      onUse(gameState, cards) {
+        if (!gameState.cardArea?.length) return {"error": "No cards"};
+        if (cards.length < 1 || cards.length > 3) return {"error": "Select 1-3 cards", "cardMax": 3};
+        cards.forEach(card => {
+          card.suit = "Spades";
+        })
+      }
     }
   ],
   "Spectral Card": [
@@ -323,16 +470,18 @@ const cards = {
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length != 1) return {"error": "Select exactly one card", "cardMax": 1};
-        cards[0].edition = pickWeightedRandom(gameState.editions);
+        let tempEditions = objectClone(gameState.editions);
+        delete tempEditions.negative;
+        cards[0].edition = pickWeightedRandom(tempEditions);
       }
     },
     {
       name: "Wraith",
       desc: "Creates a random Rare Joker (must have room), sets money to $0", // TODO: check if you can use without joker slots
       onUse(gameState, cards) {
-        if (gameState.jokers.length >= gameState.jokerSlots) return {"error": "No joker slots"};
+        if (gameState.jokers.length >= gameState.jokerSlots) return {"error": "No empty joker slots"};
         gameState.money = 0;
-        gameState.jokers.push(newCard(gameState, "Joker", false, false, "Rare"));
+        addNewJoker(gameState, newCard(gameState, "Joker", false, false, "Rare"));
       }
     },
     {
@@ -388,11 +537,10 @@ const cards = {
       onUse(gameState, cards) {
         if (!gameState.jokers.length) return {"error": "No Jokers"};
         const targetJoker = gameState.jokers[Math.floor(Math.random() * gameState.jokers.length)];
-        gameState.jokers = [];
-        gameState.jokers.push(targetJoker);
+        gameState.jokers.forEach(joker => {if (joker != targetJoker) destroyJoker(gameState, joker)});
         const jokerClone = objectClone(targetJoker);
         if (jokerClone.edition.toLowerCase().replaceAll(" ", "") == "negative") delete jokerClone.edition;
-        gameState.jokers.push(jokerClone);
+        addNewJoker(gameState, jokerClone);
       }
     },
     {
@@ -412,8 +560,7 @@ const cards = {
         if (!possibleJokers?.length) return {"error": "No valid jokers"};
         const targetJoker = possibleJokers[Math.floor(Math.random() * possibleJokers.length)];
         targetJoker.edition = "Polychrome";
-        gameState.jokers = [];
-        gameState.jokers.push(targetJoker);
+        gameState.jokers.forEach(joker => {if (joker != targetJoker) destroyJoker(gameState, joker)})
       }
     },
     {
@@ -1626,10 +1773,10 @@ const jokers = [
     getDesc(gameState) { return "+1 hand size" },
     "rarity": "Common",
     onBuy(gameState) {
-      gameState.defaultDiscards++;
+      gameState.handSize++;
     },
     onDestroy(gameState) {
-      gameState.defaultDiscards--;
+      gameState.handSize--;
     },
     "cost": 4,
     "noCopy": true,
@@ -3116,7 +3263,11 @@ function sellCard(gameState, section, index) { // Pass index starting with 0
   gameState.money += Math.max(1, roundHalfDown(calcCost(gameState, card)/2)+(card.addedSellValue || 0));
   handleJokers(gameState, "onCardSold");
   if (card.onSell) card.onSell(gameState);
-  gameState[section].splice(index, 1);
+  if (section == "consumables") {
+    gameState[section].splice(index, 1);
+  } else {
+    destroyJoker(gameState, card);
+  }
 }
 
 function addVoucher(gameState, voucher) {
@@ -3254,7 +3405,7 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
       const jokersOfRarity = jokers.filter(joker => rarity == joker.rarity);
       do {
         card = jokersOfRarity[Math.floor(Math.random() * jokersOfRarity.length)];
-      } while (jokersOfRarity.length != 0 && jokerCount(gameState, "showman") > 0 && (jokerNames.includes(card.name) || deepFind(gameState, thing => thing.name == card.name)));
+      } while (jokersOfRarity.length != 0 && jokerCount(gameState, "showman") > 0 && (jokerNames.includes(card.name) || deepFind(gameState, (thing) => thing?.name == card.name)));
     } else if (cardType == "Planet Card") {
       do {
         const pokerHand = Object.keys(pokerHands)[Math.floor(Math.random() * Object.keys(pokerHands).length)];
@@ -3263,7 +3414,9 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
     } else {
       let remainingCards = cards[cardType];
       if (cardType != "Playing Card") {
-        const newCards = remainingCards.filter(card => (!gameState.consumables.map(card => card.name).includes(card.name) && !deepFind(gameState, thing => thing.name == card.name)) || jokerCount(gameState, "showman") > 0);
+        console.log(cardType);
+        console.log(remainingCards);
+        const newCards = remainingCards.filter(card => (!gameState.consumables.map(card => card.name).includes(card.name) && !deepFind(gameState, (thing) => thing?.name == card.name)) || jokerCount(gameState, "showman") > 0);
         remainingCards = newCards.length < 1 ? remainingCards : newCards;
       } else if (playingCardType == "Number") {
         remainingCards.filter(card => {
@@ -3326,10 +3479,10 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
     if (edition) card.edition = edition;
     card.stickers = [];
 
-    if (!isBoosterPack && card.rarity != "Legendary") {
-      const timeBasedSticker = pickByPercentage({"Eternal": card.noEternal ? 0 : gameState.typeOdds.eternal, "Perishable": card.noPerishable ? 0 : gameState.typeOdds.perishable});
+    if (!isBoosterPack && jokerRarity?.toLowerCase() != "legendary") {
+      const timeBasedSticker = pickByPercentage({"Eternal": {"odds": card.noEternal ? 0 : gameState.typeOdds.eternal}, "Perishable": {"odds": card.noPerishable ? 0 : gameState.typeOdds.perishable}});
       if (timeBasedSticker) card.stickers.push(timeBasedSticker);
-      const isRental = pickByPercentage({"Rental": gameState.typeOdds.rental});
+      const isRental = pickByPercentage({"Rental": {"odds": gameState.typeOdds.rental}});
       if (isRental) card.stickers.push(isRental);
     }
   }
@@ -3559,6 +3712,16 @@ function restoreGameFunctions(game) {
     })
   })
 
+  if (game.theFool) {
+    const ogConsumable = deepFind(cards, findConsumable => findConsumable.name == game.theFool.name);
+    if (!ogConsumable) return;
+    for (const [key, value] of Object.entries(ogConsumable)) {
+      if (typeof value === "function") {
+        game.theFool[key] = value;
+      }
+    }
+  }
+
   return game;
 }
 
@@ -3666,6 +3829,11 @@ function handleJoker(gameState, joker, func, params = []) {
   let response;
   let copied = false;
   if (joker[func]) response = joker[func](gameState, ...params);
+  let idx;
+  gameState.jokers.forEach((loopJoker, index) => {
+    if (loopJoker == joker)
+      idx = index;
+  })
   if (joker.name.toLowerCase().replaceAll(" ", "") == "blueprint" && !gameState.jokers[idx+1]?.noCopy) {
     response = handleJoker(gameState, gameState.jokers[idx+1], func, params);
     copied = true;
@@ -3930,12 +4098,15 @@ function cashOut(gameState) {
   newShop(gameState);
 }
 
-function useConsumable(gameState, index, cards) { // Pass the index starting at 0
+function useConsumable(gameState, index, selectedCards) { // Pass the index starting at 0
   const card = gameState.consumables[index];
   if (!card) return "Invalid index";
   let response;
-  if (card.onUse) response = card.onUse(gameState, cards);
+  gameState.consumableSlots++;
+  if (card.onUse) response = card.onUse(gameState, selectedCards);
+  gameState.consumableSlots--;
   if (response?.error) return response;
+  if (card.handType || cards["Tarot Card"].find(tarot => tarot.name == card.name)) gameState.theFool = card;
   gameState.consumables.splice(index, 1);
   if (card.edition?.toLowerCase() == "negative") gameState.consumableSlots--;
   if (card.handType) usePlanet(gameState, card.name);
