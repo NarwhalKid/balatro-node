@@ -1611,9 +1611,9 @@ const jokers = [
     onRoundEnd(gameState) {
       if (random(gameState, 1, 6)) {
         if (gameState.bannedCards.includes("Cavendish"))
-          gameState.bannedCards.splice(gameState.indexOf("Cavendish"), 1);
-        if (!gameState.bannedCard.includes("Gros Michel"))
-          gameState.bannedCard.push("Gros Michel");
+          gameState.bannedCards.splice(gameState.bannedCards.indexOf("Cavendish"), 1);
+        if (!gameState.bannedCards.includes("Gros Michel"))
+          gameState.bannedCards.push("Gros Michel");
         
         return {"destroy": true};
       }
