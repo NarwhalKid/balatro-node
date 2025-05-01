@@ -3872,7 +3872,7 @@ function handleMult(gameState, chips, mult, responseArray) {
 
 function destroyJoker(gameState, joker) {
   if (joker.onDestroy) joker.onDestroy(gameState);
-  if (joker.edition.toLowerCase().replaceAll(" ", "") == "negative") gameState.jokerSlots--;
+  if (joker.edition?.toLowerCase().replaceAll(" ", "") == "negative") gameState.jokerSlots--;
   handleJoker(gameState, joker, "onDestroy");
   gameState.jokers.forEach((loopJoker, idx) => {
     if (loopJoker == joker) gameState.jokers.splice(idx, 1);
