@@ -1044,10 +1044,7 @@ const jokers = [
     "rarity": "Uncommon",
     getDesc(gameState) { return "Played cards with Spade suit give +50 Chips when scored" },
     onCardScored(gameState, card) {
-      console.log(card);
-      console.log(isSuit(gameState, card, "Spades"))
       if (isSuit(gameState, card, "Spades")) {
-        console.log("Woah")
         return {"plusChips": 50};
       }
     },
@@ -3929,8 +3926,10 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
         if (card.edition.toLowerCase().replaceAll(" ", "") == "polychrome") playedCardResponses.push({"timesMult": 1.5});
       }
       const handledJokers = handleJokers(gameState, "onCardScored", [card]);
+      console.log(handledJokers);
       retriggers = handledJokers.retriggers;
       playedCardResponses.push(...handledJokers.responses); // Handle jokers
+      console.log(playedCardResponses);
       trigger++;
     }
     ({ chips, mult } = handleMult(gameState, chips, mult, playedCardResponses));
