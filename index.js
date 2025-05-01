@@ -1,5 +1,5 @@
-// const suits = ['Spades', 'Hearts', 'Clubs', 'Diamonds'];
-const suits = ['Spades', 'Spades', 'Spades', 'Spades'];
+const suits = ['Spades', 'Hearts', 'Clubs', 'Diamonds'];
+// const suits = ['Spades', 'Spades', 'Spades', 'Spades'];
 const ranks = ['Ace', 'King', 'Queen', 'Jack', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
 
 function objectClone(obj) {
@@ -2905,8 +2905,8 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
       "ante": 1,
       "round": 0,
       "jokerSlots": 5,
-      // "jokers": [],
-      "jokers": [objectClone(jokers.find(card => card.name == "Arrowhead"))],
+      "jokers": [],
+      // "jokers": [objectClone(jokers.find(card => card.name == "Arrowhead"))],
       "consumableSlots": 2,
       "playedHands": 0,
       "unusedDiscards": 0,
