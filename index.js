@@ -3848,6 +3848,8 @@ function handleJoker(gameState, joker, func, params = []) {
   }
   if (copied) response.destroy = false;
   if (response?.destroy) destroyJoker(gameState, joker);
+  console.log(response);
+  console.log("c");
   return response;
 }
 
