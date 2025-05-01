@@ -3852,9 +3852,11 @@ function handleJokers(gameState, func, params = []) {
   let retriggers = 0;
   gameState.jokers?.filter((joker, idx) => !joker.debuffed).forEach(joker => {
     let response = handleJoker(gameState, joker, func, params);
+    console.log(response);
     if (response?.length) returnArray.push(response);
     if (response?.retriggers) retriggers += response.retriggers;
   })
+  console.log(returnArray);
   return {"responses": returnArray.filter(Boolean), retriggers };
 }
 
@@ -3929,7 +3931,6 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
       console.log(handledJokers);
       retriggers = handledJokers.retriggers;
       playedCardResponses.push(...handledJokers.responses); // Handle jokers
-      console.log(playedCardResponses);
       trigger++;
     }
     ({ chips, mult } = handleMult(gameState, chips, mult, playedCardResponses));
