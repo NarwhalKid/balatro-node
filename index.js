@@ -3828,11 +3828,7 @@ function blindSetup(gameState) {
 function handleJoker(gameState, joker, func, params = []) {
   let response;
   let copied = false;
-  console.log("doing the thing!");
   if (joker[func]) response = joker[func](gameState, ...params);
-  console.log("a");
-  console.log(response);
-  console.log("b");
   let idx;
   gameState.jokers.forEach((loopJoker, index) => {
     if (loopJoker == joker)
@@ -3848,8 +3844,6 @@ function handleJoker(gameState, joker, func, params = []) {
   }
   if (copied) response.destroy = false;
   if (response?.destroy) destroyJoker(gameState, joker);
-  console.log(response);
-  console.log("c");
   return response;
 }
 
@@ -3858,10 +3852,7 @@ function handleJokers(gameState, func, params = []) {
   let retriggers = 0;
   gameState.jokers?.filter((joker, idx) => !joker.debuffed).forEach(joker => {
     let response = handleJoker(gameState, joker, func, params);
-    console.log(response)
-    console.log(returnArray)
-    console.log("WWWWWWWWW")
-    if (response?.length) returnArray.push(response);
+    if (response) returnArray.push(response);
     if (response?.retriggers) retriggers += response.retriggers;
   })
   return {"responses": returnArray.filter(Boolean), retriggers };
@@ -3935,8 +3926,6 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
         if (card.edition.toLowerCase().replaceAll(" ", "") == "polychrome") playedCardResponses.push({"timesMult": 1.5});
       }
       const handledJokers = handleJokers(gameState, "onCardScored", [card]);
-      console.log("handledJokers:")
-      console.log(handledJokers);
       retriggers = handledJokers.retriggers;
       playedCardResponses.push(...handledJokers.responses); // Handle jokers
       trigger++;
