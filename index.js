@@ -287,7 +287,7 @@ const cards = {
       name: "The Hermit",
       desc: "Doubles money (Max of $20)",
       onUse(gameState, cards) {
-        gameState.money += Max.max(Math.min(gameState.money, 20), 0);
+        gameState.money += Math.max(Math.min(gameState.money, 20), 0);
       }
     },
     {
@@ -344,7 +344,7 @@ const cards = {
       onUse(gameState, cards) {
         let total = 0;
         gameState.jokers.map(joker => roundHalfDown(calcCost(gameState, joker)/2) + +(joker.addedSellValue || 0)).forEach(cost => total += cost);
-        gameState.money += Max.max(Math.min(total, 50), 0);
+        gameState.money += Math.max(Math.min(total, 50), 0);
       }
     },
     {
