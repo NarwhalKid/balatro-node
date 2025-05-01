@@ -2909,7 +2909,7 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
       "round": 0,
       "jokerSlots": 5,
       // "jokers": [],
-      "jokers": [objectClone(jokers.find(card => card.name == "ArrowHead"))],
+      "jokers": [objectClone(jokers.find(card => card.name == "Arrowhead"))],
       "consumableSlots": 2,
       "playedHands": 0,
       "unusedDiscards": 0,
