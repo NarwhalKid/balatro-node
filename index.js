@@ -190,9 +190,8 @@ const cards = {
       name: "The Fool",
       desc: "Creates the last Tarot or Planet card used during this run (The Fool excluded)",
       onUse(gameState, cards) {
-        if (gameState.theFool && gameState.theFool.name != "The Fool") {
-          gameState.consumables.push(objectClone(gameState.theFool));
-        }
+        if (!gameState.theFool || gameState.theFool.name == "The Fool") return {"error": "Invalid last card"};
+        gameState.consumables.push(objectClone(gameState.theFool));
       }
     },
     {
