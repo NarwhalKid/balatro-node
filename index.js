@@ -2,21 +2,27 @@ const suits = ['Spades', 'Hearts', 'Clubs', 'Diamonds'];
 // const suits = ['Spades', 'Spades', 'Spades', 'Spades'];
 const ranks = ['Ace', 'King', 'Queen', 'Jack', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
 
-function objectClone(obj) {
+function objectClone(obj, seen = new Map()) {
   if (typeof obj !== 'object' || obj === null) return obj;
 
+  if (seen.has(obj)) {
+      return seen.get(obj);
+  }
+
   const clone = Array.isArray(obj) ? [] : {};
+  seen.set(obj, clone);
 
   for (const [key, value] of Object.entries(obj)) {
-    if (typeof value === 'function') {
-      clone[key] = value;
-    } else {
-      clone[key] = objectClone(value);
-    }
+      if (typeof value === 'function') {
+          clone[key] = value;
+      } else {
+          clone[key] = objectClone(value, seen);
+      }
   }
 
   return clone;
 }
+
 
 const tags = [
   {
@@ -406,7 +412,7 @@ const cards = {
       desc: "Creates a random Joker card (Must have room)",
       onUse(gameState, cards) {
         if (gameState.jokers.length >= gameState.jokerSlots) return {"error": "No empty joker slots"};
-        addNewJoker(gameState, )
+        addNewJoker(gameState, newCard(gameState, "Joker"));
       }
     },
     {
@@ -1341,6 +1347,12 @@ const jokers = [
     "rarity": "Common",
     "cost": 1,
     "noCopy": true,
+    onBuy(gameState) {
+      gameState.moneyLimit -= 20;
+    },
+    onDestroy(gameState) {
+      gameState.moneyLimit += 20;
+    }
   },
   {
     "name": "Delayed Gratification",
@@ -2095,7 +2107,7 @@ const jokers = [
   },
   {
     "name": "Ride the Bus",
-    getDesc(gameState) { return `This Joker gains +1 Mult per consecutive hand played without a scoring face card\n(Currently +${plusMult})` },
+    getDesc(gameState) { return `This Joker gains +1 Mult per consecutive hand played without a scoring face card\n(Currently +${this.properties.plusMult})` },
     "rarity": "Common",
     "properties": {"plusMult":0},
     onHandPlayed(gameState, cards) {
@@ -2904,6 +2916,7 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
       "ante": 1,
       "round": 0,
       "jokerSlots": 5,
+      "moneyLimit": 0,
       "jokers": [],
       // "jokers": [objectClone(jokers.find(card => card.name == "Arrowhead"))],
       "consumableSlots": 2,
@@ -3405,12 +3418,12 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
       const jokersOfRarity = jokers.filter(joker => rarity == joker.rarity);
       do {
         card = jokersOfRarity[Math.floor(Math.random() * jokersOfRarity.length)];
-      } while (jokersOfRarity.length != 0 && jokerCount(gameState, "showman") > 0 && (jokerNames.includes(card.name) || deepFind(gameState, (thing) => thing?.name == card.name)));
+      } while (jokersOfRarity.length != 0 && jokerCount(gameState, "showman") <= 0 && (jokerNames.includes(card.name) || deepFind(gameState, (thing) => thing?.name == card.name)));
     } else if (cardType == "Planet Card") {
       do {
         const pokerHand = Object.keys(pokerHands)[Math.floor(Math.random() * Object.keys(pokerHands).length)];
         card = {name: pokerHands[pokerHand].planet, handType: pokerHand}
-      } while (!pokerHands[card.handType].unlocked && gameState.handPlays[card.handType] < 1);
+      } while ((!pokerHands[card.handType].unlocked && gameState.handPlays[card.handType] < 1) || (jokerCount(gameState, "showman") && deepFind(gameState, (thing) => thing?.name == card.name)));
     } else {
       let remainingCards = cards[cardType];
       if (cardType != "Playing Card") {
@@ -3497,6 +3510,7 @@ function fillShopCards(gameState) {
 function rerollShop(gameState) {
   gameState.shop.cards = [];
   if (gameState.shop.filled) {
+    if (gameState.money-gameState.currentReroll < gameState.moneyLimit) return "Not enough money"
     gameState.money -= gameState.currentReroll;
     gameState.currentReroll++;
   }
@@ -3581,7 +3595,7 @@ function addNewJoker(gameState, joker) {
 function buyCard(gameState, index) {
   const target = gameState.shop.cards[index];
   if (!target) return "Invalid index";
-  if (calcCost(gameState, target) > target.money-gameState.moneyLimit) return "Not enough money";
+  if (gameState.money-calcCost(gameState, target) < gameState.moneyLimit) return "Not enough money";
   if (target.rarity) { // Joker
     if (gameState.jokers.length >= gameState.jokerSlots) return "No empty joker slots";
     addNewJoker(gameState, target);
@@ -3599,7 +3613,7 @@ function buyCard(gameState, index) {
 function buyPack(gameState, index) {
   const target = gameState.shop.packs[index];
   if (!target) return "Invalid index";
-  if (calcCost(gameState, target) > target.money-gameState.moneyLimit) "Not enough money";
+  if (gameState.money-calcCost(gameState, target) < gameState.moneyLimit) "Not enough money";
   gameState.state = "openingPack";
   target.contents = [];
   const packOdds = packTypes[target.name.replaceAll("Mega", "").replaceAll("Jumbo", "").trim()];
@@ -3639,7 +3653,7 @@ function packSelect(gameState, index, cards = []) {
   } else if (!target.rank) { // Consumable
     if (target.onUse) { // Spectral or Tarot
       const response = target.onUse(gameState, cards);
-      if (response) return response.error || response;
+      if (response) return response;
     } else { // Planet Card
       usePlanet(gameState, target);
     }
@@ -3659,7 +3673,7 @@ function skipPack(gameState) {
 function buyVoucher(gameState, index) {
   const target = gameState.shop.vouchers[index];
   if (!target) return "Invalid index";
-  if (calcCost(gameState, target) > target.money-gameState.moneyLimit) return "Not enough money";
+  if (gameState.money - calcCost(gameState, target) < gameState.moneyLimit) return "Not enough money";
   gameState.money -= calcCost(gameState, target);
   addVoucher(gameState, target.name);
   gameState.shop.vouchers.splice(index, 1);
@@ -3710,9 +3724,10 @@ function restoreGameFunctions(game) {
     })
   })
 
+
   if (game.theFool) {
-    const ogConsumable = deepFind(cards, findConsumable => findConsumable.name == game.theFool.name);
-    if (!ogConsumable) return;
+    const ogConsumable = game.theFool.name;
+    if (!ogConsumable) return game;
     for (const [key, value] of Object.entries(ogConsumable)) {
       if (typeof value === "function") {
         game.theFool[key] = value;
@@ -4040,7 +4055,7 @@ function blindEnd(gameState, isMrBones = false) {
   gameState.currentBlinds[currentBlindIdx].completed = true;
   gameState.moneySources = [];
   if (!isMrBones) gameState.moneySources.push(["Blind Reward", gameState.currentBlinds[currentBlindIdx].reward]); // TODO: Figure out order
-  gameState.moneySources.push(["Interest", Math.min(Math.floor(gameState.money / 5), gameState.interestCap) + (jokerCount(gameState, "tothemoon")*Math.floor(gameState.money/5)) ]); // TODO: check if to the moon works like this
+  gameState.moneySources.push(["Interest", Math.min(Math.floor(gameState.money / 5), gameState.interestCap) * (jokerCount(gameState, "tothemoon") + 1) ]);
   gameState.moneySources.push(["Remaining Hands", gameState.blind.hands ]);
   gameState.jokers.forEach(joker => {
     const handledJoker = handleJoker(gameState, joker, "onRoundEnd");
@@ -4102,7 +4117,7 @@ function useConsumable(gameState, index, selectedCards) { // Pass the index star
   if (!card) return "Invalid index";
   let response;
   gameState.consumableSlots++;
-  if (card.onUse) response = card.onUse(gameState, selectedCards);
+  if (card.onUse) response = card.onUse(gameState, selectedCards.map(idx => gameState.cardArea[idx]));
   gameState.consumableSlots--;
   if (response?.error) return response;
   if (card.handType || cards["Tarot Card"].find(tarot => tarot.name == card.name)) gameState.theFool = card;
