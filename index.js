@@ -3823,6 +3823,7 @@ function blindSetup(gameState) {
   gameState.blind.remainingCards = [...gameState.fullDeck];
   gameState.blind.blindScore = gameState.currentBlinds[blindIdx].blindScore;
   fillHand(gameState);
+  handleJokers(gameState, "onBlindStart");
 }
 
 function handleJoker(gameState, joker, func, params = []) {
