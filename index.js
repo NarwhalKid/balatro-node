@@ -3947,6 +3947,7 @@ function newShop(gameState) {
     gameState.rerollCost = 0;
     console.log(gameState.rerollCost);
   }) // TODO: check if next reroll increases by 1
+  console.log(gameState.rerollCost);
 
   gameState.hadShop = true;
 
