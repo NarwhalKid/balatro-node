@@ -3786,7 +3786,7 @@ function buyPack(gameState, pack, free = false) {
   gameState.currentPack = target;
   delete gameState.cardArea;
   if (target.name.toLowerCase().includes("spectral") || target.name.toLowerCase().includes("arcana")) {
-    gameState.cardArea = [];
+    gameState.cardArea = []; // TODO: find bug causing +8 cards
     let tempDeck = objectClone(gameState.fullDeck);
     for (let i = gameState.cardArea.length; i < gameState.handSize; i++) {
       const cardIdx = Math.floor(Math.random() * tempDeck.length);
@@ -3927,7 +3927,7 @@ function newShop(gameState) {
 
   // Fill booster packs
   const allowedPacks = boosterPacks.filter(pack => !gameState.bannedPacks.includes(pack.name));
-  if (!gameState.hadShop && !gameState.bannedPacks.includes("Buffoon Pack")) gameState.shop.packs[0] = {"name": "Buffoon Pack", "amount": 2, "choices": 1, "odds": 1.2, "cost": 4, "types": 1};
+  if (!gameState.hadShop && !gameState.bannedPacks.includes("Buffoon Pack")) gameState.shop.packs[0] = {"name": "Arcana Pack", "amount": 2, "choices": 1, "odds": 1.2, "cost": 4, "types": 1};
   while (gameState.shop.packs.length < 2) {
     gameState.shop.packs.push(pickWeightedRandom(allowedPacks));
   }
