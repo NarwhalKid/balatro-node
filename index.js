@@ -2311,8 +2311,28 @@ const jokers = [
     "rarity": "Uncommon",
     getDesc(gameState) { return "X2 Mult if played hand has a scoring Club card and a scoring card of any other suit" },
     onScore(gameState, cards) {
-      const newCards = getHandType(gameState, cards).cards.forEach();
-      // TODO
+      const newCards = getHandType(gameState, cards).cards;
+      let suitCounts = {"Clubs": 0, "Spades": 0, "Hearts": 0, "Diamonds": 0};
+      newCards.forEach(card => {
+        if (card.enhancement != "Wild Card") {
+          suits.forEach(suit => {
+            if (isSuit(gameState, card, suit)) suitCounts[suit]++;
+          })
+        }
+      })
+      newCards.forEach(card => {
+        if (card.enhancement == "Wild Card") {
+          for (const suit of Object.keys(suitCounts)) {
+            if (isSuit(gameState, card, suit) && suitCounts[suit] == 0) {
+              suitCounts[suit]++;
+              break;
+            }
+          }
+        }
+      })
+
+      if ((suitCounts["Spades"] > 0 || suitCounts["Hearts"] > 0 || suitCounts["Diamonds"] > 0) && suitCounts["Clubs"] > 0)
+        return {"timesMult": 2};
     },
     "cost": 6,
   },
@@ -2608,7 +2628,7 @@ const jokers = [
     "noPerishable": true,
   },
   {
-    "name": "Turtle Bean", // TODO: check if this works properly
+    "name": "Turtle Bean",
     "rarity": "Uncommon",
     getDesc(gameState) { return `+${this.properties.plusHandSize} hand size, reduces by 1 every round` },
     "cost": 6,
@@ -3792,7 +3812,7 @@ function buyPack(gameState, pack, free = false) {
   gameState.currentPack = target;
   delete gameState.cardArea;
   if (target.name.toLowerCase().includes("spectral") || target.name.toLowerCase().includes("arcana")) {
-    gameState.cardArea = []; // TODO: find bug causing +8 cards
+    gameState.cardArea = [];
     for (let i = gameState.cardArea.length; i < gameState.handSize; i++) {
       const cardIdx = Math.floor(Math.random() * gameState.fullDeck.length);
       drawCard(gameState, gameState.fullDeck[cardIdx]);
@@ -4331,6 +4351,7 @@ function updateJokerProps(gameState) {
   // To Do List
   const possibleHandTypes = Object.keys(pokerHands).filter(handType => (handType.unlocked || gameState.handPlays[handType]) && handType != gameState.jokerProperties.todo.handType);
   gameState.jokerProperties.todo.handType = possibleHandTypes[Math.floor(Math.random() * possibleHandTypes.length)];
+  console.log(gameState.jokerProperties.todo.handType);
 }
 
 function cashOut(gameState) {
