@@ -4259,7 +4259,7 @@ function blindEnd(gameState, isMrBones = false) {
   gameState.moneySources.push(["Remaining Hands", gameState.blind.hands ]);
   gameState.jokers.forEach(joker => {
     const handledJoker = handleJoker(gameState, joker, "onRoundEnd");
-    if (handledJoker?.money) gameState.moneySources.push(joker.name, handledJoker.money);
+    if (handledJoker?.money) gameState.moneySources.push([joker.name, handledJoker.money]);
   });
   if (currentBlindIdx == 2) { // Boss blind
     gameState.tags.forEach((tag, idx) => {
