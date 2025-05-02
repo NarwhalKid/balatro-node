@@ -68,8 +68,10 @@ const tags = [
   {
     "name": "Boss Tag",  
     "minAnte": 1,
-    "desc": "Rerolls the Boss Blind"
-    // TODO
+    "desc": "Rerolls the Boss Blind",
+    onBuy(gameState) {
+      gameState.currentBlinds[2] = getBossBlind(gameState);
+    }
   },
   {
     "name": "Standard Tag",  
@@ -171,6 +173,9 @@ const tags = [
     getDesc(gameState) {return `Upgrade ${this.properties.handType} by 3 levels`},
     onBuy(gameState) {
       gameState.handLevels[this.properties.handType] += 3;
+    },
+    "properties": {
+      "handType": undefined
     }
   },
   {
@@ -3278,7 +3283,7 @@ function bigIntToSci(n) {
   return str.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-function newBlinds(gameState) {
+function getBossBlind(gameState) {
   const bossKey = gameState.ante > 0 && gameState.ante % 8 == 0 ? "isFinisherBoss" : "isNormalBoss" 
   let allowedBlinds = blinds.filter(blind => blind[bossKey] && blind.minimumAnte <= gameState.ante && !gameState.seenBlinds.includes(blind.name) && !gameState.bannedBlinds.includes(blind.name));
   if (allowedBlinds.length < 1) {
@@ -3289,6 +3294,11 @@ function newBlinds(gameState) {
   const newBlind = allowedBlinds[Math.floor(Math.random() * allowedBlinds.length)];
   newBlind.reward = bossKey == "isFinisherBoss" ? 7 : 5;
   gameState.seenBlinds.push(newBlind.name);
+  return newBlind;
+}
+
+function newBlinds(gameState) {
+  const newBlind = getBossBlind(gameState);
 
   const smallReward = gameState.stake.toLowerCase().replaceAll(" ", "") == "whitestake" ? 3 : 0;
 
@@ -3892,6 +3902,20 @@ function blindChoose(gameState, skip = false) {
   if (skip) {
     gameState.currentBlinds[blindIdx].completed = true;
     gameState.currentBlinds[blindIdx].skipped = true;
+    gameState.tags.push(gameState.currentBlinds[blindIdx].tag);
+    if (gameState.currentBlinds[blindIdx].tag.name != "Double Tag") {
+      gameState.tags.forEach((tag, i) => {
+        if (tag.name == "Double Tag") {
+          gameState.tags[i] = objectClone(gameState.currentBlinds[blindIdx].tag);
+        }
+      });
+    }
+    gameState.tags.forEach((tag, idx) => {
+      if (tag.onBuy) {
+        tag.onBuy(gameState);
+        gameState.tags.splice(idx, 1);
+      }
+    })
     gameState.skippedBlinds++;
   } else {
     gameState.state = "blind";
