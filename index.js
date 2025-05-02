@@ -3005,8 +3005,8 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
       "round": 0,
       "jokerSlots": 5,
       "moneyLimit": 0,
-      // "jokers": [],
-      "jokers": [objectClone(jokers.find(card => card.name == "Chaos the Clown"))],
+      "jokers": [],
+      // "jokers": [objectClone(jokers.find(card => card.name == "Chaos the Clown"))],
       "consumableSlots": 2,
       "playedHands": 0,
       "unusedDiscards": 0,
@@ -3660,7 +3660,6 @@ function fillShopCards(gameState) {
 
 function rerollShop(gameState) {
   gameState.shop.cards = [];
-  console.log(gameState.rerollCost);
   if (gameState.shop.filled) {
     if (gameState.money-gameState.rerollCost < gameState.moneyLimit) return "Not enough money"
     gameState.money -= gameState.rerollCost;
@@ -3895,7 +3894,7 @@ function restoreGameFunctions(game) {
     }
   }
 
-  if (game.blind.hand) game.cardArea = game.blind.hand;
+  if (game.blind?.hand) game.cardArea = game.blind.hand;
 
   return game;
 }
@@ -3954,7 +3953,6 @@ function newShop(gameState) {
 
   // Fill cards
   gameState.shop.filled = false;
-  console.log(gameState.rerollCost);
   rerollShop(gameState);
   gameState.shop.filled = true;
 }
