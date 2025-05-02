@@ -371,7 +371,6 @@ const cards = {
         let tempEditions = objectClone(gameState.editions);
         delete tempEditions.negative;
         targetJoker.edition = pickWeightedRandom(tempEditions);
-        gameState.jokers.push(targetJoker);
       }
     },
     {
@@ -667,7 +666,7 @@ const cards = {
       desc: "Creates a Legendary Joker (Must have room)",
       onUse(gameState, cards) {
         if (gameState.jokers.length >= gameState.jokerSlots) return {"error": "No joker slots"};
-        gameState.jokers.push(newCard(gameState, "Joker", false, false, "Legendary"));
+        addNewJoker(gameState, newCard(gameState, "Joker", false, false, "Legendary"));
       }
     },
     {
@@ -1819,7 +1818,7 @@ const jokers = [
           if (joker.name.toLowerCase().replaceAll(" ", "") == "invisiblejoker" && !invis) {
             invis = true;
           } else {
-            jokers.push(objectClone(joker));
+            addNewJoker(gameState, objectClone(joker));
           }
         });
         if (jokers.length) {
@@ -1827,7 +1826,7 @@ const jokers = [
           if (randomJoker.name.toLowerCase().replaceAll(" ", "") == "invisiblejoker") randomJoker.properties.roundsRemaining = 2;
           if (randomJoker.edition.toLowerCase().replaceAll(" ", "") == "negative") delete randomJoker.edition;
           randomJoker.copied = true;
-          gameState.jokers.push(randomJoker);
+          addNewJoker(gameState, randomJoker);
         }
       }
     },
@@ -3761,7 +3760,7 @@ function packSelect(gameState, index, cards = []) {
   if (!target) return "Invalid index";
   if (target.rarity) { // Joker
     if (gameState.jokers.length >= gameState.jokerSlots) return "No empty joker slots";
-    gameState.jokers.push(target);
+    addNewJoker(gameState, target);
   } else if (!target.rank) { // Consumable
     if (target.onUse) { // Spectral or Tarot
       const response = target.onUse(gameState, cards);
