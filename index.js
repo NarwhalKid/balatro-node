@@ -2188,7 +2188,7 @@ const jokers = [
     "properties": {"plusMult":0},
     onHandPlayed(gameState, cards) {
       let hasFaceCard = false;
-      getHandType(cards).cards.forEach(card => {
+      getHandType(gameState, cards).cards.forEach(card => {
         if (isFaceCard(card)) hasFaceCard = true;
       })
       if (hasFaceCard) {
