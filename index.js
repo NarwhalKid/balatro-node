@@ -127,13 +127,11 @@ const tags = [
     "name": "Coupon Tag",  
     "minAnte": 1,
     "desc": "Initial cards and booster packs in next shop are free"
-    // TODO
   },
   {
     "name": "Double Tag",  
     "minAnte": 1,
     "desc": "Gives a copy of the next selected Tag Double Tag excluded"
-    // TODO
   },
   {
     "name": "Juggle Tag",  
@@ -145,7 +143,6 @@ const tags = [
     "name": "D6 Tag",  
     "minAnte": 1,
     "desc": "Rerolls in next shop start at $0"
-    // TODO
   },
   {
     "name": "Top-Up Tag",  
@@ -2303,7 +2300,7 @@ const jokers = [
     "rarity": "Uncommon",
     getDesc(gameState) { return "If poker hand is a Straight Flush, create a random Spectral card (Must have room)" },
     onHandPlayed(gameState, cards) {
-      if (getHandType(cards).handType == "Straight Flush") addConsumable(gameState, newCard(gameState, "Spectral Card"));
+      if (getHandType(gameState, cards).handType == "Straight Flush") addConsumable(gameState, newCard(gameState, "Spectral Card"));
     },
     "cost": 6,
   },
@@ -2478,7 +2475,7 @@ const jokers = [
     getDesc(gameState) { return "Adds the number of times poker hand has been played this run to Mult" },
     "rarity": "Common",
     onScore(gameState, cards) {
-      return {"plusMult": gameState.handPlays[getHandType(cards).handType]};
+      return {"plusMult": gameState.handPlays[getHandType(gameState, cards).handType]};
     },
     "cost": 5,
   },
