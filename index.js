@@ -2616,7 +2616,7 @@ const jokers = [
     onRoundEnd(gameState) {
       this.properties.plusHandSize--;
       gameState.handSize--;
-      if (plusHandSize <= 0) return {"destroy": true};
+      if (gameState.properties.plusHandSize <= 0) return {"destroy": true};
     },
     onDestroy(gameState) {
       gameState.hands -= this.properties.plusHandSize;
