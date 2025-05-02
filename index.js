@@ -137,7 +137,6 @@ const tags = [
     "name": "Juggle Tag",  
     "minAnte": 1,
     "desc": "+3 hand size next round"
-    // TODO
   },
   {
     "name": "D6 Tag",  
@@ -188,8 +187,12 @@ const tags = [
 const seals = {
   "Red Seal": {onCardScored(gameState, card) {return {"retriggers": 1}}},
   "Gold Seal": {onCardScored(gameState, card) {gameState.money += 4}},
-  "Blue Seal": {onEndCards(gameState, card) {}}, // TODO
-  "Purple Seal": {} // TODO
+  "Blue Seal": {onEndCards(gameState, card) {
+    addConsumable(gameState, {name: pokerHands[gameState.lastHand].planet, handType: gameState.lastHand})
+  }},
+  "Purple Seal": {onCardDiscarded(gameState, card) {
+    addConsumable(gameState, newCard(gameState, "Tarot Card"));
+  }}
 }
 
 const voucherDescs = {
@@ -234,7 +237,7 @@ const enhancements = {
   "Glass Card": {onCardScored(gameState, card) {return {"plusChips": 2, "destroy": random(gameState, 1, 4)};}},
   "Steel Card": {onCardHeld(gameState, card) {return {"timesMult": 1.5};}},
   "Stone Card": {onCardScored(gameState, card) {return {"plusChips": 50};}},
-  "Gold Card": {onEndCards(gameState, card) {gameState.money += 3}}, // TODO
+  "Gold Card": {onEndCards(gameState, card) {gameState.money += 3}},
   "Lucky Card": {onCardScored(gameState, card) {
     const money = random(gameState, 1, 15);
     const mult = random(gameState, 1, 5);
@@ -380,7 +383,7 @@ const cards = {
       }
     },
     {
-      name: "The Hanged Man", // TODO: fix
+      name: "The Hanged Man",
       desc: "Destroys up to 2 selected cards",
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
@@ -1349,8 +1352,15 @@ const jokers = [
     onBlindStart(gameState) {
       this.properties.beenUsed = false;
     },
-    onSell(gameState) { // TODO: check how works with multiple chaos
-      gameState.rerollCost = gameState.currentReroll;
+    onBuy(gameState) {
+      if (!gameState.shop.chaosUsed) {
+        gameState.rerollCost = 0;
+        gameState.shop.chaosUsed = true;
+      }
+    },
+    onSell(gameState) {
+      if (gameState.jokers.filter(joker => joker != this && joker.name == "Chaos the Clown" && !joker.properties.beenUsed) < 1)
+        gameState.rerollCost = gameState.currentReroll;
     }
   },
   {
@@ -2997,7 +3007,7 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
     let game = {
       "endless": false,
       stake,
-      "state": "blind",
+      "state": "blindSelect",
       "defaultDiscards": 3,
       "defaultHands": 4,
       "money": 4,
@@ -3263,8 +3273,6 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
     updateJokerProps(game);
 
     game.deckStartSize = game.fullDeck.length;
-
-    blindSetup(game);
 
     return game;
 }
@@ -3659,13 +3667,19 @@ function fillShopCards(gameState) {
 }
 
 function rerollShop(gameState) {
+  handleJokers(gameState, "onReroll");
   gameState.shop.cards = [];
-  if (gameState.shop.filled) {
-    if (gameState.money-gameState.rerollCost < gameState.moneyLimit) return "Not enough money"
-    gameState.money -= gameState.rerollCost;
-    gameState.currentReroll++;
+  if (gameState.shop.filled && !gameState.chaosUsed) {
+    if (gameState.money-gameState.rerollCost < gameState.moneyLimit && gameState.money > 0 && gameState.money > 0) return "Not enough money";
   }
   fillShopCards(gameState);
+
+  const chaos = gameState.jokers.find(joker => joker.name == "Chaos the Clown" && !joker.properties.beenUsed);
+  if (chaos) {
+    gameState.rerollCost = 0;
+    gameState.chaosUsed = true;
+    chaos.properties.beenUsed = true;
+  }
 }
 
 function pickByPercentage(input, value = 'odds') {
@@ -3746,7 +3760,7 @@ function addNewJoker(gameState, joker) {
 function buyCard(gameState, index) {
   const target = gameState.shop.cards[index];
   if (!target) return "Invalid index";
-  if (gameState.money-calcCost(gameState, target) < gameState.moneyLimit) return "Not enough money";
+  if (gameState.money-calcCost(gameState, target) < gameState.moneyLimit && gameState.money > 0) return "Not enough money";
   if (target.rarity) { // Joker
     if (gameState.jokers.length >= gameState.jokerSlots) return "No empty joker slots";
     addNewJoker(gameState, target);
@@ -3765,7 +3779,7 @@ function buyCard(gameState, index) {
 function buyPack(gameState, pack, free = false) {
   const target = pack;
   if (!target) return "Invalid index";
-  if (gameState.money-calcCost(gameState, target) < gameState.moneyLimit && !free) "Not enough money";
+  if (gameState.money-calcCost(gameState, target) < gameState.moneyLimit && gameState.money > 0 && !free) "Not enough money";
   gameState.oldState = gameState.state;
   gameState.state = "openingPack";
   handleJokers(gameState, "onBoosterPack");
@@ -3832,7 +3846,7 @@ function skipPack(gameState) {
 function buyVoucher(gameState, index) {
   const target = gameState.shop.vouchers[index];
   if (!target) return "Invalid index";
-  if (gameState.money - calcCost(gameState, target) < gameState.moneyLimit) return "Not enough money";
+  if (gameState.money - calcCost(gameState, target) < gameState.moneyLimit && gameState.money > 0) return "Not enough money";
   gameState.money -= calcCost(gameState, target);
   addVoucher(gameState, target.name);
   gameState.shop.vouchers.splice(index, 1);
@@ -3941,11 +3955,13 @@ function newShop(gameState) {
     gameState.tags.splice(gameState.tags.indexOf(d6), 1);
     gameState.currentReroll = 0;
   }
-  gameState.rerollCost = gameState.currentReroll; // TODO: fix chaos
-  gameState.jokers.filter(joker => joker.name.toLowerCase().replaceAll(" ", "") == "chaostheclown" && !joker.properties.beenUsed).forEach(joker => {
-    joker.properties.beenUsed = true;
+  gameState.rerollCost = gameState.currentReroll;
+  const chaos = gameState.jokers.find(joker => joker.name == "Chaos the Clown" && !joker.properties.beenUsed);
+  if (chaos) {
     gameState.rerollCost = 0;
-  }) // TODO: check if next reroll increases by 1
+    gameState.chaosUsed = true;
+    chaos.properties.beenUsed = true;
+  }
 
   gameState.hadShop = true;
 
@@ -4028,6 +4044,14 @@ function blindSetup(gameState) {
   gameState.blind.handPlays = 0;
   gameState.blind.remainingCards = [...gameState.fullDeck];
   gameState.blind.blindScore = gameState.currentBlinds[blindIdx].blindScore;
+  gameState.blind.juggleTagsUsed = 0;
+  gameState.tags.forEach((tag, idx) => {
+    if (tag.name == "Juggle Tag") {
+      gameState.blind.juggleTagsUsed++;
+      gameState.handSize += 3;
+      gameState.tags.splice(idx, 1);
+    }
+  })
   fillHand(gameState);
   handleJokers(gameState, "onBlindStart");
 }
@@ -4108,6 +4132,7 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
   let mult = (pokerHand.base.mult + pokerHand.addition.mult * BigInt(gameState.handLevels[handType]-1)) * BigInt(decimalAccuracy); // Multiply all mult by decimalAccuracy, reset at the final calculation
 
   const handPlayedResponses = handleJokers(gameState, "onHandPlayed", [cards]).responses; // Hand played jokers
+  gameState.lastHand = handType
   ({ chips, mult } = handleMult(gameState, chips, mult, handPlayedResponses));
 
   cards.forEach((card, idx) => { // Loop through played cards
@@ -4236,6 +4261,10 @@ function discardCards(gameState, indices) { // Pass the indices starting at 0
   gameState.blind.hand = gameState.blind.hand.filter((card, idx) => !indices.includes(idx));
   cards = cards.filter(Boolean);
 
+  cards.forEach(card => {
+    if (seals[card.seal]?.onCardDiscarded)
+      seals[card.seal]?.onCardDiscarded(gameState);
+  })
   handleJokers(gameState, "onDiscard", [cards]);
   fillHand(gameState);
   gameState.blind.firstDiscard = false;
@@ -4243,8 +4272,17 @@ function discardCards(gameState, indices) { // Pass the indices starting at 0
 }
 
 function blindEnd(gameState, isMrBones = false) {
+  cards.forEach(card => {
+    for (let i = 0; i <= jokerCount(gameState, "Mime") + jokerCount(gameState, "Blueprint") + jokerCount(gameState, "Brainstorm"); i++) {
+      if (seals[card.seal]?.onEndCards)
+        seals[card.seal]?.onEndCards(gameState);
+      if (seals[card.enhancement]?.onEndCards)
+        seals[card.enhancement]?.onEndCards(gameState);
+    }
+  })
   gameState.state = "blindWin";
   delete gameState.cardArea;
+  gameState.handSize -= gameState.blind.juggleTagsUsed*3;
   let currentBlindIdx = gameState.currentBlinds.filter(blind => blind.completed).length;
   gameState.currentBlinds[currentBlindIdx].completed = true;
   gameState.moneySources = [];
