@@ -384,7 +384,7 @@ const cards = {
       }
     },
     {
-      name: "The Hanged Man",
+      name: "The Hanged Man", // TODO: fix
       desc: "Destroys up to 2 selected cards",
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
@@ -3947,7 +3947,7 @@ function newShop(gameState) {
     gameState.tags.splice(gameState.tags.indexOf(d6), 1);
     gameState.currentReroll = 0;
   }
-  gameState.rerollCost = gameState.currentReroll;
+  gameState.rerollCost = gameState.currentReroll; // TODO: fix chaos
   gameState.jokers.filter(joker => joker.name.toLowerCase().replaceAll(" ", "") == "chaostheclown" && !joker.properties.beenUsed).forEach(joker => {
     joker.properties.beenUsed = true;
     gameState.rerollCost = 0;
@@ -4320,9 +4320,9 @@ function useConsumable(gameState, index, selectedCards) { // Pass the index star
   gameState.consumableSlots--;
   if (response?.error) return response;
   if (card.handType || cards["Tarot Card"].find(tarot => tarot.name == card.name)) gameState.theFool = card;
+  if (card.handType) usePlanet(gameState, card);
   gameState.consumables.splice(index, 1);
   if (card.edition?.toLowerCase() == "negative") gameState.consumableSlots--;
-  if (card.handType) usePlanet(gameState, card.name);
 }
 
 function jokerToText(gameState, joker) {
