@@ -2064,7 +2064,7 @@ const jokers = [
     "rarity": "Common",
     onCardScored(gameState, card) {
     if (isRank(gameState, card, "Ace") || isRank(gameState, card, 9) || isRank(gameState, card, 7) || isRank(gameState, card, 5) || isRank(gameState, card, 3))
-      return {"multChips": 31};
+      return {"plusChips": 31};
     },
     "cost": 4,
   },
