@@ -324,6 +324,7 @@ const cards = {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length != 1) return {"error": "Select 1 card", "cardMax": 1};
         cards[0].enhancement = "Wild Card";
+        console.log(cards[0]);
       }
     },
     {
