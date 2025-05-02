@@ -4261,6 +4261,7 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
     } else {
       gameLose(gameState);
     }
+    return;
   }
   fillHand(gameState);
 }
