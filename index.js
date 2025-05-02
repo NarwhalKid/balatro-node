@@ -3876,12 +3876,12 @@ function deepFind(obj, predicate) {
 
 
 function restoreGameFunctions(game) {
-  const sections = [game.jokers, game.consumables, game.shop?.cards, game.currentPack?.contents];
+  const sections = [game.jokers, game.consumables, game.shop?.cards, game.currentPack?.contents, game.tags];
 
   sections.forEach(section => {
     if (!Array.isArray(section)) return;
     section.forEach(consumable => {
-      const ogConsumable = deepFind(cards, findConsumable => findConsumable.name == consumable.name) || deepFind(jokers, findConsumable => findConsumable.name == consumable.name);
+      const ogConsumable = deepFind(cards, findConsumable => findConsumable.name == consumable.name) || deepFind(jokers, findConsumable => findConsumable.name == consumable.name)|| deepFind(tags, findConsumable => findConsumable.name == consumable.name);
       if (!ogConsumable) return;
       for (const [key, value] of Object.entries(ogConsumable)) {
         if (typeof value === "function") {
