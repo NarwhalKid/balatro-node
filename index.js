@@ -3768,7 +3768,7 @@ function calcCost(gameState, card) {
   if ((card.name.toLowerCase().includes("celestial") || card.handType) && jokerCount(gameState, "astronomer")) return 0;
   if (card.stickers?.includes("Rental")) return 1;
 
-  return  (card.coupon && 0) || Math.max(1, roundHalfDown(card.cost + (gameState.editions[capitalize(card.edition)]?.cost || 0) * gameState.discount));
+  return card.coupon ? 0 : Math.max(1, roundHalfDown(card.cost + (gameState.editions[capitalize(card.edition)]?.cost || 0) * gameState.discount));
 }
 
 function addNewJoker(gameState, joker) {
@@ -3964,7 +3964,7 @@ function newShop(gameState) {
   }
   if (gameState.tags.find(tag => tag.name == "Coupon Tag")) {
     gameState.shop.packs.forEach(pack => {
-      pack.cost = 0;
+      pack.coupon = true;
     })
   }
   
