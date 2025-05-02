@@ -3894,6 +3894,8 @@ function restoreGameFunctions(game) {
     }
   }
 
+  if (game.blind.hand) game.cardArea = game.blind.hand;
+
   return game;
 }
 
