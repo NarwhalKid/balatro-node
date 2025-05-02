@@ -3331,7 +3331,7 @@ function newBlinds(gameState) {
     const possibleTags = tags.filter(tag => !gameState.bannedTags.includes(tag.name) && tag.minAnte <= gameState.ante);
     let tag = objectClone(possibleTags[Math.floor(Math.random() * possibleTags.length)]);
     if (tag.name == "Orbital Tag") {
-      const possibleHandTypes = Object.keys(pokerHands).filter(handType => handType.unlocked || gameState.handPlays[handType]);
+      const possibleHandTypes = Object.keys(pokerHands).filter(handType => pokerHands[handType].unlocked || gameState.handPlays[handType]);
       tag.properties.handType = possibleHandTypes[Math.floor(Math.random() * possibleHandTypes.length)];
     }
     return tag;
@@ -4350,9 +4350,8 @@ function updateJokerProps(gameState) {
     gameState.jokerProperties.rebate.rank = possibleCastleCards[Math.floor(Math.random() * possibleCastleCards.length)].rank;
 
   // To Do List
-  const possibleHandTypes = Object.keys(pokerHands).filter(handType => (handType.unlocked || gameState.handPlays[handType]) && handType != gameState.jokerProperties.todo.handType);
+  const possibleHandTypes = Object.keys(pokerHands).filter(handType => (pokerHands[handType].unlocked || gameState.handPlays[handType]) && handType != gameState.jokerProperties.todo.handType);
   gameState.jokerProperties.todo.handType = possibleHandTypes[Math.floor(Math.random() * possibleHandTypes.length)];
-  console.log(gameState.jokerProperties.todo.handType);
 }
 
 function cashOut(gameState) {
