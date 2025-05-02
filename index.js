@@ -3005,8 +3005,8 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
       "round": 0,
       "jokerSlots": 5,
       "moneyLimit": 0,
-      "jokers": [],
-      // "jokers": [objectClone(jokers.find(card => card.name == "Arrowhead"))],
+      // "jokers": [],
+      "jokers": [objectClone(jokers.find(card => card.name == "Chaos the Clown"))],
       "consumableSlots": 2,
       "playedHands": 0,
       "unusedDiscards": 0,
@@ -3945,6 +3945,7 @@ function newShop(gameState) {
   gameState.jokers.filter(joker => joker.name.toLowerCase().replaceAll(" ", "") == "chaostheclown" && !joker.properties.beenUsed).forEach(joker => {
     joker.properties.beenUsed = true;
     gameState.rerollCost = 0;
+    console.log("a");
   }) // TODO: check if next reroll increases by 1
 
   gameState.hadShop = true;
