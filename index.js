@@ -3660,6 +3660,7 @@ function fillShopCards(gameState) {
 
 function rerollShop(gameState) {
   gameState.shop.cards = [];
+  console.log(gameState.rerollCost);
   if (gameState.shop.filled) {
     if (gameState.money-gameState.rerollCost < gameState.moneyLimit) return "Not enough money"
     gameState.money -= gameState.rerollCost;
@@ -3945,9 +3946,7 @@ function newShop(gameState) {
   gameState.jokers.filter(joker => joker.name.toLowerCase().replaceAll(" ", "") == "chaostheclown" && !joker.properties.beenUsed).forEach(joker => {
     joker.properties.beenUsed = true;
     gameState.rerollCost = 0;
-    console.log(gameState.rerollCost);
   }) // TODO: check if next reroll increases by 1
-  console.log(gameState.rerollCost);
 
   gameState.hadShop = true;
 
@@ -3955,6 +3954,7 @@ function newShop(gameState) {
 
   // Fill cards
   gameState.shop.filled = false;
+  console.log(gameState.rerollCost);
   rerollShop(gameState);
   gameState.shop.filled = true;
 }
