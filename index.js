@@ -4293,7 +4293,7 @@ function discardCards(gameState, indices) { // Pass the indices starting at 0
 }
 
 function blindEnd(gameState, isMrBones = false) {
-  cards.forEach(card => {
+  gameState.blind.hand.forEach(card => {
     for (let i = 0; i <= jokerCount(gameState, "Mime") + jokerCount(gameState, "Blueprint") + jokerCount(gameState, "Brainstorm"); i++) {
       if (seals[card.seal]?.onEndCards)
         seals[card.seal]?.onEndCards(gameState);
