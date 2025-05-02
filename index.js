@@ -3787,11 +3787,10 @@ function buyPack(gameState, pack, free = false) {
   delete gameState.cardArea;
   if (target.name.toLowerCase().includes("spectral") || target.name.toLowerCase().includes("arcana")) {
     gameState.cardArea = []; // TODO: find bug causing +8 cards
-    let tempDeck = objectClone(gameState.fullDeck);
     for (let i = gameState.cardArea.length; i < gameState.handSize; i++) {
-      const cardIdx = Math.floor(Math.random() * tempDeck.length);
-      drawCard(gameState, tempDeck[cardIdx]);
-      tempDeck.splice(cardIdx, 1);
+      const cardIdx = Math.floor(Math.random() * gameState.fullDeck.length);
+      drawCard(gameState, gameState.fullDeck[cardIdx]);
+      gameState.fullDeck.splice(cardIdx, 1);
     }
   }
   if (!free) {
