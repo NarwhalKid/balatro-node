@@ -150,7 +150,7 @@ const tags = [
     onBuy(gameState) {
       for (let i = 0; i < 2; i++) {
         if (gameState.jokers.length < gameState.jokerSlots) {
-          addNewJoker(gameState, newCard(gameState, "Joker"));
+          addNewJoker(gameState, newCard(gameState, "Joker", undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, true));
         }
       }
     }
@@ -468,7 +468,7 @@ const cards = {
       desc: "Creates a random Joker card (Must have room)",
       onUse(gameState, cards) {
         if (gameState.jokers.length >= gameState.jokerSlots) return {"error": "No empty joker slots"};
-        addNewJoker(gameState, newCard(gameState, "Joker"));
+        addNewJoker(gameState, newCard(gameState, "Joker", undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, true));
       }
     },
     {
@@ -543,7 +543,7 @@ const cards = {
       onUse(gameState, cards) {
         if (gameState.jokers.length >= gameState.jokerSlots) return {"error": "No empty joker slots"};
         gameState.money = 0;
-        addNewJoker(gameState, newCard(gameState, "Joker", false, false, "Rare"));
+        addNewJoker(gameState, newCard(gameState, "Joker", false, false, "Rare", undefined, undefined, undefined, undefined, undefined, undefined, true));
       }
     },
     {
@@ -2218,7 +2218,7 @@ const jokers = [
     onBlindStart(gameState) {
       for (let i = 0; i < 2; i++) {
         if (gameState.jokers.length < gameState.jokerSlots) {
-          addNewJoker(gameState, newCard(gameState, "Joker", false, false, "Common"));
+          addNewJoker(gameState, newCard(gameState, "Joker", false, false, "Common", undefined, undefined, undefined, undefined, undefined, undefined, true));
         }
       }
     },
@@ -3530,7 +3530,7 @@ function addVoucher(gameState, voucher) {
   }
 }
 
-function newCard(gameState, cardType, certificate = false, stone = false, jokerRarity = undefined, forceEnhancement = false, blockEdition = false, playingCardType = undefined, isBoosterPack = false, isShop = false, isCoupon = false) {
+function newCard(gameState, cardType, certificate = false, stone = false, jokerRarity = undefined, forceEnhancement = false, blockEdition = false, playingCardType = undefined, isBoosterPack = false, isShop = false, isCoupon = false, noStickers = false) {
   let card;
   let rarity = pickByPercentage([
     {"type": "Common", "odds": 70},
@@ -3667,7 +3667,7 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
 
     card.stickers = [];
 
-    if (!isBoosterPack && jokerRarity?.toLowerCase() != "legendary") {
+    if (!isBoosterPack && jokerRarity?.toLowerCase() != "legendary" && !noStickers) {
       const timeBasedSticker = pickByPercentage({"Eternal": {"odds": card.noEternal ? 0 : gameState.typeOdds.eternal}, "Perishable": {"odds": card.noPerishable ? 0 : gameState.typeOdds.perishable}});
       if (timeBasedSticker) card.stickers.push(timeBasedSticker);
       const isRental = pickByPercentage({"Rental": {"odds": gameState.typeOdds.rental}});
