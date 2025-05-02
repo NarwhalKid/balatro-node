@@ -3821,7 +3821,7 @@ function deepFind(obj, predicate) {
 
 
 function restoreGameFunctions(game) {
-  const sections = [game.jokers, game.consumables, game.shop?.cards, game.currentPack?.choices];
+  const sections = [game.jokers, game.consumables, game.shop?.cards, game.currentPack?.contents];
 
   sections.forEach(section => {
     if (!Array.isArray(section)) return;
