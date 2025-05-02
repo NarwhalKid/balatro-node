@@ -3744,7 +3744,7 @@ function buyPack(gameState, pack, free = false) {
   }
   if (!free) {
     gameState.money -= calcCost(gameState, target);
-    gameState.shop.packs.forEach(loopPack => loopPack == pack);
+    gameState.shop.packs.splice(gameState.shop.packs.indexOf(pack), 1);
   }
 }
 
