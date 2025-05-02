@@ -3453,17 +3453,17 @@ function addVoucher(gameState, voucher) {
       break;
     case "tarotmerchant":
       gameState.possibleVouchers.push("Tarot Tycoon");
-      gameState.shopWeights["Tarot"].odds = 9.6;
+      gameState.shopWeights["Tarot Card"].odds = 9.6;
       break;
     case "tarottycoon":
-      gameState.shopWeights["Tarot"].odds = 32;
+      gameState.shopWeights["Tarot Card"].odds = 32;
       break;
     case "planetmerchant":
       gameState.possibleVouchers.push("Planet Tycoon");
-      gameState.shopWeights["Planet"].odds = 9.6;
+      gameState.shopWeights["Planet Card"].odds = 9.6;
       break;
     case "planettycoon":
-      gameState.shopWeights["Planet"].odds = 32;
+      gameState.shopWeights["Planet Card"].odds = 32;
       break;
     case "seedmoney":
       gameState.possibleVouchers.push("Money Tree");
