@@ -28,32 +28,32 @@ const tags = [
   {
     "name": "Uncommon Tag", 
     "minAnte": 1,
-    "desc": "Shop has a free Uncommon Joker" // TODO
+    "desc": "Shop has a free Uncommon Joker"
   },
   {
     "name": "Rare Tag",  
     "minAnte": 1,
-    "desc": "Shop has a free Rare Joker" // TODO
+    "desc": "Shop has a free Rare Joker"
   },
   {
     "name": "Negative Tag",  
     "minAnte": 2,
-    "desc": "Next base edition shop Joker is free and becomes Negative" // TODO
+    "desc": "Next base edition shop Joker is free and becomes Negative"
   },
   {
     "name": "Foil Tag",  
     "minAnte": 1,
-    "desc": "Next base edition shop Joker is free and becomes Foil" // TODO
+    "desc": "Next base edition shop Joker is free and becomes Foil"
   },
   {
     "name": "Holographic Tag",  
     "minAnte": 1,
-    "desc": "Next base edition shop Joker is free and becomes Holographic" // TODO
+    "desc": "Next base edition shop Joker is free and becomes Holographic"
   },
   {
     "name": "Polychrome Tag",  
     "minAnte": 1,
-    "desc": "Next base edition shop Joker is free and becomes Polychrome" // TODO
+    "desc": "Next base edition shop Joker is free and becomes Polychrome"
   },
   {
     "name": "Investment Tag",  
@@ -1354,6 +1354,15 @@ const jokers = [
     "rarity": "Common",
     "cost": 4,
     "noCopy": true,
+    "properties": {
+      "beenUsed": false
+    },
+    onBlindStart(gameState) {
+      this.properties.beenUsed = false;
+    },
+    onSell(gameState) { // TODO: check how works with multiple chaos
+      gameState.rerollCost = gameState.currentReroll;
+    }
   },
   {
     "name": "Chicot",
@@ -3504,7 +3513,7 @@ function addVoucher(gameState, voucher) {
   }
 }
 
-function newCard(gameState, cardType, certificate = false, stone = false, jokerRarity = undefined, forceEnhancement = false, blockEdition = false, playingCardType = undefined, isBoosterPack = false) {
+function newCard(gameState, cardType, certificate = false, stone = false, jokerRarity = undefined, forceEnhancement = false, blockEdition = false, playingCardType = undefined, isBoosterPack = false, isShop = false, isCoupon = false) {
   let card;
   let rarity = pickByPercentage([
     {"type": "Common", "odds": 70},
@@ -3513,6 +3522,22 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
   ]).type;
   if (jokerRarity) rarity = jokerRarity;
   const jokerNames = gameState.jokers.map(joker => joker.name.toLowerCase());
+  if (isShop) {
+    for (const tag of gameState.tags) {
+      if (tag == "Uncommon Tag") {
+        cardType = "Joker";
+        jokerRarity = "Uncommon";
+        gameState.tags.splice(gameState.tags.indexOf(tag), 1);
+        break;
+      }
+      if (tag == "Rare Tag") {
+        cardToText = "Joker";
+        jokerRarity = "Rare";
+        gameState.tags.splice(gameState.tags.indexOf(tag), 1);
+        break;
+      }
+    }
+  }
   do {
     if (cardType == "Joker") {
       const jokersOfRarity = jokers.filter(joker => rarity == joker.rarity);
@@ -3561,6 +3586,8 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
 
   card = objectClone(card); // Seperate card object from where it got it from
 
+  if (isCoupon) card.coupon = true;
+
   if (cardType == "Playing Card") card.cost = 1;
   if (cardType == "Tarot Card" || cardType == "Planet Card") card.cost = 3;
   if (cardType == "Spectral Card") card.cost = 4;
@@ -3594,7 +3621,33 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
   }
   if (cardType == "Joker") {
     const edition = pickByPercentage(gameState.editions);
-    if (edition) card.edition = edition;
+    if (edition) {
+      card.edition = edition;
+    } else if (isShop) {
+      for (const tag of gameState.tags) {
+        if (tag == "Foil Tag") {
+          card.edition = "Foil";
+          gameState.tags.splice(gameState.tags.indexOf(tag), 1);
+          break;
+        }
+        if (tag == "Holographic Tag") {
+          card.edition = "Holographic";
+          gameState.tags.splice(gameState.tags.indexOf(tag), 1);
+          break;
+        }
+        if (tag == "Polychrome Tag") {
+          card.edition = "Polychrome";
+          gameState.tags.splice(gameState.tags.indexOf(tag), 1);
+          break;
+        }
+        if (tag == "Negative Tag") {
+          card.edition = "Negative";
+          gameState.tags.splice(gameState.tags.indexOf(tag), 1);
+          break;
+        }
+      }
+    }
+
     card.stickers = [];
 
     if (!isBoosterPack && jokerRarity?.toLowerCase() != "legendary") {
@@ -3608,17 +3661,19 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
 }
 
 function fillShopCards(gameState) {
+  const coupon = gameState.tags.find(tag => tag.name == "Coupon Tag");
+  if (coupon) gameState.tags.splice(gameState.tags.indexOf(coupon), 1);
   while (gameState.shop.cards.length < gameState.shopSlots) {
     const cardType = pickWeightedRandom(gameState.shopWeights);
-    gameState.shop.cards.push(newCard(gameState, cardType));
+    gameState.shop.cards.push(newCard(gameState, cardType, undefined, undefined, undefined, undefined, undefined, undefined, undefined, true, !!coupon));
   }
 }
 
 function rerollShop(gameState) {
   gameState.shop.cards = [];
   if (gameState.shop.filled) {
-    if (gameState.money-gameState.currentReroll < gameState.moneyLimit) return "Not enough money"
-    gameState.money -= gameState.currentReroll;
+    if (gameState.money-gameState.rerollCost < gameState.moneyLimit) return "Not enough money"
+    gameState.money -= gameState.rerollCost;
     gameState.currentReroll++;
   }
   fillShopCards(gameState);
@@ -3675,7 +3730,7 @@ function roundHalfDown(n) {
 
 function addVoucherToShop(gameState) {
   const newVouchers = gameState.possibleVouchers.filter(voucher => !gameState.shop.vouchers.includes(voucher));
-  if (newVouchers.length < 1) return;
+  if (newVouchers.length < 1) return "No tags";
   const voucherType = newVouchers[Math.floor(Math.random() * newVouchers.length)];
   gameState.shop.vouchers.push({"name": voucherType, "cost": 10, "desc": voucherDescs[voucherType]});
 }
@@ -3690,7 +3745,7 @@ function calcCost(gameState, card) {
   if ((card.name.toLowerCase().includes("celestial") || card.handType) && jokerCount(gameState, "astronomer")) return 0;
   if (card.stickers?.includes("Rental")) return 1;
 
-  return Math.max(1, roundHalfDown(card.cost + (gameState.editions[capitalize(card.edition)]?.cost || 0) * gameState.discount));
+  return  (card.coupon && 0) || Math.max(1, roundHalfDown(card.cost + (gameState.editions[capitalize(card.edition)]?.cost || 0) * gameState.discount));
 }
 
 function addNewJoker(gameState, joker) {
@@ -3714,6 +3769,7 @@ function buyCard(gameState, index) {
     drawCard(gameState, target);
   }
   gameState.money -= calcCost(gameState, target);
+  delete target.coupon;
   gameState.shop.cards.splice(index, 1);
 }
 
@@ -3867,8 +3923,8 @@ function newShop(gameState) {
   // Add vouchers for voucher tags
   for (let i = gameState.tags.length - 1; i >= 0; i--) {
     if (gameState.tags[i].name.toLowerCase().replaceAll(" ", "") == "vouchertag") {
-      gameState.tags.splice(i, 1);
-      addVoucherToShop(gameState);
+      if (addVoucherToShop(gameState) != "No tags")
+        gameState.tags.splice(i, 1);
     }
   }
 
@@ -3878,6 +3934,24 @@ function newShop(gameState) {
   while (gameState.shop.packs.length < 2) {
     gameState.shop.packs.push(pickWeightedRandom(allowedPacks));
   }
+  if (gameState.tags.find(tag => tag.name == "Coupon Tag")) {
+    gameState.shop.packs.forEach(pack => {
+      pack.cost = 0;
+    })
+  }
+  
+  gameState.currentReroll = gameState.rerollBase;
+
+  const d6 = gameState.tags.find(tag => tag.name == "D6 Tag");
+  if (d6) {
+    gameState.tags.splice(gameState.tags.indexOf(d6), 1);
+    gameState.currentReroll = 0;
+  }
+  gameState.rerollCost = gameState.currentReroll;
+  gameState.jokers.filter(joker => joker.name.toLowerCase().replaceAll(" ", "") == "chaostheclown" && !joker.properties.beenUsed).forEach(joker => {
+    joker.properties.beenUsed = true;
+    gameState.rerollCost = 0;
+  }) // TODO: check if next reroll increases by 1
 
   gameState.hadShop = true;
 
