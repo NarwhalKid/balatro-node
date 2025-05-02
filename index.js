@@ -3945,7 +3945,7 @@ function newShop(gameState) {
   gameState.jokers.filter(joker => joker.name.toLowerCase().replaceAll(" ", "") == "chaostheclown" && !joker.properties.beenUsed).forEach(joker => {
     joker.properties.beenUsed = true;
     gameState.rerollCost = 0;
-    console.log("a");
+    console.log(gameState.rerollCost);
   }) // TODO: check if next reroll increases by 1
 
   gameState.hadShop = true;
