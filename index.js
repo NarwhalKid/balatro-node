@@ -268,9 +268,9 @@ const cards = {
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length < 1 || cards.length > 2) return {"error": "Select 1-2 cards", "cardMax": 2};
-        cards.forEach(card => {
+        for (const card of cards) {
           card.enhancement = "Lucky Card";
-        })
+        }
       }
     },
     {
@@ -290,9 +290,9 @@ const cards = {
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length < 1 || cards.length > 2) return {"error": "Select 1-2 cards", "cardMax": 2};
-        cards.forEach(card => {
+        for (const card of cards) {
           card.enhancement = "Mult Card";
-        })
+        }
       }
     },
     {
@@ -312,9 +312,9 @@ const cards = {
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length < 1 || cards.length > 2) return {"error": "Select 1-2 cards", "cardMax": 2};
-        cards.forEach(card => {
+        for (const card of cards) {
           card.enhancement = "Bonus Card";
-        })
+        }
       }
     },
     {
@@ -323,9 +323,7 @@ const cards = {
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length != 1) return {"error": "Select 1 card", "cardMax": 1};
-        cards.forEach(card => {
-          card.enhancement = "Wild Card";
-        })
+        cards[0].enhancement = "Wild Card";
       }
     },
     {
@@ -334,9 +332,7 @@ const cards = {
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length != 1) return {"error": "Select 1 card", "cardMax": 1};
-        cards.forEach(card => {
-          card.enhancement = "Steel Card";
-        })
+        cards[0].enhancement = "Steel Card";
       }
     },
     {
@@ -345,9 +341,7 @@ const cards = {
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length != 1) return {"error": "Select 1 card", "cardMax": 1};
-        cards.forEach(card => {
-          card.enhancement = "Glass Card";
-        })
+        cards[0].enhancement = "Glass Card";
       }
     },
     {
@@ -376,11 +370,11 @@ const cards = {
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length < 1 || cards.length > 2) return {"error": "Select 1-2 cards", "cardMax": 2};
-        cards.forEach(card => {
+        for (const card of cards) {
           let newIdx = ranks.indexOf(card.rank)-1;
           if (newIdx < 0) newIdx = ranks.length-1;
           card.rank = ranks[newIdx];
-        })
+        }
       }
     },
     {
@@ -389,9 +383,9 @@ const cards = {
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length < 1 || cards.length > 2) return {"error": "Select 1-2 cards", "cardMax": 2};
-        cards.forEach(card => {
+        for (const card of cards) {
           deleteCard(gameState, card);
-        })
+        }
       }
     },
     {
@@ -419,9 +413,7 @@ const cards = {
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length != 1) return {"error": "Select 1 card", "cardMax": 1};
-        cards.forEach(card => {
-          card.enhancement = "Gold Card";
-        })
+        cards[0].enhancement = "Gold Card";
       }
     },
     {
@@ -430,9 +422,7 @@ const cards = {
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length != 1) return {"error": "Select 1 card", "cardMax": 1};
-        cards.forEach(card => {
-          card.enhancement = "Stone Card";
-        })
+        cards[0].enhancement = "Stone Card";
       }
     },
     {
@@ -441,9 +431,9 @@ const cards = {
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length < 1 || cards.length > 3) return {"error": "Select 1-3 cards", "cardMax": 3};
-        cards.forEach(card => {
+        for (const card of cards) {
           card.suit = "Diamonds";
-        })
+        }
       }
     },
     {
@@ -452,9 +442,9 @@ const cards = {
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length < 1 || cards.length > 3) return {"error": "Select 1-3 cards", "cardMax": 3};
-        cards.forEach(card => {
+        for (const card of cards) {
           card.suit = "Clubs";
-        })
+        }
       }
     },
     {
@@ -463,9 +453,9 @@ const cards = {
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length < 1 || cards.length > 3) return {"error": "Select 1-3 cards", "cardMax": 3};
-        cards.forEach(card => {
+        for (const card of cards) {
           card.suit = "Hearts";
-        })
+        }
       }
     },
     {
@@ -482,9 +472,9 @@ const cards = {
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length < 1 || cards.length > 3) return {"error": "Select 1-3 cards", "cardMax": 3};
-        cards.forEach(card => {
+        for (const card of cards) {
           card.suit = "Spades";
-        })
+        }
       }
     }
   ],
