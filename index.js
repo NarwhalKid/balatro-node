@@ -2299,7 +2299,7 @@ const jokers = [
     "rarity": "Uncommon",
     getDesc(gameState) { return "X2 Mult if played hand has a scoring Club card and a scoring card of any other suit" },
     onScore(gameState, cards) {
-      const cards = getHandType(gameState, cards).cards.forEach();
+      const newCards = getHandType(gameState, cards).cards.forEach();
       // TODO
     },
     "cost": 6,
