@@ -24,102 +24,162 @@ function objectClone(obj, seen = new Map()) {
 }
 
 
-const tags = [ // TODO
+const tags = [
   {
     "name": "Uncommon Tag", 
-    "desc": "Shop has a free Uncommon Joker"
+    "minAnte": 1,
+    "desc": "Shop has a free Uncommon Joker" // TODO
   },
   {
-    "name": "Rare Tag", 
-    "desc": "Shop has a free Rare Joker"
+    "name": "Rare Tag",  
+    "minAnte": 1,
+    "desc": "Shop has a free Rare Joker" // TODO
   },
   {
-    "name": "Negative Tag", 
-    "desc": "Next base edition shop Joker is free and becomes Negative"
+    "name": "Negative Tag",  
+    "minAnte": 2,
+    "desc": "Next base edition shop Joker is free and becomes Negative" // TODO
   },
   {
-    "name": "Foil Tag", 
-    "desc": "Next base edition shop Joker is free and becomes Foil"
+    "name": "Foil Tag",  
+    "minAnte": 1,
+    "desc": "Next base edition shop Joker is free and becomes Foil" // TODO
   },
   {
-    "name": "Holographic Tag", 
-    "desc": "Next base edition shop Joker is free and becomes Holographic"
+    "name": "Holographic Tag",  
+    "minAnte": 1,
+    "desc": "Next base edition shop Joker is free and becomes Holographic" // TODO
   },
   {
-    "name": "Polychrome Tag", 
-    "desc": "Next base edition shop Joker is free and becomes Polychrome"
+    "name": "Polychrome Tag",  
+    "minAnte": 1,
+    "desc": "Next base edition shop Joker is free and becomes Polychrome" // TODO
   },
   {
-    "name": "Investment Tag", 
+    "name": "Investment Tag",  
+    "minAnte": 1,
     "desc": "After defeating the Boss Blnd, gain $25"
   },
   {
-    "name": "Voucher Tag", 
+    "name": "Voucher Tag",  
+    "minAnte": 1,
     "desc": "Adds one Voucher to the next shop"
   },
   {
-    "name": "Boss Tag", 
+    "name": "Boss Tag",  
+    "minAnte": 1,
     "desc": "Rerolls the Boss Blind"
+    // TODO
   },
   {
-    "name": "Standard Tag", 
-    "desc": "Gives a free Mega Standard Pack"
+    "name": "Standard Tag",  
+    "minAnte": 2,
+    "desc": "Gives a free Mega Standard Pack",
+    onBuy(gameState) {
+      buyPack(gameState, boosterPacks.find(pack => pack.name == "Mega Standard Pack"), true);
+    }
   },
   {
-    "name": "Charm Tag", 
-    "desc": "Gives a free Mega Arcana Pack"
+    "name": "Charm Tag",  
+    "minAnte": 1,
+    "desc": "Gives a free Mega Arcana Pack",
+    onBuy(gameState) {
+      buyPack(gameState, boosterPacks.find(pack => pack.name == "Mega Arcana Pack"), true);
+    }
   },
   {
-    "name": "Meteor Tag", 
-    "desc": "Gives a free Mega Celestial Pack"
+    "name": "Meteor Tag",  
+    "minAnte": 2,
+    "desc": "Gives a free Mega Celestial Pack",
+    onBuy(gameState) {
+      buyPack(gameState, boosterPacks.find(pack => pack.name == "Mega Celestial Pack"), true);
+    }
   },
   {
-    "name": "Buffoon Tag", 
-    "desc": "Gives a free Mega Buffoon Pack"
+    "name": "Buffoon Tag",  
+    "minAnte": 2,
+    "desc": "Gives a free Mega Buffoon Pack",
+    onBuy(gameState) {
+      buyPack(gameState, boosterPacks.find(pack => pack.name == "Mega Buffoon Pack"), true);
+    }
   },
   {
-    "name": "Handy Tag", 
+    "name": "Handy Tag",  
+    "minAnte": 2,
     getDesc(gameState) {return `Gives $1 per played hand this run (Will give $${gameState.playedHands})`}
   }, 
   {
-    "name": "Garbage Tag", 
+    "name": "Garbage Tag",  
+    "minAnte": 2,
     getDesc(gameState) {return `Gives $1 per unused discard this run (Will give $${gameState.unusedDiscards})`}
   },
   {
-    "name": "Ethereal Tag", 
-    "desc": "Gives a free Spectral Pack"
+    "name": "Ethereal Tag",  
+    "minAnte": 2,
+    "desc": "Gives a free Spectral Pack",
+    onBuy(gameState) {
+      buyPack(gameState, boosterPacks.find(pack => pack.name == "Spectral Pack"), true);
+    }
   },
   {
-    "name": "Coupon Tag", 
+    "name": "Coupon Tag",  
+    "minAnte": 1,
     "desc": "Initial cards and booster packs in next shop are free"
+    // TODO
   },
   {
-    "name": "Double Tag", 
+    "name": "Double Tag",  
+    "minAnte": 1,
     "desc": "Gives a copy of the next selected Tag Double Tag excluded"
+    // TODO
   },
   {
-    "name": "Juggle Tag", 
+    "name": "Juggle Tag",  
+    "minAnte": 1,
     "desc": "+3 hand size next round"
+    // TODO
   },
   {
-    "name": "D6 Tag", 
+    "name": "D6 Tag",  
+    "minAnte": 1,
     "desc": "Rerolls in next shop start at $0"
+    // TODO
   },
   {
-    "name": "Top-Up Tag", 
-    "desc": "Create up to 2 Common Jokers (Must have room)"
+    "name": "Top-Up Tag",  
+    "minAnte": 2,
+    "desc": "Create up to 2 Common Jokers (Must have room)",
+    onBuy(gameState) {
+      for (let i = 0; i < 2; i++) {
+        if (gameState.jokers.length < gameState.jokerSlots) {
+          addNewJoker(gameState, newCard(gameState, "Joker"));
+        }
+      }
+    }
   },
   {
-    "name": "Speed Tag", 
-    getDesc(gameState) {return `Gives $5 per skipped blind this run (Will give $${gameState.skippedBlinds * 5})`}
+    "name": "Speed Tag",  
+    "minAnte": 1,
+    getDesc(gameState) {return `Gives $5 per skipped blind this run (Will give $${gameState.skippedBlinds * 5})`},
+    onBuy(gameState) {
+      gameState.money += gameState.skippedBlinds * 5;
+    }
   },
   {
-    "name": "Orbital Tag", 
-    getDesc(gameState) {return `Upgrade ${0} by 3 levels`}
+    "name": "Orbital Tag",  
+    "minAnte": 2,
+    getDesc(gameState) {return `Upgrade ${this.properties.handType} by 3 levels`},
+    onBuy(gameState) {
+      gameState.handLevels[this.properties.handType] += 3;
+    }
   },
   {
-    "name": "Economy Tag", 
-    "desc": "Doubles your money (Max of $40)"
+    "name": "Economy Tag",  
+    "minAnte": 1,
+    "desc": "Doubles your money (Max of $40)",
+    onBuy(gameState) {
+      gameState.money += Math.max(Math.min(gameState.money, 40), 0);
+    }
   }
 ]
 
@@ -3014,7 +3074,7 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
         "Holographic": {
           "cost": 2,
           "odds": 1.4,
-          "playingCardOdds": 8
+          "playingCardOdds": 2.8
         },
         "Polychrome": {
           "cost": 2,
@@ -3233,8 +3293,13 @@ function newBlinds(gameState) {
   const smallReward = gameState.stake.toLowerCase().replaceAll(" ", "") == "whitestake" ? 3 : 0;
 
   const randomTag = () => {
-    const possibleTags = tags.filter(tag => !gameState.bannedTags.includes(tag.name));
-    return objectClone(possibleTags[Math.floor(Math.random() * possibleTags.length)]);
+    const possibleTags = tags.filter(tag => !gameState.bannedTags.includes(tag.name) && tag.minAnte <= gameState.ante);
+    let tag = objectClone(possibleTags[Math.floor(Math.random() * possibleTags.length)]);
+    if (tag.name == "Orbital Tag") {
+      const possibleHandTypes = Object.keys(pokerHands).filter(handType => handType.unlocked || gameState.handPlays[handType]);
+      tag.properties.handType = possibleHandTypes[Math.floor(Math.random() * possibleHandTypes.length)];
+    }
+    return tag;
   }
 
   gameState.currentBlinds = [
@@ -3494,18 +3559,25 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
 
   if (cardType == "Spectral Card" || cardType == "Tarot Card" || cardType == "Planet Card") return card;
   if (cardType == "Playing Card") {
-    const hasEdition = Math.random() <= gameState.shopWeights["Playing Card"].edition / 100;
-    const hasEnhancement = Math.random() <= gameState.shopWeights["Playing Card"].enhancement / 100;
-    const hasSeal = Math.random() <= 0.2;
-
-    if (hasEdition && !certificate && !stone && !blockEdition) {
+    if (isBoosterPack) {
+      const hasSeal = Math.random() <= 0.2;
+      if (hasSeal) {
+        card.seal = seals[Math.floor(Math.random() * seals.length)];
+      }
       card.edition = pickByPercentage(gameState.editions, "playingCardOdds");
+    } else {
+      const hasEdition = Math.random() <= gameState.shopWeights["Playing Card"].edition / 100;
+
+      if (hasEdition && !certificate && !stone && !blockEdition) {
+        card.edition = pickWeightedRandom({"Holographic": {"odds": 2.8}}, {"Polychrome": {"odds": 1.2}}, {"Foil": {"odds": 4}});
+      }
+      if (certificate) {
+        card.seal = seals[Math.floor(Math.random() * seals.length)];
+      }
     }
+    const hasEnhancement = Math.random() <= gameState.shopWeights["Playing Card"].enhancement / 100;
     if (hasEnhancement && !certificate && !stone || forceEnhancement) {
       card.enhancement = enhancements[Math.floor(Math.random() * enhancements.length)];
-    }
-    if (hasSeal || certificate && !stone) {
-      card.seal = seals[Math.floor(Math.random() * seals.length)];
     }
     if (stone) {
       card.enhancement = "Stone Card";
@@ -3636,10 +3708,11 @@ function buyCard(gameState, index) {
   gameState.shop.cards.splice(index, 1);
 }
 
-function buyPack(gameState, index) {
-  const target = gameState.shop.packs[index];
+function buyPack(gameState, pack, free = false) {
+  const target = pack;
   if (!target) return "Invalid index";
-  if (gameState.money-calcCost(gameState, target) < gameState.moneyLimit) "Not enough money";
+  if (gameState.money-calcCost(gameState, target) < gameState.moneyLimit && !free) "Not enough money";
+  gameState.oldState = gameState.state;
   gameState.state = "openingPack";
   handleJokers(gameState, "onBoosterPack");
   target.contents = [];
@@ -3659,8 +3732,10 @@ function buyPack(gameState, index) {
       tempDeck.splice(cardIdx, 1);
     }
   }
-  gameState.money -= calcCost(gameState, target);
-  gameState.shop.packs.splice(index, 1);
+  if (!free) {
+    gameState.money -= calcCost(gameState, target);
+    gameState.shop.packs.splice(index, 1);
+  }
 }
 
 function usePlanet(gameState, card) {
@@ -3688,13 +3763,13 @@ function packSelect(gameState, index, cards = []) {
     drawCard(gameState, target);
   }
   gameState.currentPack.choices--;
-  if (gameState.currentPack.choices < 1) gameState.state = "shop";
+  if (gameState.currentPack.choices < 1) gameState.state = gameState.oldState;
 }
 
 function skipPack(gameState) {
   if (gameState.state != "openingPack") return "Not opening pack";
   handleJokers(gameState, "onBoosterPackSkipped");
-  gameState.state = "shop";
+  gameState.state = gameState.oldState;
 }
 
 function buyVoucher(gameState, index) {
@@ -3711,7 +3786,7 @@ function shopBuy(gameState, section, index) { // Pass index starting at 0
     case "cards":
       return buyCard(gameState, index);
     case "packs":
-      return buyPack(gameState, index);
+      return buyPack(gameState, gameState.shop.packs[index]);
     case "vouchers":
       return buyVoucher(gameState, index);
     default:
