@@ -31,7 +31,7 @@ const tags = [
     "desc": "Shop has a free Uncommon Joker"
   },
   {
-    "name": "Rare Tag", // fix?
+    "name": "Rare Tag",
     "minAnte": 1,
     "desc": "Shop has a free Rare Joker"
   },
@@ -4325,7 +4325,6 @@ function blindEnd(gameState, isMrBones = false) {
     if (handledJoker?.money) gameState.moneySources.push([joker.name, handledJoker.money]);
   });
   if (currentBlindIdx == 2) { // Boss blind
-    console.log(gameState.tags);
     gameState.tags.forEach((tag, idx) => {
       if (tag.name.toLowerCase().replaceAll(" ", "") == "investmenttag") gameState.moneySources.push("Investment Tag", 25);
       gameState.tags.splice(idx, 1);
