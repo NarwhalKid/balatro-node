@@ -4310,7 +4310,7 @@ function blindEnd(gameState, isMrBones = false) {
   gameState.moneySources = [];
   if (gameState.deck.toLowerCase().replaceAll(" ", "") == "anaglyphdeck") {
     if (!gameState.bannedTags.includes("Double Tag"))
-      gameState.tags.push(tags.filter(tag => tag.name == "Double Tag"));
+      gameState.tags.push(objectClone(tags.find(tag => tag.name == "Double Tag")));
   }
   if (!isMrBones) gameState.moneySources.push(["Blind Reward", gameState.currentBlinds[currentBlindIdx].reward]);
   if (gameState.deck.toLowerCase().replaceAll(" ", "") == "greendeck") {
