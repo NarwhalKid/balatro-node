@@ -31,7 +31,7 @@ const tags = [
     "desc": "Shop has a free Uncommon Joker"
   },
   {
-    "name": "Rare Tag",  
+    "name": "Rare Tag", // fix?
     "minAnte": 1,
     "desc": "Shop has a free Rare Joker"
   },
@@ -3549,7 +3549,7 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
         break;
       }
       if (tag == "Rare Tag") {
-        cardToText = "Joker";
+        cardType = "Joker";
         jokerRarity = "Rare";
         gameState.tags.splice(gameState.tags.indexOf(tag), 1);
         break;
