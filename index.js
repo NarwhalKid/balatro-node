@@ -248,7 +248,7 @@ const enhancements = {
 }
 
 const packTypes = {
-  "Arcana Pack": {"Tarot Card": {"odds": 1}, "Spectral Card": {"odds": 0}},
+  "Arcana Pack": {"Tarot Card": {"odds": 0.8}, "Spectral Card": {"odds": 0}},
   "Celestial Pack": {"Planet Card": {"odds": 1}},
   "Standard Pack": {"Playing Card": {"odds": 1}},
   "Buffoon Pack": {"Joker": {"odds": 1}},
@@ -3241,7 +3241,7 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
             break;
         case "painteddeck":
             game.jokerSlots--;
-            game.handSize++;
+            game.handSize += 2;
             break;
         case "anaglyphdeck":
             break;
@@ -3455,11 +3455,12 @@ function addVoucher(gameState, voucher) {
       gameState.consumableSlots++;
       break;
     case "omenglobe":
+      packTypes["Arcana Pack"]["Spectral Card"].odds = 0.2;
       break;
-    case "telescope":
+    case "telescope": // TODO
       gameState.possibleVouchers.push("Observatory");
       break;
-    case "observatory":
+    case "observatory": // TODO
       break;
     case "grabber":
       gameState.possibleVouchers.push("Nacho Tong");
@@ -3515,10 +3516,10 @@ function addVoucher(gameState, voucher) {
       gameState.ante--;
       gameState.defaultDiscards--;
       break;
-    case "director'scut":
+    case "director'scut": // TODO
       gameState.possibleVouchers.push("Retcon");
       break;
-    case "retcon":
+    case "retcon": // TODO
       break;
     case "paintbrush":
       gameState.possibleVouchers.push("Palette");
@@ -4307,9 +4308,18 @@ function blindEnd(gameState, isMrBones = false) {
   let currentBlindIdx = gameState.currentBlinds.filter(blind => blind.completed).length;
   gameState.currentBlinds[currentBlindIdx].completed = true;
   gameState.moneySources = [];
+  if (gameState.deck.toLowerCase().replaceAll(" ", "") == "anaglyphdeck") {
+    if (!gameState.bannedTags.includes("Double Tag"))
+      gameState.tags.push(tags.filter(tag => tag.name == "Double Tag"));
+  }
   if (!isMrBones) gameState.moneySources.push(["Blind Reward", gameState.currentBlinds[currentBlindIdx].reward]);
-  gameState.moneySources.push(["Interest", Math.min(Math.floor(gameState.money / 5), gameState.interestCap) * (jokerCount(gameState, "tothemoon") + 1) ]);
-  gameState.moneySources.push(["Remaining Hands", gameState.blind.hands ]);
+  if (gameState.deck.toLowerCase().replaceAll(" ", "") == "greendeck") {
+    gameState.moneySources.push(["Remaining Hands", gameState.blind.hands*2 ]);
+    gameState.moneySources.push(["Remaining Discards", gameState.blind.discards ]);
+  } else {
+    gameState.moneySources.push(["Interest", Math.min(Math.floor(gameState.money / 5), gameState.interestCap) * (jokerCount(gameState, "tothemoon") + 1) ]);
+    gameState.moneySources.push(["Remaining Hands", gameState.blind.hands ]);
+  }
   gameState.jokers.forEach(joker => {
     const handledJoker = handleJoker(gameState, joker, "onRoundEnd");
     if (handledJoker?.money) gameState.moneySources.push([joker.name, handledJoker.money]);
