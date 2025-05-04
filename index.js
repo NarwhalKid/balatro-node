@@ -242,7 +242,7 @@ const enhancements = {
     const money = random(gameState, 1, 15);
     const mult = random(gameState, 1, 5);
     if (money) gameState.money += 20;
-    if (money || mult) handleJokers(gameState, onLuckyTrigger);
+    if (money || mult) handleJokers(gameState, "onLuckyTrigger");
     return {"plusMult": mult ? 20 : 0};
   }}
 }
@@ -4646,7 +4646,7 @@ function blindsToText(gameState) {
 function cardsToText(gameState, used = true) {
   let returnString = "";
   gameState.fullDeck.forEach(card => {
-    
+
   })
     if (gameState.blind?.remainingCards && used) {
   }
