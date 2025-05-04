@@ -4023,22 +4023,17 @@ function restoreGameFunctions(game) {
   sections.forEach(section => {
     if (!Array.isArray(section)) return;
     section.forEach(consumable => {
-      const ogConsumable = deepFind(cards, findConsumable => findConsumable.name == consumable.name) ||
-                           deepFind(jokers, findConsumable => findConsumable.name == consumable.name) ||
-                           deepFind(tags, findConsumable => findConsumable?.name == consumable.name);
+      const ogConsumable = deepFind(cards, findConsumable => findConsumable.name == consumable.name) || deepFind(jokers, findConsumable => findConsumable.name == consumable.name) || deepFind(tags, findConsumable => findConsumable?.name == consumable.name);
       if (!ogConsumable) return;
-
-      // Ensure references to functions are restored correctly
       for (const [key, value] of Object.entries(ogConsumable)) {
         if (typeof value === "function") {
-          // Directly assign function reference, no cloning
           consumable[key] = value;
         }
       }
-    });
-  });
+    })
+  })
 
-  // Handle special case for 'theFool'
+
   if (game.theFool) {
     const ogConsumable = game.theFool.name;
     if (!ogConsumable) return game;
@@ -4053,7 +4048,6 @@ function restoreGameFunctions(game) {
 
   return game;
 }
-
 
 function newShop(gameState) {
   let currentBlindIdx = gameState.currentBlinds.filter(blind => blind.completed).length;
