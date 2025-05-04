@@ -3784,6 +3784,7 @@ function rerollShop(gameState) {
     chaos.properties.beenUsed = true;
   } else {
     gameState.shop.chaosUsed = false;
+    gameState.rerollCost = gameState.currentReroll;
   }
 }
 
