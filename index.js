@@ -1366,8 +1366,10 @@ const jokers = [
       }
     },
     onSell(gameState) {
-      if (gameState.jokers.filter(joker => joker != this && joker.name == "Chaos the Clown" && !joker.properties.beenUsed) < 1)
+      if (gameState.jokers.filter(joker => joker != this && joker.name == "Chaos the Clown" && !joker.properties.beenUsed) < 1) {
         gameState.rerollCost = gameState.currentReroll;
+        gameState.shop.chaosUsed = false;
+      }
     }
   },
   {
@@ -3768,19 +3770,20 @@ function fillShopCards(gameState) {
 function rerollShop(gameState) {
   handleJokers(gameState, "onReroll");
   gameState.shop.cards = [];
-  if (gameState.shop.filled && !gameState.chaosUsed) {
+  if (gameState.shop.filled && !gameState.shop.chaosUsed) {
     if (gameState.money-gameState.rerollCost < gameState.moneyLimit && gameState.money > 0 && gameState.money > 0) return "Not enough money";
     gameState.money -= gameState.rerollCost;
+    gameState.currentReroll++;
   }
   fillShopCards(gameState);
 
   const chaos = gameState.jokers.find(joker => joker.name == "Chaos the Clown" && !joker.properties.beenUsed);
   if (chaos) {
     gameState.rerollCost = 0;
-    gameState.chaosUsed = true;
+    gameState.shop.chaosUsed = true;
     chaos.properties.beenUsed = true;
   } else {
-    gameState.chaosUsed = false;
+    gameState.shop.chaosUsed = false;
   }
 }
 
@@ -4062,10 +4065,10 @@ function newShop(gameState) {
   const chaos = gameState.jokers.find(joker => joker.name == "Chaos the Clown" && !joker.properties.beenUsed);
   if (chaos) {
     gameState.rerollCost = 0;
-    gameState.chaosUsed = true;
+    gameState.shop.chaosUsed = true;
     chaos.properties.beenUsed = true;
   } else {
-    gameState.chaosUsed = false;
+    gameState.shop.chaosUsed = false;
   }
 
   gameState.hadShop = true;
