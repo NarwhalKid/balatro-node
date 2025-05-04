@@ -4643,6 +4643,15 @@ function blindsToText(gameState) {
   return returnArray.join("\n\n");
 }
 
+function cardsToText(gameState, used = true) {
+  let returnString = "";
+  gameState.fullDeck.forEach(card => {
+    
+  })
+    if (gameState.blind?.remainingCards && used) {
+  }
+}
+
 function swapCards(gameState, indexes) {
   if (!gameState.cardArea) return "No cards";
   if (indexes.length != 2) return "Select 2 cards";
