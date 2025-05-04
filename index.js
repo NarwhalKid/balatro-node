@@ -3885,7 +3885,7 @@ function buyCard(gameState, index) {
 function buyPack(gameState, pack, free = false) {
   const target = pack;
   if (!target) return "Invalid index";
-  if (gameState.money-calcCost(gameState, target) < gameState.moneyLimit && calcCost(gameState, target) > 0 && !free) "Not enough money";
+  if (gameState.money-calcCost(gameState, target) < gameState.moneyLimit && calcCost(gameState, target) > 0 && !free) return "Not enough money";
   gameState.oldState = gameState.state;
   gameState.state = "openingPack";
   handleJokers(gameState, "onBoosterPack");
