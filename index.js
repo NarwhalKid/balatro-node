@@ -3771,7 +3771,7 @@ function rerollShop(gameState) {
   handleJokers(gameState, "onReroll");
   gameState.shop.cards = [];
   if (gameState.shop.filled && !gameState.shop.chaosUsed) {
-    if (gameState.money-gameState.rerollCost < gameState.moneyLimit && gameState.money > 0 && gameState.money > 0) return "Not enough money";
+    if (gameState.money-gameState.rerollCost < gameState.moneyLimit && gameState.rerollCost > 0) return "Not enough money";
     gameState.money -= gameState.rerollCost;
     gameState.currentReroll++;
   }
@@ -3866,7 +3866,7 @@ function addNewJoker(gameState, joker) {
 function buyCard(gameState, index) {
   const target = gameState.shop.cards[index];
   if (!target) return "Invalid index";
-  if (gameState.money-calcCost(gameState, target) < gameState.moneyLimit && gameState.money > 0) return "Not enough money";
+  if (gameState.money-calcCost(gameState, target) < gameState.moneyLimit && calcCost(gameState, target) > 0) return "Not enough money";
   if (target.rarity) { // Joker
     if (gameState.jokers.length >= gameState.jokerSlots) return "No empty joker slots";
     addNewJoker(gameState, target);
@@ -3885,7 +3885,7 @@ function buyCard(gameState, index) {
 function buyPack(gameState, pack, free = false) {
   const target = pack;
   if (!target) return "Invalid index";
-  if (gameState.money-calcCost(gameState, target) < gameState.moneyLimit && gameState.money > 0 && !free) "Not enough money";
+  if (gameState.money-calcCost(gameState, target) < gameState.moneyLimit && calcCost(gameState, target) > 0 && !free) "Not enough money";
   gameState.oldState = gameState.state;
   gameState.state = "openingPack";
   handleJokers(gameState, "onBoosterPack");
@@ -3953,7 +3953,7 @@ function skipPack(gameState) {
 function buyVoucher(gameState, index) {
   const target = gameState.shop.vouchers[index];
   if (!target) return "Invalid index";
-  if (gameState.money - calcCost(gameState, target) < gameState.moneyLimit && gameState.money > 0) return "Not enough money";
+  if (gameState.money - calcCost(gameState, target) < gameState.moneyLimit && calcCost(gameState, target) > 0) return "Not enough money";
   gameState.money -= calcCost(gameState, target);
   addVoucher(gameState, target.name);
   gameState.shop.vouchers.splice(index, 1);
