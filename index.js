@@ -3991,19 +3991,30 @@ function shopBuy(gameState, section, index) { // Pass index starting at 0
 }
 
 function deepFind(obj, predicate) {
-  if (typeof obj !== 'object' || obj === null) return;
+  if (typeof obj !== 'object' || obj === null) return undefined;
 
-  for (const [key, value] of Object.entries(obj)) {
-    if (predicate(value, key)) {
-      return value;
+  if (Array.isArray(obj)) {
+    for (let i = 0; i < obj.length; i++) {
+      if (predicate(obj[i], i)) return obj[i];
+      if (typeof obj[i] === 'object' && obj[i] !== null) {
+        const result = deepFind(obj[i], predicate);
+        if (result !== undefined) return result;
+      }
     }
+  } else {
+    for (const [key, value] of Object.entries(obj)) {
+      if (predicate(value, key)) return value;
 
-    if (typeof value === 'object' && value !== null) {
-      const result = deepFind(value, predicate);
-      if (result !== undefined) return result;
+      if (typeof value === 'object' && value !== null) {
+        const result = deepFind(value, predicate);
+        if (result !== undefined) return result;
+      }
     }
   }
+
+  return undefined;
 }
+
 
 
 function restoreGameFunctions(game) {
