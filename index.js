@@ -259,10 +259,14 @@ const cards = {
   "Tarot Card": [
     {
       name: "The Fool",
-      desc: "Creates the last Tarot or Planet card used during this run (The Fool excluded)",
+      getDesc(gameState) {return `Creates the last Tarot or Planet card used during this run (The Fool excluded)\n(${this.getLastText(gameState)})`},
       onUse(gameState, cards) {
         if (!gameState.theFool || gameState.theFool.name == "The Fool") return {"error": "Invalid last card"};
         gameState.consumables.push(objectClone(gameState.theFool));
+      },
+      getLastText(gameState) {
+        if (!gameState.theFool || gameState.theFool.name == "The Fool") return "None";
+        return gameState.theFool.name;
       }
     },
     {
@@ -405,11 +409,14 @@ const cards = {
     },
     {
       name: "Temperance",
-      desc: "Gives the total sell value of all current Jokers (Max of $50)",
+      getDesc(gameState){return `Gives the total sell value of all current Jokers (Max of $50)\n(Currently ${this.calcMoney(gameState)})`},
       onUse(gameState, cards) {
+        gameState.money += this.calcMoney(gameState);
+      },
+      calcMoney(gameState) {
         let total = 0;
         gameState.jokers.map(joker => roundHalfDown(calcCost(gameState, joker)/2) + +(joker.addedSellValue || 0)).forEach(cost => total += cost);
-        gameState.money += Math.max(Math.min(total, 50), 0);
+        return Math.max(Math.min(total, 50), 0);
       }
     },
     {
@@ -3487,6 +3494,8 @@ function addVoucher(gameState, voucher) {
       gameState.possibleVouchers.push("Overstock Plus");
     case "overstockplus":
       gameState.shopSlots++;
+      if (gameState.state == "shop")
+        fillShopCards(gameState);
       break;
     case "clearancesale":
       gameState.possibleVouchers.push("Liquidation");
@@ -3916,6 +3925,7 @@ function packSelect(gameState, index, cards = []) {
     } else { // Planet Card
       usePlanet(gameState, target);
     }
+    if (target.handType || cards["Tarot Card"].find(tarot => tarot.name == target.name)) gameState.theFool = target;
   } else { // Playing Card
     drawCard(gameState, target);
   }
@@ -4508,7 +4518,12 @@ function gameToText(gameState) {
   returnString += "\n\nConsumables:";
   gameState.consumables.forEach(consumable => returnString += `\n${consumableToText(gameState, consumable)}`);
   returnString += "\n\nTags:";
-  gameState.tags.forEach(tag => returnString += `\n${tag.name}`);
+  gameState.tags.forEach(tag => {
+    returnString += `\n${tag.name}`;
+    if (tag.name == "Orbital Tag") {
+      returnString += ` ${(tag.properties.handType)}`;
+    }
+  });
   returnString += `\n\nHands: ${gameState.blind ? gameState.blind.hands : gameState.defaultHands} | Discards: ${gameState.blind ? gameState.blind.discards : gameState.defaultDiscards}`;
   returnString += `\n$${gameState.money}`;
   returnString += `\nAnte: ${gameState.ante}/8`;
@@ -4538,7 +4553,7 @@ function gameToText(gameState) {
         money += source[1];
         moneyString += `\n${source[0]}: ${"$".repeat(source[1])}`;
       })
-      returnString += `Cash Out: ${money}`;
+      returnString += `Cash Out: $${money}`;
       returnString += moneyString;
       break;
     case "shop":
