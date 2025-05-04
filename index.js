@@ -3770,6 +3770,7 @@ function rerollShop(gameState) {
   gameState.shop.cards = [];
   if (gameState.shop.filled && !gameState.chaosUsed) {
     if (gameState.money-gameState.rerollCost < gameState.moneyLimit && gameState.money > 0 && gameState.money > 0) return "Not enough money";
+    gameState.money -= gameState.rerollCost;
   }
   fillShopCards(gameState);
 
@@ -3778,6 +3779,8 @@ function rerollShop(gameState) {
     gameState.rerollCost = 0;
     gameState.chaosUsed = true;
     chaos.properties.beenUsed = true;
+  } else {
+    gameState.chaosUsed = false;
   }
 }
 
@@ -4061,6 +4064,8 @@ function newShop(gameState) {
     gameState.rerollCost = 0;
     gameState.chaosUsed = true;
     chaos.properties.beenUsed = true;
+  } else {
+    gameState.chaosUsed = false;
   }
 
   gameState.hadShop = true;
