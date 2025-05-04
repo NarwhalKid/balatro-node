@@ -3918,7 +3918,7 @@ function usePlanet(gameState, card) {
     gameState.jokerProperties.satellite.planets.push(card.name);
 }
 
-function packSelect(gameState, index, cards = []) {
+function packSelect(gameState, index, selectedCards = []) {
   if (gameState.state != "openingPack") return "Not opening Pack";
   const target = gameState.currentPack.contents[index];
   if (!target) return "Invalid index";
@@ -3927,7 +3927,7 @@ function packSelect(gameState, index, cards = []) {
     addNewJoker(gameState, target);
   } else if (!target.rank) { // Consumable
     if (target.onUse) { // Spectral or Tarot
-      const response = target.onUse(gameState, cards);
+      const response = target.onUse(gameState, selectedCards);
       if (response) return response;
     } else { // Planet Card
       usePlanet(gameState, target);
