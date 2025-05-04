@@ -3441,9 +3441,9 @@ function adjustBlinds(gameState) {
       const exponent = Math.pow(inner, c);
       base = BigInt(Math.floor(Number(a) * exponent));
 
-      const digits = log10BigInt(result) - 1n;
+      const digits = log10BigInt(base) - 1n;
       const roundingFactor = powBigInt(10n, digits);
-      base -= result % roundingFactor;
+      base -= base % roundingFactor;
   }
   const plasmaMult = gameState.deck.toLowerCase().replaceAll(" ", "") == "plasmadeck" ? 2n : 1n;
   gameState.currentBlinds[0].blindScore = base * plasmaMult;
