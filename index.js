@@ -3646,7 +3646,7 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
       do {
         const pokerHand = Object.keys(pokerHands)[Math.floor(Math.random() * Object.keys(pokerHands).length)];
         card = {name: pokerHands[pokerHand].planet, handType: pokerHand}
-      } while ((!pokerHands[card.handType].unlocked && gameState.handPlays[card.handType] < 1) || (jokerCount(gameState, "showman") && deepFind(gameState, (thing) => thing?.name == card.name)));
+      } while ((!pokerHands[card.handType].unlocked && gameState.handPlays[card.handType] < 1) || (!jokerCount(gameState, "showman") && deepFind(gameState, (thing) => thing?.name == card.name)));
     } else {
       let remainingCards = cards[cardType];
       if (cardType != "Playing Card") {
@@ -4119,6 +4119,13 @@ function fillHand(gameState) {
   for (let i = gameState.blind.hand.length; i < gameState.handSize; i++) {
     drawCard(gameState);
   }
+  setHandSort(gameState, gameState.sortByRank);
+}
+
+function setHandSort(gameState, sortByRank) {
+  if (gameState.state != "blind") return "Not in Blind";
+  gameState.sortByRank = sortByRank;
+  
   const bigger = gameState.sortByRank ? "rank" : "suit";
   const smaller = gameState.sortByRank ? "suit" : "rank";
   const biggerArr = gameState.sortByRank ? ranks : suits;
@@ -4130,12 +4137,6 @@ function fillHand(gameState) {
     if (smallerArr.indexOf(a[smaller]) > smallerArr.indexOf(b[smaller])) return 1;
     return 0;
   })
-}
-
-function setHandSort(gameState, sortByRank) {
-  if (gameState.state != "blind") return "Not in Blind";
-  gameState.sortByRank = sortByRank;
-  fillHand(gameState);
 }
 
 function blindSetup(gameState) {
