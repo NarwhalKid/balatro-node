@@ -3403,10 +3403,39 @@ function newBlinds(gameState) {
   adjustBlinds(gameState);
 }
 
+function adjustBlinds(gameState) {
+  const SCALE = BigInt(decimalAccuracy);
+  const k = SCALE * 75n / 100n;
+  const fixed_b = SCALE * 16n / 10n;
+
+  let base;
+
+  if (gameState.ante < 1) {
+    base = 100n;
+  } else if (gameState.ante <= 8) {
+    base = gameState.blindBases[gameState.ante - 1];
+  } else {
+    const a = gameState.blindBases[7];
+    const c = BigInt(gameState.ante - 8);
+    const dScaled = SCALE + SCALE * 2n * c / 10n;
+    const kcScaled = k * c / SCALE;
+    const innerScaled = fixed_b + powFixed(kcScaled, dScaled, SCALE);
+    const exponentScaled = powFixed(innerScaled, c, SCALE);
+    const result = a * exponentScaled / SCALE;
+    const digits = log10BigInt(result) - 1n;
+    const roundingFactor = powBigInt(10n, digits);
+    base = result - result % roundingFactor;
+  }
+
+  const plasmaMult = gameState.deck.toLowerCase().replaceAll(" ", "") === "plasmadeck" ? 2n : 1n;
+  gameState.currentBlinds[0].blindScore = base * plasmaMult;
+  gameState.currentBlinds[1].blindScore = base * 15n / 10n * plasmaMult;
+  const mult = BigInt(Math.round(gameState.currentBlinds[2].scoreMult * 10));
+  gameState.currentBlinds[2].blindScore = base * mult / 10n * plasmaMult;
+}
+
 function powBigInt(base, exp) {
-  let result = 1;
-  base = BigInt(base);
-  exp = BigInt(exp);
+  let result = 1n;
   while (exp > 0n) {
     if (exp % 2n === 1n) result *= base;
     base *= base;
@@ -3414,41 +3443,24 @@ function powBigInt(base, exp) {
   }
   return result;
 }
-  
+
+function powFixed(baseScaled, exp, scale) {
+  let result = scale;
+  for (let i = 0n; i < exp; i++) {
+    result = result * baseScaled / scale;
+  }
+  return result;
+}
+
 function log10BigInt(n) {
-  let digits = 0n;
+  let log = 0n;
   while (n >= 10n) {
     n /= 10n;
-    digits++;
+    log++;
   }
-  return digits;
+  return log + 1n;
 }
 
-function adjustBlinds(gameState) {
-  let base;
-  if (gameState.ante < 1) {
-      base = 100n;
-  } else if (gameState.ante <= 8) {
-      base = gameState.blindBases[gameState.ante-1];
-  } else {
-      const a = gameState.blindBases[7];
-      const c = gameState.ante - 8;
-      const d = 1 + 0.2 * c;
-      const b = 1.6;
-
-      const inner = b + Math.pow(k * c, d);
-      const exponent = Math.pow(inner, c);
-      base = BigInt(Math.floor(Number(a) * exponent));
-
-      const digits = log10BigInt(result) - 1n;
-      const roundingFactor = powBigInt(10n, digits);
-      base -= result % roundingFactor;
-  }
-  const plasmaMult = gameState.deck.toLowerCase().replaceAll(" ", "") == "plasmadeck" ? 2n : 1n;
-  gameState.currentBlinds[0].blindScore = base * plasmaMult;
-  gameState.currentBlinds[1].blindScore = base * 15n / 10n * plasmaMult;
-  gameState.currentBlinds[2].blindScore = base * BigInt(gameState.currentBlinds[2].scoreMult*10) / 10n * plasmaMult; // Multiply and divide to multiply by decimal
-}
 
 function sellCard(gameState, section, index) { // Pass index starting with 0
   section = section.toLowerCase().replaceAll(" ", "");
@@ -3468,7 +3480,7 @@ function sellCard(gameState, section, index) { // Pass index starting with 0
 
 function addVoucher(gameState, voucher) {
   gameState.vouchers.push(voucher);
-  delete gameState.possibleVouchers[voucher];
+  gameState.vouchers.splice(gameState.vouchers.indexOf(voucher), 1);
 
   switch (voucher.toLowerCase().replaceAll(" ", "")) {
     case "overstock":
