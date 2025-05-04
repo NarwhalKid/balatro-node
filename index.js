@@ -1826,7 +1826,7 @@ const jokers = [
           if (joker.name.toLowerCase().replaceAll(" ", "") == "invisiblejoker" && !invis) {
             invis = true;
           } else {
-            addNewJoker(gameState, objectClone(joker));
+            jokers.push(objectClone(joker));
           }
         });
         if (jokers.length) {
@@ -3020,7 +3020,64 @@ const blinds = [
       "secondaryColor": "#2a292d",
       "tertiaryColor": "#35262e",
       "isNormalBoss": true
-  }
+  },
+
+  {
+    "name": "Violet Vessel",
+    "debuff": "Very large blind",
+    "minimumAnte": 8,
+    "scoreMult": 6,
+    "primaryColor": "#7d60e0",
+    "primaryShadow": "#4d3a93",
+    "secondaryColor": "#303550",
+    "tertiaryColor": "#443f74",
+    "isFinisherBoss": true
+  },
+  {
+    "name": "Cerulean Bell",
+    "debuff": "Forces 1 card to\nalways be selected",
+    "minimumAnte": 8,
+    "scoreMult": 2,
+    "primaryColor": "#0091ff",
+    "primaryShadow": "#005ca9",
+    "secondaryColor": "#123f57",
+    "tertiaryColor": "#055481",
+    "isFinisherBoss": true
+  },
+  {
+    "name": "Verdant Leaf",
+    "debuff": "All cards debuffed\nuntil 1 Joker sold",
+    "minimumAnte": 8,
+    "scoreMult": 2,
+    "primaryColor": "#429e78",
+    "primaryShadow": "#24644a",
+    "secondaryColor": "#25423c",
+    "tertiaryColor": "#2c584b",
+    "isFinisherBoss": true
+  },
+  {
+    "name": "Amber Acorn",
+    "debuff": "Flips and shuffles\nall Joker cards",
+    "minimumAnte": 8,
+    "scoreMult": 2,
+    "primaryColor": "#ff9800",
+    "primaryShadow": "#a96000",
+    "secondaryColor": "#4b401d",
+    "tertiaryColor": "#78560d",
+    "isFinisherBoss": true
+  },
+  {
+    "name": "Crimson Heart",
+    "debuff": "One random Joker\ndisabled every hand",
+    "minimumAnte": 8,
+    "scoreMult": 2,
+    "primaryColor": "#a41919",
+    "primaryShadow": "#680707",
+    "secondaryColor": "#392629",
+    "tertiaryColor": "#532324",
+    "isFinisherBoss": true
+  },
+  
 ]
 
 function newGame(deck = "Red Deck", stake = "White Stake") {
@@ -4418,7 +4475,7 @@ function playingCardToText(gameState, card) {
   if (card.debuffed) returnString += "Debuffed ";
   if (card.seal) returnString += `${card.seal} `;
   if (card.edition) returnString += `${card.edition} `;
-  if (card.enhancement) returnString += `${card.enhancement.replaceAll(" ", "")} `;
+  if (card.enhancement) returnString += `${card.enhancement} `;
   if (card.edition?.toLowerCase().replaceAll(" ", "") != "stonecard")
     returnString += `${card.rank} of ${card.suit}`;
   if (card.extraChips) returnString += ` (+${card.extraChips} extra Chips)`
