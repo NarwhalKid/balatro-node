@@ -3270,8 +3270,26 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
             break;
         case "magicdeck":
             addVoucher(game, "Crystal Ball");
-            const fool = objectClone(cards["Tarot Card"].find(card => card.name == "The Fool"));
+            const fool = objectClone(cards["Tarot Card"].find(card => card.name == "The Empress"));
             fool.cost = 3;
+            game.consumables.push(objectClone(fool));
+            game.consumables.push(objectClone(fool));
+            game.consumables.push(objectClone(fool));
+            game.consumables.push(objectClone(fool));
+            game.consumables.push(objectClone(fool));
+            game.consumables.push(objectClone(fool));
+            game.consumables.push(objectClone(fool));
+            game.consumables.push(objectClone(fool));
+            game.consumables.push(objectClone(fool));
+            game.consumables.push(objectClone(fool));
+            game.consumables.push(objectClone(fool));
+            game.consumables.push(objectClone(fool));
+            game.consumables.push(objectClone(fool));
+            game.consumables.push(objectClone(fool));
+            game.consumables.push(objectClone(fool));
+            game.consumables.push(objectClone(fool));
+            game.consumables.push(objectClone(fool));
+            game.consumables.push(objectClone(fool));
             game.consumables.push(objectClone(fool));
             game.consumables.push(fool);
             break;
