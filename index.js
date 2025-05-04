@@ -3405,8 +3405,8 @@ function newBlinds(gameState) {
 
 function adjustBlinds(gameState) {
   const SCALE = BigInt(decimalAccuracy);
-  const k = SCALE * 75n / 100n;
-  const fixed_b = SCALE * 16n / 10n;
+  const k = SCALE * 185n / 100n;
+  const fixed_b = SCALE * 37n / 10n;
 
   let base;
 
@@ -3419,9 +3419,10 @@ function adjustBlinds(gameState) {
     const c = BigInt(gameState.ante - 8);
     const dScaled = SCALE + SCALE * 2n * c / 10n;
     const kcScaled = k * c / SCALE;
-    const innerScaled = fixed_b + powFixed(kcScaled, dScaled, SCALE);
-    const exponentScaled = powFixed(innerScaled, c, SCALE);
+    const innerScaled = fixed_b + powBigInt(kcScaled, dScaled);
+    const exponentScaled = powBigInt(innerScaled, c);
     const result = a * exponentScaled / SCALE;
+    
     const digits = log10BigInt(result) - 1n;
     const roundingFactor = powBigInt(10n, digits);
     base = result - result % roundingFactor;
@@ -3440,14 +3441,6 @@ function powBigInt(base, exp) {
     if (exp % 2n === 1n) result *= base;
     base *= base;
     exp /= 2n;
-  }
-  return result;
-}
-
-function powFixed(baseScaled, exp, scale) {
-  let result = scale;
-  for (let i = 0n; i < exp; i++) {
-    result = result * baseScaled / scale;
   }
   return result;
 }
