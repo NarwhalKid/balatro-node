@@ -3403,40 +3403,10 @@ function newBlinds(gameState) {
   adjustBlinds(gameState);
 }
 
-function adjustBlinds(gameState) {
-  const SCALE = BigInt(decimalAccuracy);
-  const k = SCALE * 185n / 100n;
-  const fixed_b = SCALE * 37n / 10n;
-
-  let base;
-
-  if (gameState.ante < 1) {
-    base = 100n;
-  } else if (gameState.ante <= 8) {
-    base = gameState.blindBases[gameState.ante - 1];
-  } else {
-    const a = gameState.blindBases[7];
-    const c = BigInt(gameState.ante - 8);
-    const dScaled = SCALE + SCALE * 2n * c / 10n;
-    const kcScaled = k * c / SCALE;
-    const innerScaled = fixed_b + powBigInt(kcScaled, dScaled);
-    const exponentScaled = powBigInt(innerScaled, c);
-    const result = a * exponentScaled / SCALE;
-    
-    const digits = log10BigInt(result) - 1n;
-    const roundingFactor = powBigInt(10n, digits);
-    base = result - result % roundingFactor;
-  }
-
-  const plasmaMult = gameState.deck.toLowerCase().replaceAll(" ", "") === "plasmadeck" ? 2n : 1n;
-  gameState.currentBlinds[0].blindScore = base * plasmaMult;
-  gameState.currentBlinds[1].blindScore = base * 15n / 10n * plasmaMult;
-  const mult = BigInt(Math.round(gameState.currentBlinds[2].scoreMult * 10));
-  gameState.currentBlinds[2].blindScore = base * mult / 10n * plasmaMult;
-}
-
 function powBigInt(base, exp) {
-  let result = 1n;
+  let result = 1;
+  base = BigInt(base);
+  exp = BigInt(exp);
   while (exp > 0n) {
     if (exp % 2n === 1n) result *= base;
     base *= base;
@@ -3444,16 +3414,42 @@ function powBigInt(base, exp) {
   }
   return result;
 }
-
+  
 function log10BigInt(n) {
-  let log = 0n;
+  let digits = 0n;
   while (n >= 10n) {
     n /= 10n;
-    log++;
+    digits++;
   }
-  return log + 1n;
+  return digits;
 }
 
+function adjustBlinds(gameState) {
+  const k = 0.75;
+  let base;
+  if (gameState.ante < 1) {
+      base = 100n;
+  } else if (gameState.ante <= 8) {
+      base = gameState.blindBases[gameState.ante-1];
+  } else {
+      const a = gameState.blindBases[7];
+      const c = gameState.ante - 8;
+      const d = 1 + 0.2 * c;
+      const b = 1.6;
+
+      const inner = b + Math.pow(k * c, d);
+      const exponent = Math.pow(inner, c);
+      base = BigInt(Math.floor(Number(a) * exponent));
+
+      const digits = log10BigInt(result) - 1n;
+      const roundingFactor = powBigInt(10n, digits);
+      base -= result % roundingFactor;
+  }
+  const plasmaMult = gameState.deck.toLowerCase().replaceAll(" ", "") == "plasmadeck" ? 2n : 1n;
+  gameState.currentBlinds[0].blindScore = base * plasmaMult;
+  gameState.currentBlinds[1].blindScore = base * 15n / 10n * plasmaMult;
+  gameState.currentBlinds[2].blindScore = base * BigInt(gameState.currentBlinds[2].scoreMult*10) / 10n * plasmaMult; // Multiply and divide to multiply by decimal
+}
 
 function sellCard(gameState, section, index) { // Pass index starting with 0
   section = section.toLowerCase().replaceAll(" ", "");
