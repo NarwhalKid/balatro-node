@@ -4717,12 +4717,13 @@ function cardsToText(gameState, fullDeck = false) {
 
   let returnString = "";
   Object.keys(suitArrays).forEach(suit => {
-    returnString += `\n${suit}: ${suitArrays[suit].length}\n\n`;
-    suitArrays[suit].forEach(card => returnString += `${cardToText(gameState, card)}\n`);
+    returnString += `\n\n${suit}: ${suitArrays[suit].length}\n`;
+    suitArrays[suit].forEach(card => returnString += `${cardToText(gameState, card)}`);
   })
   Object.keys(rankCounts).forEach(rank => {
-    if (Number.isNaN(parseInt(rank))) rank = rank.substring(0,1);
-    returnString += `\n${rank}: ${rank.length}`;
+    let rankName;
+    if (Number.isNaN(parseInt(rank))) rankName = rank.substring(0,1);
+    returnString += `\n${rankName}: ${rankCounts[rank].length}`;
   })
   return returnString;
 }
