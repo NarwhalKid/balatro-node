@@ -3414,8 +3414,6 @@ function newBlinds(gameState) {
 
 function adjustBlinds(gameState) {
   const SCALE = BigInt(decimalAccuracy);
-  const k = SCALE * 75n / 100n;
-  const fixed_b = SCALE * 16n / 10n;
 
   let base;
 
@@ -3424,16 +3422,50 @@ function adjustBlinds(gameState) {
   } else if (gameState.ante <= 8) {
     base = gameState.blindBases[gameState.ante - 1];
   } else {
-    const a = gameState.blindBases[7];
-    const c = BigInt(gameState.ante - 8);
-    const dScaled = SCALE + SCALE * 2n * c / 10n;
-    const kcScaled = k * c / SCALE;
-    const innerScaled = fixed_b + powFixed(kcScaled, dScaled, SCALE);
-    const exponentScaled = powFixed(innerScaled, c, SCALE);
-    const result = a * exponentScaled / SCALE;
-    const digits = log10BigInt(result) - 1n;
-    const roundingFactor = powBigInt(10n, digits);
-    base = result - result % roundingFactor;
+    // Functions taken from https://www.desmos.com/calculator/fsvcr75cdx
+    const SCALE = 10n ** BigInt(decimalAccuracy);
+    const b = (16n * SCALE) / 10n;      // 1.6
+    const r75 = (75n * SCALE) / 100n;   // 0.75
+    const r02 = (2n * SCALE) / 10n;     // 0.2
+    const start = BigInt(gameState.blindBases[7]);
+
+    function powFixed(base, exp) {
+      if (exp % SCALE !== 0n) throw new Error("Non-integer exponent");
+      let result = SCALE;
+      let b = base;
+      let e = exp / SCALE;
+      while (e > 0n) {
+        if (e % 2n === 1n) result = (result * b) / SCALE;
+        b = (b * b) / SCALE;
+        e /= 2n;
+      }
+      return result;
+    }
+
+    function c(ante) {
+      return BigInt(ante - 8);
+    }
+
+    function d(ante) {
+      return SCALE + (c(ante) * r02) / SCALE;
+    }
+
+    function f(ante) {
+      const cVal = c(ante);
+      const dVal = d(ante);
+      const base = (r75 * cVal);
+      const inner = b + powFixed(base, dVal);
+      return (start * powFixed(inner, cVal * SCALE)) / SCALE;
+    }
+
+    function g(ante) {
+      const value = f(ante);
+      const log10 = BigInt(value.toString().length - 1);
+      const round = 10n ** (log10 - 1n);
+      return value - (value % round);
+    }
+
+    base = g(gameState.ante);
   }
 
   const plasmaMult = gameState.deck.toLowerCase().replaceAll(" ", "") === "plasmadeck" ? 2n : 1n;
@@ -4208,7 +4240,7 @@ function handleJokers(gameState, func, params = []) {
   return {"responses": returnArray.filter(Boolean), retriggers };
 }
 
-const decimalAccuracy = 100000000;
+const decimalAccuracy = 100000;
 
 function handleMult(gameState, chips, mult, responseArray) {
   responseArray.filter(Boolean).forEach(response => {
