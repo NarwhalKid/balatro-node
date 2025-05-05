@@ -4720,8 +4720,9 @@ function cardsToText(gameState, fullDeck = false) {
     returnString += `\n\n${suit}: ${suitArrays[suit].length}\n`;
     suitArrays[suit].forEach(card => returnString += `${cardToText(gameState, card)}`);
   })
-  Object.keys(rankCounts).forEach(rank => {
-    let rankName;
+  returnString += "\n\n";
+  ranks.forEach(rank => {
+    let rankName = rank;
     if (Number.isNaN(parseInt(rank))) rankName = rank.substring(0,1);
     returnString += `\n${rankName}: ${rankCounts[rank].length}`;
   })
