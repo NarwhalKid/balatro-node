@@ -4583,9 +4583,6 @@ function gameToText(gameState) {
   returnString += "\n\nTags:";
   gameState.tags.forEach(tag => {
     returnString += `\n${tag.name}`;
-    if (tag.name == "Orbital Tag") {
-      returnString += ` ${(tag.properties.handType)}`;
-    }
   });
   returnString += `\n\nHands: ${gameState.blind ? gameState.blind.hands : gameState.defaultHands} | Discards: ${gameState.blind ? gameState.blind.discards : gameState.defaultDiscards}`;
   returnString += `\n$${gameState.money}`;
@@ -4685,7 +4682,13 @@ function blindsToText(gameState) {
     } else {
       tempReturnString += `No Reward\n`;
     }
-    if (blind.tag) tempReturnString += `Skip Tag: ${blind.tag.name}\n`;
+    if (blind.tag) {
+      tempReturnString += `Skip Tag: ${blind.tag.name}`;
+      if (blind.tag.name == "Orbital Tag") {
+        tempReturnString += ` ${(blind.tag.properties.handType)}`;
+      }
+      tempReturnString += "\n";
+    }
     if (blind.skipped) {
       tempReturnString += "SKIPPED\n";
     } else if (blind.completed) {
