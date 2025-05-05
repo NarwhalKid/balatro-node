@@ -2786,21 +2786,30 @@ const blinds = [
       "primaryShadow": "#651200",
       "secondaryColor": "#522a1e",
       "tertiaryColor": "#372a25",
-      "isNormalBoss": true
+      "isNormalBoss": true,
+      onHandPlayed(gameState, cards) {
+        // TODO
+      }
   },
   {
-      "name": "The Ox",
+      "name": "The Ox", // TODO
       "debuff": "Playing a (most played hand)\nsets money to $0",
+      "properties": {
+        "handType": undefined
+      },
       "minimumAnte": 6,
       "scoreMult": 2,
       "primaryColor": "#b24700",
       "primaryShadow": "#732700",
       "secondaryColor": "#3c301f",
       "tertiaryColor": "#5a3612",
-      "isNormalBoss": true
+      "isNormalBoss": true,
+      onHandPlayed(gameState, cards) {
+        if (getHandType(gameState, cards).handType == this.properties.handType) gameState.money = 0;
+      }
   },
   {
-      "name": "The House",
+      "name": "The House", // TODO
       "debuff": "First hand is\ndrawn face down",
       "minimumAnte": 2,
       "scoreMult": 2,
@@ -2830,7 +2839,12 @@ const blinds = [
       "primaryShadow": "#1f7742",
       "secondaryColor": "#24473a",
       "tertiaryColor": "#2a6446",
-      "isNormalBoss": true
+      "isNormalBoss": true,
+      onCardDrawn(gameState, card) {
+        if (random(gameState, 1, 7)) {
+          card.flipped = true;
+        }
+      }
   },
   {
       "name": "The Arm",
@@ -2841,7 +2855,13 @@ const blinds = [
       "primaryShadow": "#322fa1",
       "secondaryColor": "#293355",
       "tertiaryColor": "#343b7d",
-      "isNormalBoss": true
+      "isNormalBoss": true,
+      onHandPlayed(gameState, cards) {
+        const handType = getHandType(gameState, cards).handType;
+        if (gameState.handLevels[handType] > 0) {
+          gameState.handLevels[handType]--;
+        }
+      }
   },
   {
       "name": "The Club",
@@ -2852,10 +2872,15 @@ const blinds = [
       "primaryShadow": "#738154",
       "secondaryColor": "#3c4a3e",
       "tertiaryColor": "#5a6850",
-      "isNormalBoss": true
+      "isNormalBoss": true,
+      onCardDrawn(gameState, card) {
+        if (isSuit(gameState, card, "Clubs")) {
+          card.debuffed = true;
+        }
+      }
   },
   {
-      "name": "The Fish",
+      "name": "The Fish", // TODO
       "debuff": "Cards drawn face down\nafter each hand played",
       "minimumAnte": 2,
       "scoreMult": 2,
@@ -2866,7 +2891,7 @@ const blinds = [
       "isNormalBoss": true
   },
   {
-      "name": "The Psychic",
+      "name": "The Psychic", // TODO
       "debuff": "Must play 5 cards",
       "minimumAnte": 1,
       "scoreMult": 2,
@@ -2885,7 +2910,12 @@ const blinds = [
       "primaryShadow": "#732957",
       "secondaryColor": "#3c303f",
       "tertiaryColor": "#5a3652",
-      "isNormalBoss": true
+      "isNormalBoss": true,
+      onCardDrawn(gameState, card) {
+        if (isSuit(gameState, card, "Spades")) {
+          card.debuffed = true;
+        }
+      }
   },
   {
       "name": "The Water",
@@ -2896,7 +2926,17 @@ const blinds = [
       "primaryShadow": "#7d919b",
       "secondaryColor": "#3e4e53",
       "tertiaryColor": "#5f7378",
-      "isNormalBoss": true
+      "isNormalBoss": true,
+      "properties": {
+        "discardAmt": undefined
+      },
+      onBlindStart(gameState) {
+        this.properties.discardAmt = gameState.blind.discards;
+        gameState.blind.discards = 0;
+      },
+      onBlindDebuffed(gameState) {
+        gameState.blind.discards += this.properties.discardAmt;
+      }
   },
   {
       "name": "The Window",
@@ -2907,7 +2947,12 @@ const blinds = [
       "primaryShadow": "#666056",
       "secondaryColor": "#37403f",
       "tertiaryColor": "#525652",
-      "isNormalBoss": true
+      "isNormalBoss": true,
+      onCardDrawn(gameState, card) {
+        if (isSuit(gameState, card, "Diamonds")) {
+          card.debuffed = true;
+        }
+      }
   },
   {
       "name": "The Manacle",
@@ -2918,7 +2963,13 @@ const blinds = [
       "primaryShadow": "#242424",
       "secondaryColor": "#252f30",
       "tertiaryColor": "#2c3435",
-      "isNormalBoss": true
+      "isNormalBoss": true,
+      onBlindStart(gameState) {
+        gameState.handSize--;
+      },
+      onBlindEnd(gameState) {
+        gameState.handSize++;
+      }
   },
   {
       "name": "The Eye",
@@ -2929,7 +2980,18 @@ const blinds = [
       "primaryShadow": "#1b3a95",
       "secondaryColor": "#233552",
       "tertiaryColor": "#273f76",
-      "isNormalBoss": true
+      "isNormalBoss": true,
+      "properties": {
+        "playedHands": []
+      },
+      onHandPlayed(gameState, cards) {
+        const handType = getHandType(gameState, cards).handType;
+        if (this.properties.playedHands.includes(handType)) {
+          // TODO
+        } else {
+          this.properties.playedHands.push(handType);
+        }
+      }
   },
   {
       "name": "The Mouth",
@@ -2940,7 +3002,17 @@ const blinds = [
       "primaryShadow": "#6a3a50",
       "secondaryColor": "#39353d",
       "tertiaryColor": "#543f4e",
-      "isNormalBoss": true
+      "isNormalBoss": true,
+      "properties": {
+        "handType": undefined
+      },
+      onHandPlayed(gameState, cards) {
+        const handType = getHandType(gameState, cards).handType;
+        if (!this.properties.handType) this.properties.handType = handType;
+        if (this.properties.handType != handType) {
+          // TODO
+        }
+      }
   },
   {
       "name": "The Plant",
@@ -2951,10 +3023,15 @@ const blinds = [
       "primaryShadow": "#395448",
       "secondaryColor": "#2b3d3b",
       "tertiaryColor": "#374f4a",
-      "isNormalBoss": true
+      "isNormalBoss": true,
+      onCardDrawn(gameState, card) {
+        if (isFaceCard(gameState, card)) {
+          card.debuffed = true;
+        }
+      }
   },
   {
-      "name": "The Serpent",
+      "name": "The Serpent", // TODO
       "debuff": "After Play or Discard,\nalways draw 3 cards",
       "minimumAnte": 5,
       "scoreMult": 2,
@@ -2965,7 +3042,7 @@ const blinds = [
       "isNormalBoss": true
   },
   {
-      "name": "The Pillar",
+      "name": "The Pillar", // TODO
       "debuff": "Cards played previously\nthis Ante are debuffed",
       "minimumAnte": 1,
       "scoreMult": 2,
@@ -2973,7 +3050,12 @@ const blinds = [
       "primaryShadow": "#443221",
       "secondaryColor": "#2e332f",
       "tertiaryColor": "#3e3b33",
-      "isNormalBoss": true
+      "isNormalBoss": true,
+      onCardDrawn(gameState, card) {
+        if (card.wasPlayed) { // TODO
+          card.debuffed = true;
+        }
+      }
   },
   {
       "name": "The Needle",
@@ -2984,7 +3066,18 @@ const blinds = [
       "primaryShadow": "#293706",
       "secondaryColor": "#263429",
       "tertiaryColor": "#2e3e24",
-      "isNormalBoss": true
+      "isNormalBoss": true,
+      "properties": {
+        "handAmt": undefined
+      },
+      onBlindStart(gameState) {
+        this.properties.handAmt = gameState.blind.hands-1;
+        gameState.blind.hands = 1;
+      },
+      onBlindDebuffed(gameState) {
+        gameState.blind.hands += this.properties.handAmt;
+        if (gameState.blind.hands < 1) gameState.blind.hands = 1;
+      }
   },
   {
       "name": "The Head",
@@ -2995,7 +3088,12 @@ const blinds = [
       "primaryShadow": "#685c6f",
       "secondaryColor": "#393f46",
       "tertiaryColor": "#53545f",
-      "isNormalBoss": true
+      "isNormalBoss": true,
+      onCardDrawn(gameState, card) {
+        if (isSuit(gameState, card, "Hearts")) {
+          card.debuffed = true;
+        }
+      }
   },
   {
       "name": "The Tooth",
@@ -3006,10 +3104,13 @@ const blinds = [
       "primaryShadow": "#6f0303",
       "secondaryColor": "#3b2527",
       "tertiaryColor": "#572122",
-      "isNormalBoss": true
+      "isNormalBoss": true,
+      onHandPlayed(gameState, cards) {
+        gameState.money -= cards.length;
+      }
   },
   {
-      "name": "The Flint",
+      "name": "The Flint", // TODO
       "debuff": "Base Chips and\nMult are halved",
       "minimumAnte": 2,
       "scoreMult": 2,
@@ -3028,7 +3129,12 @@ const blinds = [
       "primaryShadow": "#293706",
       "secondaryColor": "#2a292d",
       "tertiaryColor": "#35262e",
-      "isNormalBoss": true
+      "isNormalBoss": true,
+      onCardDrawn(gameState, card) {
+        if (isFaceCard(gameState, card)) {
+          card.flipped = true;
+        }
+      }
   },
 
   {
@@ -3043,7 +3149,7 @@ const blinds = [
     "isFinisherBoss": true
   },
   {
-    "name": "Cerulean Bell",
+    "name": "Cerulean Bell", // TODO
     "debuff": "Forces 1 card to\nalways be selected",
     "minimumAnte": 8,
     "scoreMult": 2,
@@ -3054,7 +3160,7 @@ const blinds = [
     "isFinisherBoss": true
   },
   {
-    "name": "Verdant Leaf",
+    "name": "Verdant Leaf", // TODO
     "debuff": "All cards debuffed\nuntil 1 Joker sold",
     "minimumAnte": 8,
     "scoreMult": 2,
@@ -3062,7 +3168,15 @@ const blinds = [
     "primaryShadow": "#24644a",
     "secondaryColor": "#25423c",
     "tertiaryColor": "#2c584b",
-    "isFinisherBoss": true
+    "isFinisherBoss": true,
+    "properties": {
+      "jokerSold": false
+    },
+    onCardDrawn(gameState, card) {
+      if (!this.properties.jokerSold) {
+        card.debuffed = true;
+      }
+    }
   },
   {
     "name": "Amber Acorn",
@@ -3073,10 +3187,19 @@ const blinds = [
     "primaryShadow": "#a96000",
     "secondaryColor": "#4b401d",
     "tertiaryColor": "#78560d",
-    "isFinisherBoss": true
+    "isFinisherBoss": true,
+    onBlindStart(gameState) {
+      gameState.jokers.forEach(joker => {
+        joker.flipped = true;
+      })
+      for (let i = gameState.jokers.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [gameState.jokers[i], gameState.jokers[j]] = [gameState.jokers[j], gameState.jokers[i]];
+      }
+    }
   },
   {
-    "name": "Crimson Heart",
+    "name": "Crimson Heart", // TODO
     "debuff": "One random Joker\ndisabled every hand",
     "minimumAnte": 8,
     "scoreMult": 2,
@@ -3084,7 +3207,10 @@ const blinds = [
     "primaryShadow": "#680707",
     "secondaryColor": "#392629",
     "tertiaryColor": "#532324",
-    "isFinisherBoss": true
+    "isFinisherBoss": true,
+    onBlindStart(gameState) {
+
+    }
   },
   
 ]
@@ -3401,6 +3527,12 @@ function newBlinds(gameState) {
       tag.properties.handType = possibleHandTypes[Math.floor(Math.random() * possibleHandTypes.length)];
     }
     return tag;
+  }
+
+  if (newBlind.name == "The Ox") {
+    const mostPlayedHand = Object.keys(gameState.handPlays).sort((a, b) => {return gameState.handPlays[a] - gameState.handPlays[b]})[0];
+    newBlind.debuff = `Playing a ${mostPlayedHand}\nsets money to $0`;
+    newBlind.properties.handType = mostPlayedHand;
   }
 
   gameState.currentBlinds = [
