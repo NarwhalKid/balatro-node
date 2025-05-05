@@ -3652,13 +3652,13 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
   const jokerNames = gameState.jokers.map(joker => joker.name.toLowerCase());
   if (isShop) {
     for (const tag of gameState.tags) {
-      if (tag == "Uncommon Tag") {
+      if (tag.name == "Uncommon Tag") {
         cardType = "Joker";
         jokerRarity = "Uncommon";
         gameState.tags.splice(gameState.tags.indexOf(tag), 1);
         break;
       }
-      if (tag == "Rare Tag") {
+      if (tag.name == "Rare Tag") {
         cardType = "Joker";
         jokerRarity = "Rare";
         gameState.tags.splice(gameState.tags.indexOf(tag), 1);
@@ -3757,22 +3757,22 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
       card.edition = edition;
     } else if (isShop) {
       for (const tag of gameState.tags) {
-        if (tag == "Foil Tag") {
+        if (tag.name == "Foil Tag") {
           card.edition = "Foil";
           gameState.tags.splice(gameState.tags.indexOf(tag), 1);
           break;
         }
-        if (tag == "Holographic Tag") {
+        if (tag.name == "Holographic Tag") {
           card.edition = "Holographic";
           gameState.tags.splice(gameState.tags.indexOf(tag), 1);
           break;
         }
-        if (tag == "Polychrome Tag") {
+        if (tag.name == "Polychrome Tag") {
           card.edition = "Polychrome";
           gameState.tags.splice(gameState.tags.indexOf(tag), 1);
           break;
         }
-        if (tag == "Negative Tag") {
+        if (tag.name == "Negative Tag") {
           card.edition = "Negative";
           gameState.tags.splice(gameState.tags.indexOf(tag), 1);
           break;
