@@ -3802,13 +3802,13 @@ function fillShopCards(gameState) {
 }
 
 function rerollShop(gameState) {
-  handleJokers(gameState, "onReroll");
-  gameState.shop.cards = [];
   if (gameState.shop.filled && !gameState.shop.chaosUsed) {
     if (gameState.money-gameState.rerollCost < gameState.moneyLimit && gameState.rerollCost > 0) return "Not enough money";
     gameState.money -= gameState.rerollCost;
     gameState.currentReroll++;
   }
+  handleJokers(gameState, "onReroll");
+  gameState.shop.cards = [];
   fillShopCards(gameState);
 
   const chaos = gameState.jokers.find(joker => joker.name == "Chaos the Clown" && !joker.properties.beenUsed);
@@ -4696,13 +4696,44 @@ function blindsToText(gameState) {
   return returnArray.join("\n\n");
 }
 
-function cardsToText(gameState, used = true) {
-  let returnString = "";
-  gameState.fullDeck.forEach(card => {
-
-  })
-    if (gameState.blind?.remainingCards && used) {
+function cardsToText(gameState, fullDeck = false) {
+  let suitArrays = {
+    "Spades": [],
+    "Hearts": [],
+    "Clubs": [],
+    "Diamonds": []
   }
+  let rankCounts = {};
+  ranks.forEach(rank => rankCounts[rank] = 0);
+  gameState.fullDeck.forEach(card => {
+    if (fullDeck || !gameState.blind || gameState.blind.remainingCards.includes(card)) {
+      suitArrays[card.suit].push(card);
+      rankCounts[card.rank]++;
+    }
+  })
+
+  let returnString = "";
+  Object.keys(suitArrays).forEach(suit => {
+    returnString += `\n${suit}: ${suitArrays[suit].length}\n\n`;
+    suitArrays[suit].forEach(card => returnString += `${cardToText(card)}\n`);
+  })
+  Object.keys(rankCounts).forEach(rank => {
+    if (Number.isNaN(parseInt(rank))) rank = rank.substring(0,1);
+    returnString += `\n${rank}: ${rank.length}`;
+  })
+  return returnArr.join("\n");
+}
+
+function vouchersToText(gameState) {
+  return gameState.vouchers.join("\n");
+}
+
+function handLevelsToText(gameState) {
+  let returnArr = [];
+  Object.keys(pokerHands).filter(hand => pokerHands[hand].unlocked || gameState.handPlays[hand] > 0).forEach(hand => {
+    returnArr.push(`${hand}: lvl.${gameState.handLevels[hand]} | ${gameState.handPlays[hand]}`);
+  })
+  return returnArr.join("\n");
 }
 
 function swapCards(gameState, indexes) {
@@ -4740,5 +4771,8 @@ module.exports = {
   restoreGameFunctions,
   calcCost,
   swapCards,
-  swapJokers
+  swapJokers,
+  cardsToText,
+  vouchersToText,
+  handLevelsToText
 }
