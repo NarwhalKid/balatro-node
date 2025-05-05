@@ -3656,12 +3656,14 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
         cardType = "Joker";
         rarity = "Uncommon";
         gameState.tags.splice(gameState.tags.indexOf(tag), 1);
+        isCoupon = true;
         break;
       }
       if (tag.name == "Rare Tag") {
         cardType = "Joker";
         rarity = "Rare";
         gameState.tags.splice(gameState.tags.indexOf(tag), 1);
+        isCoupon = true;
         break;
       }
     }
@@ -3759,21 +3761,25 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
       for (const tag of gameState.tags) {
         if (tag.name == "Foil Tag") {
           card.edition = "Foil";
+          card.coupon = true;
           gameState.tags.splice(gameState.tags.indexOf(tag), 1);
           break;
         }
         if (tag.name == "Holographic Tag") {
           card.edition = "Holographic";
+          card.coupon = true;
           gameState.tags.splice(gameState.tags.indexOf(tag), 1);
           break;
         }
         if (tag.name == "Polychrome Tag") {
           card.edition = "Polychrome";
+          card.coupon = true;
           gameState.tags.splice(gameState.tags.indexOf(tag), 1);
           break;
         }
         if (tag.name == "Negative Tag") {
           card.edition = "Negative";
+          card.coupon = true;
           gameState.tags.splice(gameState.tags.indexOf(tag), 1);
           break;
         }
