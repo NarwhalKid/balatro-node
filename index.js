@@ -3413,8 +3413,6 @@ function newBlinds(gameState) {
 }
 
 function adjustBlinds(gameState) {
-  const SCALE = BigInt(decimalAccuracy);
-
   let base;
 
   if (gameState.ante < 1) {
@@ -3423,10 +3421,10 @@ function adjustBlinds(gameState) {
     base = gameState.blindBases[gameState.ante - 1];
   } else {
     // Functions taken from https://www.desmos.com/calculator/fsvcr75cdx
-    const SCALE = 10n ** BigInt(decimalAccuracy);
-    const b = (16n * SCALE) / 10n;      // 1.6
-    const r75 = (75n * SCALE) / 100n;   // 0.75
-    const r02 = (2n * SCALE) / 10n;     // 0.2
+    const SCALE = BigInt(decimalAccuracy);
+    const b = (16n * SCALE) / 10n;
+    const r75 = (75n * SCALE) / 100n;
+    const r02 = (2n * SCALE) / 10n;
     const start = BigInt(gameState.blindBases[7]);
 
     function powFixed(base, exp) {
@@ -4240,7 +4238,7 @@ function handleJokers(gameState, func, params = []) {
   return {"responses": returnArray.filter(Boolean), retriggers };
 }
 
-const decimalAccuracy = 100000;
+const decimalAccuracy = 100000000;
 
 function handleMult(gameState, chips, mult, responseArray) {
   responseArray.filter(Boolean).forEach(response => {
