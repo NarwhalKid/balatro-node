@@ -2515,7 +2515,7 @@ const jokers = [
     getDesc(gameState) { return "Create a Tarot card if poker hand contains an Ace and a Straight (Must have room)" },
     "rarity": "Common",
     onHandPlayed(gameState, cards) {
-      if (getHandType(gameState).cards.filter(card => isRank(gameState, card, "Aces")).length > 0 && cardsContain(gameState, cards, "Straight")) {
+      if (getHandType(gameState, cards).cards.filter(card => isRank(gameState, card, "Aces")).length > 0 && cardsContain(gameState, cards, "Straight")) {
         addConsumable(gameState, newCard(gameState, "Tarot Card"));
       }
     },
