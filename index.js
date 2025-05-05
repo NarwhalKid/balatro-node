@@ -3654,13 +3654,13 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
     for (const tag of gameState.tags) {
       if (tag.name == "Uncommon Tag") {
         cardType = "Joker";
-        jokerRarity = "Uncommon";
+        rarity = "Uncommon";
         gameState.tags.splice(gameState.tags.indexOf(tag), 1);
         break;
       }
       if (tag.name == "Rare Tag") {
         cardType = "Joker";
-        jokerRarity = "Rare";
+        rarity = "Rare";
         gameState.tags.splice(gameState.tags.indexOf(tag), 1);
         break;
       }
