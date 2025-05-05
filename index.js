@@ -1227,7 +1227,7 @@ const jokers = [
     getDesc(gameState) { return "Upgrade the level of the first discarded poker hand each round" },
     onDiscard(gameState, cards) {
       if (gameState.blind.firstDiscard) {
-        gameState.handLevels[getHandType(gameState, cards)]++;
+        gameState.handLevels[getHandType(gameState, cards).handType]++;
       }
     },
     "cost": 8,
