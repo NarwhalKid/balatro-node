@@ -3131,18 +3131,18 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
       }, 
       "blackHolesUsed": 0,
       "handPlays": {
-        "High Card": 0,
-        "Pair": 0,
-        "Two Pair": 0,
-        "Three of a Kind": 0,
-        "Straight": 0,
-        "Flush": 0,
-        "Full House": 0,
-        "Four of a Kind": 0,
-        "Straight Flush": 0,
-        "Five of a Kind": 0,
+        "Flush Five": 0,
         "Flush House": 0,
-        "Flush Five": 0
+        "Five of a Kind": 0,
+        "Straight Flush": 0,
+        "Four of a Kind": 0,
+        "Full House": 0,
+        "Flush": 0,
+        "Straight": 0,
+        "Three of a Kind": 0,
+        "Two Pair": 0,
+        "Pair": 0,
+        "High Card": 0
       },   
       "shopWeights": {
         "Joker": {
@@ -3567,10 +3567,10 @@ function addVoucher(gameState, voucher) {
     case "omenglobe":
       packTypes["Arcana Pack"]["Spectral Card"].odds = 0.2;
       break;
-    case "telescope": // TODO
+    case "telescope":
       gameState.possibleVouchers.push("Observatory");
       break;
-    case "observatory": // TODO
+    case "observatory":
       break;
     case "grabber":
       gameState.possibleVouchers.push("Nacho Tong");
@@ -3673,6 +3673,10 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
         card = jokersOfRarity[Math.floor(Math.random() * jokersOfRarity.length)];
       } while (jokersOfRarity.length != 0 && jokerCount(gameState, "showman") <= 0 && (jokerNames.includes(card.name) || deepFind(gameState, (thing) => thing?.name == card.name)));
     } else if (cardType == "Planet Card") {
+      if (gameState.vouchers.includes("Telescope") && isBoosterPack && !gameState.currentPack.contents.length) {
+        const pokerHand = Object.keys(gameState.handPlays).sort((a, b) => {return gameState.handPlays[a] - gameState.handPlays[b]})[0];
+        card = {name: pokerHands[pokerHand].planet, handType: pokerHand};
+      }
       do {
         const pokerHand = Object.keys(pokerHands)[Math.floor(Math.random() * Object.keys(pokerHands).length)];
         card = {name: pokerHands[pokerHand].planet, handType: pokerHand}
@@ -4351,6 +4355,16 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
     }
     ({ chips, mult } = handleMult(gameState, chips, mult, heldCardResponses));
   })
+
+  if (gameState.vouchers.includes("Observatory")) { // Observatory
+    let observatoryArr = [];
+    gameState.consumables.forEach(consumable => {
+      if (consumable.handType == handType) {
+        observatoryArr.push({"timesMult": 1.5});
+      }
+    })
+    ({chips, mult} = handleMult(gameState, chips, mult, observatoryArr));
+  }
 
   let jokerResponses = [];
   if (Array.isArray(gameState.jokers)) {
