@@ -4469,7 +4469,7 @@ function blindEnd(gameState, isMrBones = false) {
   if (currentBlindIdx == 2) { // Boss blind
     gameState.tags.forEach((tag, idx) => {
       if (tag.name.toLowerCase().replaceAll(" ", "") == "investmenttag") {
-        gameState.moneySources.push("Investment Tag", 25);
+        gameState.moneySources.push(["Investment Tag", 25]);
         gameState.tags.splice(idx, 1);
       }
     })
