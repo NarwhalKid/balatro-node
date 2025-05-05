@@ -4724,7 +4724,7 @@ function cardsToText(gameState, fullDeck = false) {
     if (Number.isNaN(parseInt(rank))) rank = rank.substring(0,1);
     returnString += `\n${rank}: ${rank.length}`;
   })
-  return returnArr.join("\n");
+  return returnString;
 }
 
 function vouchersToText(gameState) {
