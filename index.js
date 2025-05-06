@@ -4192,6 +4192,7 @@ function restoreGameFunctions(game) {
   sections.forEach(section => {
     if (!Array.isArray(section)) return;
     section.forEach(consumable => {
+      if (!consumable) return;
       if (consumable.handType) consumable.getDesc = (gameState) => {return `(lvl.${gameState.handLevels[consumable.handType]}) Level up ${consumable.handType}`};
       const ogConsumable = deepFind(cards, findConsumable => findConsumable?.name == consumable.name) || deepFind(jokers, findConsumable => findConsumable?.name == consumable.name) || deepFind(tags, findConsumable => findConsumable?.name == consumable.name);
       if (!ogConsumable) return;
