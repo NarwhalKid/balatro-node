@@ -3867,10 +3867,10 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
     if (isBoosterPack) {
       const hasSeal = Math.random() <= 0.2;
       if (hasSeal) {
-        card.seal = seals[Math.floor(Math.random() * seals.length)];
+        card.seal = Object.keys(seals)[Math.floor(Math.random() * Object.keys(seals).length)];
       }
       if (Math.random() <= 0.4) {
-        card.enhancement = enhancements[Math.floor(Math.random() * enhancements.length)];
+        card.enhancement = Object.keys(enhancements)[Math.floor(Math.random() * Object.keys(enhancements).length)];
       }
       card.edition = pickByPercentage(gameState.editions, "playingCardOdds");
     } else {
