@@ -4897,7 +4897,7 @@ function blindsToText(gameState) {
   return returnArray.join("\n\n");
 }
 
-function cardsToText(gameState, fullDeck = false) { // TODO: check if stone cards should count
+function cardsToText(gameState, fullDeck = false) { // TODO: check if stone cards should count, make sure they show up in rank order (with stone cards last)
   let suitArrays = {
     "Spades": [],
     "Hearts": [],
