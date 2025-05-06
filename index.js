@@ -188,7 +188,7 @@ const seals = {
   "Red Seal": {onCardScored(gameState, card) {return {"retriggers": 1}}},
   "Gold Seal": {onCardScored(gameState, card) {gameState.money += 4}},
   "Blue Seal": {onEndCards(gameState, card) {
-    addConsumable(gameState, {name: pokerHands[gameState.lastHand].planet, handType: gameState.lastHand, desc: "Level up " + gameState.lastHand})
+    addConsumable(gameState, {name: pokerHands[gameState.lastHand].planet, handType: gameState.lastHand, getDesc(gameState){return `(lvl.${gameState.handLevels[this.handType]}) Level up ${this.handType}`}})
   }},
   "Purple Seal": {onCardDiscarded(gameState, card) {
     addConsumable(gameState, newCard(gameState, "Tarot Card"));
@@ -3810,11 +3810,11 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
     } else if (cardType == "Planet Card") {
       if (gameState.vouchers.includes("Telescope") && isBoosterPack && !gameState.currentPack.contents.length) {
         const pokerHand = Object.keys(gameState.handPlays).sort((a, b) => {return gameState.handPlays[a] - gameState.handPlays[b]})[0];
-        card = {name: pokerHands[pokerHand].planet, handType: pokerHand, desc: "Level up " + pokerHand};
+        card = {name: pokerHands[pokerHand].planet, handType: pokerHand, getDesc(gameState){return `(lvl.${gameState.handLevels[this.handType]}) Level up ${this.handType}`}};
       }
       do {
         const pokerHand = Object.keys(pokerHands)[Math.floor(Math.random() * Object.keys(pokerHands).length)];
-        card = {name: pokerHands[pokerHand].planet, handType: pokerHand, desc: "Level up " + pokerHand};
+        card = {name: pokerHands[pokerHand].planet, handType: pokerHand, getDesc(gameState){return `(lvl.${gameState.handLevels[this.handType]}) Level up ${this.handType}`}};
       } while ((!pokerHands[card.handType].unlocked && gameState.handPlays[card.handType] < 1) || (!jokerCount(gameState, "showman") && deepFind(gameState, (thing) => thing?.name == card.name)));
     } else {
       let remainingCards = cards[cardType];
