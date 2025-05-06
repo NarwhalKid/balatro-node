@@ -4754,7 +4754,8 @@ function voucherToText(gameState, voucher, addDesc = false) {
 function packToText(gameState, pack, addDesc = false) {
   let returnString = pack.name;
   if (addDesc) {
-    let desc = `Choose ${pack.choices} of up to ${pack.amount} ${cardType} cards`
+    let cardType = Object.keys(packTypes[pack.name.replaceAll("Mega", "").replaceAll("Jumbo", "").trim()])[0].replace(" Card", "");
+    let desc = `Choose ${pack.choices} of up to ${pack.amount} ${cardType} cards`;
     if (pack.name.includes("Standard")) {
       desc += " to add to your deck";
     } else if (!pack.name.includes("Buffoon")) {
