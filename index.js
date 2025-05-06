@@ -3809,11 +3809,11 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
     } else if (cardType == "Planet Card") {
       if (gameState.vouchers.includes("Telescope") && isBoosterPack && !gameState.currentPack.contents.length) {
         const pokerHand = Object.keys(gameState.handPlays).sort((a, b) => {return gameState.handPlays[a] - gameState.handPlays[b]})[0];
-        card = {name: pokerHands[pokerHand].planet, handType: pokerHand, getDesc(gameState){return `(lvl.${gameState.handLevels[this.handType]}) Level up ${this.handType}`}};
+        card = {name: pokerHands[pokerHand].planet, handType: pokerHand, getDesc(gameState) {return `(lvl.${gameState.handLevels[this.handType]}) Level up ${this.handType}`}};
       }
       do {
         const pokerHand = Object.keys(pokerHands)[Math.floor(Math.random() * Object.keys(pokerHands).length)];
-        card = {name: pokerHands[pokerHand].planet, handType: pokerHand, getDesc(gameState){return `(lvl.${gameState.handLevels[this.handType]}) Level up ${this.handType}`}};
+        card = {name: pokerHands[pokerHand].planet, handType: pokerHand, getDesc(gameState) {return `(lvl.${gameState.handLevels[this.handType]}) Level up ${this.handType}`}};
       } while ((!pokerHands[card.handType].unlocked && gameState.handPlays[card.handType] < 1) || (!jokerCount(gameState, "showman") && deepFind(gameState, (thing) => thing?.name == card.name)));
     } else {
       let remainingCards = cards[cardType];
@@ -4751,6 +4751,20 @@ function voucherToText(gameState, voucher, addDesc = false) {
   return returnString;
 }
 
+function packToText(gameState, pack, addDesc = false) {
+  let returnString = pack.name;
+  if (addDesc) {
+    let desc = `Choose ${pack.choices} of up to ${pack.amount} ${cardType} cards`
+    if (pack.name.includes("Standard")) {
+      desc += " to add to your deck";
+    } else if (!pack.name.includes("Buffoon")) {
+      desc += " to be used immediately";
+    }
+    returnString += `\n-# ${desc}`;
+  }
+  return returnString;
+}
+
 function gameToText(gameState) {
   let returnString = `${gameState.stake} | ${gameState.deck}`;
   returnString += "\nJokers:";
@@ -4809,7 +4823,7 @@ function gameToText(gameState) {
 
       returnString += "\n\nBooster Packs:";
       gameState.shop.packs.forEach(pack => {
-        returnString += `\n$${calcCost(gameState, pack)} ${pack.name}`;
+        returnString += `\n$${calcCost(gameState, pack)} ${packToText(gameState, pack, true)}`;
       })
 
       returnString += "\n\nVouchers:";
