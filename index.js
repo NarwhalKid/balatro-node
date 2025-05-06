@@ -2119,6 +2119,9 @@ const jokers = [
     "name": "Photograph",
     getDesc(gameState) { return "First played face card gives X2 Mult when scored" },
     "rarity": "Common",
+    "properties": {
+      "index": undefined
+    },
     onHandPlayed(gameState, cards) {
       this.properties.index = undefined;
       getHandType(gameState, cards).cards.forEach((card, idx) => {
