@@ -4736,7 +4736,6 @@ function consumableToText(gameState, consumable, addDesc = false) {
     if (consumable.desc) desc = consumable.desc;
     if (consumable.getDesc) desc = consumable.getDesc(gameState);
     if (desc) returnString += `\n-# ${desc}`;
-    console.log(consumable);
   }
   return returnString;
 }
