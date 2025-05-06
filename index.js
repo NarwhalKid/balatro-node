@@ -4189,9 +4189,9 @@ function restoreGameFunctions(game) {
   sections.forEach(section => {
     if (!Array.isArray(section)) return;
     section.forEach(consumable => {
+      if (consumable.handType) consumable.getDesc = () => {return `(lvl.${gameState.handLevels[this.handType]}) Level up ${this.handType}`};
       const ogConsumable = deepFind(cards, findConsumable => findConsumable.name == consumable.name) || deepFind(jokers, findConsumable => findConsumable.name == consumable.name) || deepFind(tags, findConsumable => findConsumable?.name == consumable.name);
       if (!ogConsumable) return;
-      if (consumable.handType) consumable.getDesc = () => {return `(lvl.${gameState.handLevels[this.handType]}) Level up ${this.handType}`};
       for (const [key, value] of Object.entries(ogConsumable)) {
         if (typeof value === "function") {
           consumable[key] = value;
@@ -4203,8 +4203,8 @@ function restoreGameFunctions(game) {
 
   if (game.theFool) {
     const ogConsumable = game.theFool.name;
-    if (!ogConsumable) return game;
     if (ogConsumable.handType) game.theFool.getDesc = () => {return `(lvl.${gameState.handLevels[this.handType]}) Level up ${this.handType}`};
+    if (!ogConsumable) return game;
     for (const [key, value] of Object.entries(ogConsumable)) {
       if (typeof value === "function") {
         game.theFool[key] = value;
