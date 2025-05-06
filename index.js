@@ -4727,7 +4727,7 @@ function playingCardToText(gameState, card) {
   if (card.seal) returnString += `${card.seal} `;
   if (card.edition) returnString += `${card.edition} `;
   if (card.enhancement) returnString += `${card.enhancement} `;
-  if (card.edition?.toLowerCase().replaceAll(" ", "") != "stonecard")
+  if (card.enhancement?.toLowerCase().replaceAll(" ", "") != "stonecard")
     returnString += `${card.rank} of ${card.suit}`;
   if (card.extraChips) returnString += ` (+${card.extraChips} extra Chips)`
   return returnString;
@@ -4897,7 +4897,7 @@ function blindsToText(gameState) {
   return returnArray.join("\n\n");
 }
 
-function cardsToText(gameState, fullDeck = false) {
+function cardsToText(gameState, fullDeck = false) { // TODO: check if stone cards should count
   let suitArrays = {
     "Spades": [],
     "Hearts": [],
