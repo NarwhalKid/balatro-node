@@ -3866,6 +3866,9 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
       if (hasSeal) {
         card.seal = seals[Math.floor(Math.random() * seals.length)];
       }
+      if (Math.random() <= 0.4) {
+        card.enhancement = enhancements[Math.floor(Math.random() * enhancements.length)];
+      }
       card.edition = pickByPercentage(gameState.editions, "playingCardOdds");
     } else {
       const hasEdition = Math.random() <= gameState.shopWeights["Playing Card"].edition / 100;
