@@ -2119,7 +2119,6 @@ const jokers = [
     "name": "Photograph",
     getDesc(gameState) { return "First played face card gives X2 Mult when scored" },
     "rarity": "Common",
-    "properties": {},
     onHandPlayed(gameState, cards) {
       this.properties.index = undefined;
       getHandType(gameState, cards).cards.forEach((card, idx) => {
@@ -2348,14 +2347,14 @@ const jokers = [
   {
     "name": "Seltzer",
     "rarity": "Uncommon",
-    getDesc(gameState) { return `Retrigger all cards played for the next ${this.properties.retriggers} hand${this.properties.retriggers.length == 1 ? "" : "s"}` },
-    "properties": {"retriggers":10},
+    getDesc(gameState) { return `Retrigger all cards played for the next ${this.properties.roundsRemaining} hand${this.properties.roundsRemaining == 1 ? "" : "s"}` },
+    "properties": {"roundsRemaining":10},
     onCardScored(gameState, card) {
       return {"retriggers": 1};
     },
     onScore(gameState, cards) {
-      this.properties.retriggers--;
-      if (this.properties.retriggers < 1) return {"destroy": true};
+      this.properties.roundsRemaining--;
+      if (this.properties.roundsRemaining < 1) return {"destroy": true};
     },
     "cost": 6,
     "noEternal": true,
@@ -4119,6 +4118,7 @@ function packSelect(gameState, index, selectedCards = []) {
   } else { // Playing Card
     drawCard(gameState, target);
   }
+  gameState.currentPack.contents.splice(index, 1);
   gameState.currentPack.choices--;
   if (gameState.currentPack.choices < 1) {
     gameState.state = gameState.oldState;
