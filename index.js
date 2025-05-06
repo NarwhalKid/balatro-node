@@ -70,7 +70,7 @@ const tags = [
     "minAnte": 1,
     "desc": "Rerolls the Boss Blind",
     onBuy(gameState) {
-      gameState.currentBlinds[2] = getBossBlind(gameState);
+      bossReroll(gameState, true);
     }
   },
   {
@@ -3515,6 +3515,7 @@ function getBossBlind(gameState) {
 }
 
 function newBlinds(gameState) {
+  gameState.bossRerolled = false;
   const newBlind = getBossBlind(gameState);
 
   const smallReward = gameState.stake.toLowerCase().replaceAll(" ", "") == "whitestake" ? 3 : 0;
@@ -4849,22 +4850,23 @@ function cardsToText(gameState, fullDeck = false) {
   let rankCounts = {};
   ranks.forEach(rank => rankCounts[rank] = 0);
   gameState.fullDeck.forEach(card => {
-    if (fullDeck || !gameState.blind || gameState.blind.remainingCards.includes(card)) {
+    if (fullDeck || !gameState.blind || gameState.blind.remainingCards.includes(card) || card.flipped) {
       suitArrays[card.suit].push(card);
       rankCounts[card.rank]++;
     }
   })
+  const hasFlippedQuestion = gameState.fullDeck.find(card => card.flipped) ? "?" : "";
 
   let returnString = "";
   Object.keys(suitArrays).forEach(suit => {
-    returnString += `\n\n${suit}: ${suitArrays[suit].length}\n`;
+    returnString += `\n\n${suit}: ${suitArrays[suit].length}${hasFlippedQuestion}\n`;
     suitArrays[suit].forEach(card => returnString += `${cardToText(gameState, card)}`);
   })
   returnString += "\n\nRank Counts:";
   ranks.forEach(rank => {
     let rankName = rank;
     if (Number.isNaN(parseInt(rank))) rankName = rank.substring(0,1);
-    returnString += `\n${rankName}: ${rankCounts[rank]}`;
+    returnString += `\n${rankName}: ${rankCounts[rank]}${hasFlippedQuestion}`;
   })
   return returnString;
 }
@@ -4896,6 +4898,16 @@ function swapJokers(gameState, indexes) {
   gameState.jokers[indexes[1]] = temp;
 }
 
+function bossReroll(gameState, free = false) {
+  if (!free) {
+    if (gameState.bossRerolled && !gameState.vouchers.includes("Retcon")) return "No more rerolls";
+    if (gameState.money-10 < gameState.moneyLimit) return "Not enough money";
+    gameState.money -= 10;
+  }  
+  gameState.currentBlinds[2] = getBossBlind(gameState);
+  gameState.bossRerolled = true;
+}
+
 module.exports = {
   newGame,
   rerollShop,
@@ -4919,5 +4931,6 @@ module.exports = {
   swapJokers,
   cardsToText,
   vouchersToText,
-  handLevelsToText
+  handLevelsToText,
+  bossReroll
 }
