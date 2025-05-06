@@ -4325,7 +4325,7 @@ function blindSetup(gameState) {
   gameState.blind = objectClone(blinds.find(blind => blind.name == gameState.currentBlinds[blindIdx].name));
 
   gameState.round++;
-  gameState.blind.hands = gameState.defaultHands;
+  gameState.blind.hands = Math.max(gameState.defaultHands, 1);
   gameState.blind.discards = gameState.defaultDiscards;
   gameState.blind.firstDiscard = true;
   gameState.blind.firstHand = true;
