@@ -1958,7 +1958,7 @@ const jokers = [
     "rarity": "Common",
     onDiscard(gameState, cards) {
       cards.forEach(card => {
-        if (isSuit(gameState, card, gameState.jokerProperties.rebate.rank)) {
+        if (isRank(gameState, card, gameState.jokerProperties.rebate.rank)) {
           gameState.money += 5;
         }
       })
