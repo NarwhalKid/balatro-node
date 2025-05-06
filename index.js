@@ -4036,7 +4036,7 @@ function addNewJoker(gameState, joker) {
   handleJoker(gameState, joker, "onBuy");
 }
 
-function buyCard(gameState, index) {
+function buyCard(gameState, index, buyAndUse = false) {
   const target = gameState.shop.cards[index];
   if (!target) return "Invalid index";
   if (gameState.money-calcCost(gameState, target) < gameState.moneyLimit && calcCost(gameState, target) > 0) return "Not enough money";
@@ -4044,9 +4044,19 @@ function buyCard(gameState, index) {
     if (gameState.jokers.length >= gameState.jokerSlots) return "No empty joker slots";
     addNewJoker(gameState, target);
   } else if (!target.rank) { // Consumable
-    if (gameState.consumables.length >= gameState.consumableSlots) return "No empty consumable slots";
-    if (target.edition?.toLowerCase() == "negative") gameState.consumableSlots++;
-    gameState.consumables.push(target);
+    if (buyAndUse) {
+      gameState.consumables.push(target);
+      let index = gameState.consumables.indexOf(target);
+      const response = useConsumable(gameState, index, []);
+      if (response) {
+        gameState.consumables.splice(index, 1);
+        return response;
+      }
+    } else {
+      if (gameState.consumables.length >= gameState.consumableSlots) return "No empty consumable slots";
+      if (target.edition?.toLowerCase() == "negative") gameState.consumableSlots++;
+      gameState.consumables.push(target);
+    }
   } else { // Playing Card
     drawCard(gameState, target);
   }
@@ -4132,10 +4142,10 @@ function buyVoucher(gameState, index) {
   gameState.shop.vouchers.splice(index, 1);
 }
 
-function shopBuy(gameState, section, index) { // Pass index starting at 0
+function shopBuy(gameState, section, index, buyAndUse = false) { // Pass index starting at 0
   switch (section.toLowerCase().replaceAll(" ", "")) {
     case "cards":
-      return buyCard(gameState, index);
+      return buyCard(gameState, index, buyAndUse);
     case "packs":
       return buyPack(gameState, gameState.shop.packs[index]);
     case "vouchers":
