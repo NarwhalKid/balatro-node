@@ -4740,6 +4740,17 @@ function consumableToText(gameState, consumable, addDesc = false) {
   return returnString;
 }
 
+function voucherToText(gameState, voucher, addDesc = false) {
+  let returnString = voucher.name;
+  if (addDesc) {
+    let desc;
+    if (voucher.desc) desc = voucher.desc;
+    if (voucher.getDesc) desc = voucher.getDesc(gameState);
+    if (desc) returnString += `\n-# ${desc}`;
+  }
+  return returnString;
+}
+
 function gameToText(gameState) {
   let returnString = `${gameState.stake} | ${gameState.deck}`;
   returnString += "\nJokers:";
@@ -4803,13 +4814,13 @@ function gameToText(gameState) {
 
       returnString += "\n\nVouchers:";
       gameState.shop.vouchers.forEach(voucher => {
-        returnString += `\n$${calcCost(gameState, voucher)} ${voucher.name}`;
+        returnString += `\n$${calcCost(gameState, voucher)} ${voucherToText(gameState, voucher, true)}`;
       })
       break;
     case "openingPack":
       returnString += `${gameState.currentPack.name}\n`;
       gameState.currentPack.contents.forEach(card => {
-        returnString += cardToText(gameState, card);
+        returnString += cardToText(gameState, card, true);
       })
       if (gameState.cardArea) {
         returnString += "\n\n"
