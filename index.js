@@ -4684,7 +4684,7 @@ function useConsumable(gameState, index, selectedCards) { // Pass the index star
   if (card.edition?.toLowerCase() == "negative") gameState.consumableSlots--;
 }
 
-function jokerToText(gameState, joker) {
+function jokerToText(gameState, joker, addDesc = false) {
   if (joker.flipped) {
     const addon = gameState.deck.toLowerCase().replaceAll(" ", "") != "reddeck" && joker.copied ? " (copied)" : "";
     switch (joker.name.toLowerCase().replaceAll(" ", "")) {
@@ -4704,6 +4704,12 @@ function jokerToText(gameState, joker) {
   })
   if (joker.edition) returnString += `${joker.edition} `;
   returnString += joker.name;
+  if (addDesc) {
+    let desc;
+    if (joker.desc) desc = joker.desc;
+    if (joker.getDesc) desc = joker.getDesc(gameState);
+    if (desc) returnString += `\n-# ${desc}`;
+  }
   return returnString;
 }
 
@@ -4721,10 +4727,16 @@ function playingCardToText(gameState, card) {
   return returnString;
 }
 
-function consumableToText(gameState, consumable) {
+function consumableToText(gameState, consumable, addDesc = false) {
   let returnString = "";
   if (consumable.negative) returnString += "Negative ";
   returnString += consumable.name;
+  if (addDesc) {
+    let desc;
+    if (consumable.desc) desc = consumable.desc;
+    if (consumable.getDesc) desc = consumable.getDesc(gameState);
+    if (desc) returnString += `\n-# ${desc}`;
+  }
   return returnString;
 }
 
@@ -4776,11 +4788,11 @@ function gameToText(gameState) {
         returnString += `\n$${calcCost(gameState, card)} `;
 
         if (card.rarity) { // Joker
-          returnString += jokerToText(gameState, card);
+          returnString += jokerToText(gameState, card, true);
         } else if (card.rank) { // Playing Card
           returnString += playingCardToText(gameState, card);
         } else { // Consumable
-          returnString += consumableToText(gameState, card);
+          returnString += consumableToText(gameState, card, true);
         }
       })
 
@@ -4814,13 +4826,13 @@ function gameToText(gameState) {
   return returnString;
 }
 
-function cardToText(gameState, card) {
+function cardToText(gameState, card, addDesc = false) {
   if (card.rarity) { // Joker
-    return `\n${jokerToText(gameState, card)}`;
+    return `\n${jokerToText(gameState, card, addDesc)}`;
   } else if (card.rank) { // Playing Card
     return `\n${playingCardToText(gameState, card)}`;
   } else { // Consumable
-    return `\n${consumableToText(gameState, card)}`;
+    return `\n${consumableToText(gameState, card, addDesc)}`;
   }
 }
 
