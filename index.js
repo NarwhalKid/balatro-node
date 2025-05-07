@@ -1055,6 +1055,7 @@ function drawCard(gameState, card = undefined, toHand = true) {
 }
 
 function addConsumable(gameState, card) {
+  if (card.edition == "Negative") gameState.consumableSlots++;
   if (gameState.consumableSlots > gameState.consumables.length) {
     gameState.consumables.push(card);
   }
@@ -2112,6 +2113,11 @@ const jokers = [
     "rarity": "Legendary",
     getDesc(gameState) { return "Creates a Negative copy of 1 random consumable card in your possession at the end of the shop" },
     "cost": 20,
+    onBlindStart(gameState) {
+      let cons = objectClone(gameState.consumables[Math.floor(Math.random() * gameState.consumables.length)]);
+      cons.edition = "Negative";
+      addConsumable(gameState, cons);
+    }
   },
   {
     "name": "Photograph",
