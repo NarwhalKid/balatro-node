@@ -4205,6 +4205,16 @@ function restoreGameFunctions(game) {
     })
   })
 
+  game.currentBlinds.forEach(blind => {
+    if (!blind.tag) return;
+    const ogConsumable = deepFind(tags, findConsumable => findConsumable?.name == blind.tag.name); 
+    for (const [key, value] of Object.entries(ogConsumable)) {
+      if (typeof value === "function") {
+        blind.tag[key] = value;
+      }
+    }
+  })
+
 
   if (game.theFool) {
     const ogConsumable = game.theFool.name;
@@ -4305,8 +4315,8 @@ function blindChoose(gameState, skip = false) {
       });
     }
     gameState.tags.forEach((tag, idx) => {
-      if (tags.find(loopTag => loopTag.name == tag.name).onBuy) {
-        tags.find(loopTag => loopTag.name == tag.name).onBuy(gameState);
+      if (tag.onBuy) {
+        tag.onBuy(gameState);
         gameState.tags.splice(idx, 1);
       }
     })
