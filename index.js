@@ -4164,7 +4164,6 @@ function shopBuy(gameState, section, index, buyAndUse = false) { // Pass index s
 }
 
 function deepFind(obj, predicate) {
-  console.log(predicate);
   if (typeof obj !== 'object' || obj === null) return undefined;
 
   if (Array.isArray(obj)) {
