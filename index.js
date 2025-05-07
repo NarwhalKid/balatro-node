@@ -4190,7 +4190,7 @@ function deepFind(obj, predicate) {
 }
 
 function restoreGameFunctions(game) {
-  game.consumables = game.consumables.filter(Boolean);
+  game.consumables = game.consumables.filter(consumable => consumable.name);
   const sections = [game.jokers, game.consumables, game.shop?.cards, game.currentPack?.contents, game.tags];
 
   sections.forEach(section => {
