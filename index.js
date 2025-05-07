@@ -188,7 +188,7 @@ const seals = {
   "Red Seal": {onCardScored(gameState, card) {return {"retriggers": 1}}},
   "Gold Seal": {onCardScored(gameState, card) {gameState.money += 4}},
   "Blue Seal": {onEndCards(gameState, card) {
-    addConsumable(gameState, {name: pokerHands[gameState.lastHand].planet, handType: gameState.lastHand, getDesc(gameState){return `(lvl.${gameState.handLevels[this.handType]}) Level up ${this.handType}`}})
+    addConsumable(gameState, {name: pokerHands[gameState.lastHand].planet, cost: 3, handType: gameState.lastHand, getDesc(gameState){return `(lvl.${gameState.handLevels[this.handType]}) Level up ${this.handType}`}})
   }},
   "Purple Seal": {onCardDiscarded(gameState, card) {
     addConsumable(gameState, newCard(gameState, "Tarot Card"));
