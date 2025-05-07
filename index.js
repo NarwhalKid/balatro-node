@@ -188,6 +188,7 @@ const seals = {
   "Red Seal": {onCardScored(gameState, card) {return {"retriggers": 1}}},
   "Gold Seal": {onCardScored(gameState, card) {gameState.money += 4}},
   "Blue Seal": {onEndCards(gameState, card) {
+    console.log(gameState.consumables);
     addConsumable(gameState, {name: pokerHands[gameState.lastHand].planet, handType: gameState.lastHand, getDesc(gameState){return `(lvl.${gameState.handLevels[this.handType]}) Level up ${this.handType}`}})
   }},
   "Purple Seal": {onCardDiscarded(gameState, card) {
@@ -4603,9 +4604,9 @@ function blindEnd(gameState, isMrBones = false) {
   gameState.blind.hand.forEach(card => {
     for (let i = 0; i <= jokerCount(gameState, "Mime") + jokerCount(gameState, "Blueprint") + jokerCount(gameState, "Brainstorm"); i++) {
       if (seals[card.seal]?.onEndCards)
-        seals[card.seal]?.onEndCards(gameState);
+        seals[card.seal].onEndCards(gameState);
       if (enhancements[card.enhancement]?.onEndCards)
-        enhancements[card.enhancement]?.onEndCards(gameState);
+        enhancements[card.enhancement].onEndCards(gameState);
     }
   })
   gameState.state = "blindWin";
