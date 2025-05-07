@@ -2598,7 +2598,7 @@ const jokers = [
     "name": "Triboulet",
     "rarity": "Legendary",
     getDesc(gameState) { return "Played Kings and Queens each give X2 Mult when scored" },
-    onScore(gameState, card) {
+    onCardScored(gameState, card) {
       if (isRank(gameState, card, "King") || isRank(gameState, card, "Queen")) return {"timesMult": 2};
     },
     "cost": 20,
