@@ -4756,7 +4756,7 @@ function consumableToText(gameState, consumable, addDesc = false) {
     let desc;
     if (consumable.desc) desc = consumable.desc;
     if (consumable.getDesc) desc = consumable.getDesc(gameState);
-    if (desc) returnString += `\n-# ${desc}`;
+    if (desc) returnString += `\n${desc.replace(/^/gm, "-# ")}`;
   }
   return returnString;
 }
@@ -4767,7 +4767,7 @@ function voucherToText(gameState, voucher, addDesc = false) {
     let desc;
     if (voucher.desc) desc = voucher.desc;
     if (voucher.getDesc) desc = voucher.getDesc(gameState);
-    if (desc) returnString += `\n-# ${desc}`;
+    if (desc) returnString += `\n${desc.replace(/^/gm, "-# ")}`;
   }
   return returnString;
 }
@@ -4782,7 +4782,7 @@ function packToText(gameState, pack, addDesc = false) {
     } else if (!pack.name.includes("Buffoon")) {
       desc += " to be used immediately";
     }
-    returnString += `\n-# ${desc}`;
+    returnString += `\n${desc.replace(/^/gm, "-# ")}`;
   }
   return returnString;
 }
