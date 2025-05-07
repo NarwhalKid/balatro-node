@@ -234,7 +234,7 @@ const enhancements = {
   "Bonus Card": {onCardScored(gameState, card) {return {"plusChips": 30};}},
   "Mult Card": {onCardScored(gameState, card) {return {"plusMult": 4};}},
   "Wild Card": {},
-  "Glass Card": {onCardScored(gameState, card) {return {"plusChips": 2};}},
+  "Glass Card": {onCardScored(gameState, card) {return {"timesMult": 2};}},
   "Steel Card": {onCardHeld(gameState, card) {return {"timesMult": 1.5};}},
   "Stone Card": {onCardScored(gameState, card) {return {"plusChips": 50};}},
   "Gold Card": {onEndCards(gameState, card) {gameState.money += 3}},
