@@ -4305,8 +4305,8 @@ function blindChoose(gameState, skip = false) {
       });
     }
     gameState.tags.forEach((tag, idx) => {
-      if (tag.onBuy) {
-        tag.onBuy(gameState);
+      if (tags.find(loopTag => loopTag.name == tag.name).onBuy) {
+        tags.find(loopTag => loopTag.name == tag.name).onBuy(gameState);
         gameState.tags.splice(idx, 1);
       }
     })
