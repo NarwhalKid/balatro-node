@@ -4357,7 +4357,7 @@ function blindSetup(gameState) {
   gameState.blind.roundScore = 0n;
   gameState.blind.hand = [];
   gameState.cardArea = gameState.blind.hand;
-  gameState.blind.handPlays = 0;
+  gameState.blind.handPlays = [];
   gameState.blind.remainingCards = [...gameState.fullDeck];
   gameState.blind.blindScore = gameState.currentBlinds[blindIdx].blindScore;
   gameState.blind.juggleTagsUsed = 0;
@@ -4448,6 +4448,7 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
   let mult = (pokerHand.base.mult + pokerHand.addition.mult * BigInt(gameState.handLevels[handType]-1)) * BigInt(decimalAccuracy); // Multiply all mult by decimalAccuracy, reset at the final calculation
 
   const handPlayedResponses = handleJokers(gameState, "onHandPlayed", [cards]).responses; // Hand played jokers
+  gameState.blind.handPlays = [];
   gameState.blind.handPlays.push(handType);
   gameState.handPlays[handType]++;
   gameState.lastHand = handType;
