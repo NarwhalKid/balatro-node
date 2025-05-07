@@ -4448,9 +4448,7 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
   let mult = (pokerHand.base.mult + pokerHand.addition.mult * BigInt(gameState.handLevels[handType]-1)) * BigInt(decimalAccuracy); // Multiply all mult by decimalAccuracy, reset at the final calculation
 
   const handPlayedResponses = handleJokers(gameState, "onHandPlayed", [cards]).responses; // Hand played jokers
-  gameState.blind.handPlays.push(handType);
   gameState.handPlays[handType]++;
-  gameState.lastHand = handType;
   ({ chips, mult } = handleMult(gameState, chips, mult, handPlayedResponses));
 
   cards.forEach((card, idx) => { // Loop through played cards
@@ -4549,6 +4547,9 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
     })
   }
   ({ chips, mult } = handleMult(gameState, chips, mult, jokerResponses));
+  
+  gameState.blind.handPlays.push(handType);
+  gameState.lastHand = handType;
 
   if (gameState.deck.toLowerCase().replaceAll(" ", "") == "plasmadeck") {
     chips = (chips + mult / BigInt(decimalAccuracy)) / 2n;
