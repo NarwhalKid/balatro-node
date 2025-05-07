@@ -2126,7 +2126,7 @@ const jokers = [
       this.properties.index = undefined;
       getHandType(gameState, cards).cards.forEach((card, idx) => {
         console.log(this.properties.index);
-        if (isFaceCard(gameState, card) && !this.properties.index) {
+        if (isFaceCard(gameState, card) && this.properties.index == undefined) {
           this.properties.index = idx;
           console.log("Woah");
         }
