@@ -188,7 +188,6 @@ const seals = {
   "Red Seal": {onCardScored(gameState, card) {return {"retriggers": 1}}},
   "Gold Seal": {onCardScored(gameState, card) {gameState.money += 4}},
   "Blue Seal": {onEndCards(gameState, card) {
-    console.log(gameState.consumables);
     addConsumable(gameState, {name: pokerHands[gameState.lastHand].planet, handType: gameState.lastHand, getDesc(gameState){return `(lvl.${gameState.handLevels[this.handType]}) Level up ${this.handType}`}})
   }},
   "Purple Seal": {onCardDiscarded(gameState, card) {
@@ -4189,7 +4188,6 @@ function deepFind(obj, predicate) {
 }
 
 function restoreGameFunctions(game) {
-  game.consumables = game.consumables.filter(consumable => consumable.name);
   const sections = [game.jokers, game.consumables, game.shop?.cards, game.currentPack?.contents, game.tags];
 
   sections.forEach(section => {
