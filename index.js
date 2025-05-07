@@ -2798,7 +2798,7 @@ const blinds = [
       }
   },
   {
-      "name": "The Ox", // TODO
+      "name": "The Ox",
       "debuff": "Playing a (most played hand)\nsets money to $0",
       "properties": {
         "handType": undefined
@@ -4629,6 +4629,7 @@ function blindEnd(gameState, isMrBones = false) {
   gameState.state = "blindWin";
   gameState.jokers.forEach(joker => {if (joker.stickers?.includes("Rental")) gameState.money -= 3;}) // Rentals
   delete gameState.cardArea;
+  delete gameState.blind.hand;
   gameState.handSize -= gameState.blind.juggleTagsUsed*3;
   let currentBlindIdx = gameState.currentBlinds.filter(blind => blind.completed).length;
   gameState.currentBlinds[currentBlindIdx].completed = true;
