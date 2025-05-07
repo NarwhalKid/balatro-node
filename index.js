@@ -1055,8 +1055,8 @@ function drawCard(gameState, card = undefined, toHand = true) {
 }
 
 function addConsumable(gameState, card) {
-  if (card.edition == "Negative") gameState.consumableSlots++;
-  if (gameState.consumableSlots > gameState.consumables.length) {
+  if (gameState.consumableSlots + (card.editon == "Negative" ? 1 : 0) > gameState.consumables.length) {
+    if (card.edition == "Negative") gameState.consumableSlots++;
     gameState.consumables.push(card);
   }
 }
@@ -1608,7 +1608,7 @@ const jokers = [
       let tempSuits = objectClone(suits);
       let wilds = 0;
       getHandType(gameState, cards).cards.forEach(card => {
-        if (card.enhancement.toLowerCase() == "wildcard" && card.disabled) {
+        if (card.enhancement.toLowerCase() == "wildcard" && !card.disabled) {
           wilds++;
         } else {
           if (tempSuits.contains(card.suit)) tempSuits.splice(tempSuits.indexOf(card.suit), 1);
@@ -2329,14 +2329,14 @@ const jokers = [
       const newCards = getHandType(gameState, cards).cards;
       let suitCounts = {"Clubs": 0, "Spades": 0, "Hearts": 0, "Diamonds": 0};
       newCards.forEach(card => {
-        if (card.enhancement != "Wild Card") {
+        if (card.enhancement != "Wild Card" && !card.disabled) {
           suits.forEach(suit => {
             if (isSuit(gameState, card, suit)) suitCounts[suit]++;
           })
         }
       })
       newCards.forEach(card => {
-        if (card.enhancement == "Wild Card") {
+        if (card.enhancement == "Wild Card" && !card.disabled) {
           for (const suit of Object.keys(suitCounts)) {
             if (isSuit(gameState, card, suit) && suitCounts[suit] == 0) {
               suitCounts[suit]++;
