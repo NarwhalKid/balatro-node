@@ -407,7 +407,7 @@ const cards = {
     },
     {
       name: "Temperance",
-      getDesc(gameState){return `Gives the total sell value of all current Jokers (Max of $50)\n(Currently ${this.calcMoney(gameState)})`},
+      getDesc(gameState){return `Gives the total sell value of all current Jokers (Max of $50)\n(Currently $${this.calcMoney(gameState)})`},
       onUse(gameState, cards) {
         gameState.money += this.calcMoney(gameState);
       },
