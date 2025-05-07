@@ -2125,12 +2125,15 @@ const jokers = [
     onHandPlayed(gameState, cards) {
       this.properties.index = undefined;
       getHandType(gameState, cards).cards.forEach((card, idx) => {
+        console.log(this.properties.index);
         if (isFaceCard(gameState, card) && !this.properties.index) {
           this.properties.index = idx;
+          console.log("Woah");
         }
       })
     },
     onCardScored(gameState, card) {
+      console.log(`CardIdx: ${card.index} | thisIdx: ${this.properties.index}`);
       if (card.index == this.properties.index)
         return {"timesMult": 2};
     },
@@ -4547,7 +4550,7 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
     })
   }
   ({ chips, mult } = handleMult(gameState, chips, mult, jokerResponses));
-  
+
   gameState.blind.handPlays.push(handType);
   gameState.lastHand = handType;
 
