@@ -234,7 +234,7 @@ const enhancements = {
   "Bonus Card": {onCardScored(gameState, card) {return {"plusChips": 30};}},
   "Mult Card": {onCardScored(gameState, card) {return {"plusMult": 4};}},
   "Wild Card": {},
-  "Glass Card": {onCardScored(gameState, card) {return {"plusChips": 2, "destroy": random(gameState, 1, 4)};}},
+  "Glass Card": {onCardScored(gameState, card) {return {"plusChips": 2};}},
   "Steel Card": {onCardHeld(gameState, card) {return {"timesMult": 1.5};}},
   "Stone Card": {onCardScored(gameState, card) {return {"plusChips": 50};}},
   "Gold Card": {onEndCards(gameState, card) {gameState.money += 3}},
@@ -4486,6 +4486,7 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
       playedCardResponses.push(...handledJokers.responses); // Handle jokers
       trigger++;
     }
+    if (card.enhancement == "Glass Card" && random(gameState, 1, 4)) deleteCard(gameState, card);
     ({ chips, mult } = handleMult(gameState, chips, mult, playedCardResponses));
   })
 
