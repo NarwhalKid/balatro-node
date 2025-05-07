@@ -654,8 +654,8 @@ const cards = {
       onUse(gameState, cards) {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length != 1) return {"error": "Select exactly one card", "cardMax": 1};
-        drawCard(gameState, cards[0]);
-        drawCard(gameState, cards[0]);
+        drawCard(gameState, objectClone(cards[0]));
+        drawCard(gameState, objectClone(cards[0]));
       }
     },
     {
@@ -1037,12 +1037,11 @@ function getHandType(gameState, cards) { // TODO: go through all uses and check 
 
 function drawCard(gameState, card = undefined, toHand = true) {
   if (card) {
+    gameState.fullDeck.push(card);
     if (toHand) {
-      gameState.fullDeck.push(card);
       if (gameState.cardArea)
         gameState.cardArea.push(card);
     } else {
-      gameState.fullDeck.push(card);
       if (gameState.state == "blind")
         gameState.blind.remainingCards.push(card);
     }
