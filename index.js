@@ -4952,7 +4952,11 @@ function cardsToText(gameState, fullDeck = false) { // TODO: check if stone card
 }
 
 function vouchersToText(gameState) {
-  return gameState.vouchers.join("\n");
+  let response = "";
+  gameState.vouchers.forEach(voucher => {
+    response += voucherToText(gameState, voucher, true);
+  })
+  return response;
 }
 
 function handLevelsToText(gameState) {
