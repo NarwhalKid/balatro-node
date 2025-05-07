@@ -3804,12 +3804,12 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
     }
   }
   do {
-    if (cardType == "Joker") {
+    if (cardType == "Joker") { // JOKER
       const jokersOfRarity = jokers.filter(joker => rarity == joker.rarity);
       do {
         card = jokersOfRarity[Math.floor(Math.random() * jokersOfRarity.length)];
       } while (jokersOfRarity.length != 0 && jokerCount(gameState, "showman") <= 0 && (jokerNames.includes(card.name) || deepFind(gameState, (thing) => thing?.name == card.name)));
-    } else if (cardType == "Planet Card") {
+    } else if (cardType == "Planet Card") { // PLANET
       if (gameState.vouchers.includes("Telescope") && isBoosterPack && !gameState.currentPack.contents.length) {
         const pokerHand = Object.keys(gameState.handPlays).sort((a, b) => {return gameState.handPlays[a] - gameState.handPlays[b]})[0];
         card = {name: pokerHands[pokerHand].planet, handType: pokerHand, getDesc(gameState) {return `(lvl.${gameState.handLevels[this.handType]}) Level up ${this.handType}`}};
@@ -3820,7 +3820,7 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
       } while ((!pokerHands[card.handType].unlocked && gameState.handPlays[card.handType] < 1) || (!jokerCount(gameState, "showman") && deepFind(gameState, (thing) => thing?.name == card.name)));
     } else {
       let remainingCards = cards[cardType];
-      if (cardType != "Playing Card") {
+      if (cardType != "Playing Card") { // CONSUMABLES
         const newCards = remainingCards.filter(card => (!gameState.consumables.map(card => card.name).includes(card.name) && !deepFind(gameState, (thing) => thing?.name == card.name)) || jokerCount(gameState, "showman") > 0);
         remainingCards = newCards.length < 1 ? remainingCards : newCards;
       } else if (playingCardType == "Number") {
@@ -4716,7 +4716,7 @@ function jokerToText(gameState, joker, addDesc = false) {
     let desc;
     if (joker.desc) desc = joker.desc;
     if (joker.getDesc) desc = joker.getDesc(gameState);
-    if (desc) returnString += `\n-# ${desc}`;
+    if (desc) returnString += `\n${desc.replace(/^/gm, "-# ")}`;
   }
   return returnString;
 }
