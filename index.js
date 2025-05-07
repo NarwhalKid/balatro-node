@@ -3931,6 +3931,9 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
       if (timeBasedSticker) card.stickers.push(timeBasedSticker);
       const isRental = pickByPercentage({"Rental": {"odds": gameState.typeOdds.rental}});
       if (isRental) card.stickers.push(isRental);
+      if (timeBasedSticker == "Perishable") {
+        card.properties.perishable = 5;
+      }
     }
   }
   return card;
@@ -4187,6 +4190,7 @@ function deepFind(obj, predicate) {
 }
 
 function restoreGameFunctions(game) {
+  game.consumables = game.consumables.filter(Boolean);
   const sections = [game.jokers, game.consumables, game.shop?.cards, game.currentPack?.contents, game.tags];
 
   sections.forEach(section => {
@@ -4445,6 +4449,8 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
   let mult = (pokerHand.base.mult + pokerHand.addition.mult * BigInt(gameState.handLevels[handType]-1)) * BigInt(decimalAccuracy); // Multiply all mult by decimalAccuracy, reset at the final calculation
 
   const handPlayedResponses = handleJokers(gameState, "onHandPlayed", [cards]).responses; // Hand played jokers
+  gameState.blind.handPlays.push(handType);
+  gameState.handPlays[handType]++;
   gameState.lastHand = handType;
   ({ chips, mult } = handleMult(gameState, chips, mult, handPlayedResponses));
 
@@ -4600,11 +4606,12 @@ function blindEnd(gameState, isMrBones = false) {
     for (let i = 0; i <= jokerCount(gameState, "Mime") + jokerCount(gameState, "Blueprint") + jokerCount(gameState, "Brainstorm"); i++) {
       if (seals[card.seal]?.onEndCards)
         seals[card.seal]?.onEndCards(gameState);
-      if (seals[card.enhancement]?.onEndCards)
-        seals[card.enhancement]?.onEndCards(gameState);
+      if (enhancements[card.enhancement]?.onEndCards)
+        enhancements[card.enhancement]?.onEndCards(gameState);
     }
   })
   gameState.state = "blindWin";
+  gameState.jokers.forEach(joker => {if (joker.stickers?.includes("Rental")) gameState.money -= 3;}) // Rentals
   delete gameState.cardArea;
   gameState.handSize -= gameState.blind.juggleTagsUsed*3;
   let currentBlindIdx = gameState.currentBlinds.filter(blind => blind.completed).length;
@@ -4639,6 +4646,12 @@ function blindEnd(gameState, isMrBones = false) {
   }
   delete gameState.blind.remainingCards;
   gameState.unusedDiscards += gameState.blind.discards;
+  gameState.jokers.forEach(joker => { // Perishables
+    if (joker.properties?.perishable > 0) joker.properties.perishable--;
+    if (joker.properties?.perishable == 0) {
+      joker.debuffed = true;
+    }
+  })
 
   updateJokerProps(gameState);
 }
