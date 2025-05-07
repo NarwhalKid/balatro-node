@@ -4422,6 +4422,7 @@ function handleJokers(gameState, func, params = []) {
 const decimalAccuracy = 100000000;
 
 function handleMult(gameState, chips, mult, responseArray) {
+  console.log(responseArray);
   responseArray.filter(Boolean).forEach(response => {
     if (response.plusChips && response.plusChips > 0) chips += BigInt(response.plusChips);
     if (response.plusMult && response.plusMult > 0) mult += BigInt(response.plusMult * decimalAccuracy);
