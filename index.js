@@ -331,8 +331,6 @@ const cards = {
         if (!gameState.cardArea?.length) return {"error": "No cards"};
         if (cards.length != 1) return {"error": "Select 1 card", "cardMax": 1};
         cards[0].enhancement = "Wild Card";
-        console.log(cards[0]);
-        console.log(gameState.cardArea);
       }
     },
     {
@@ -2125,15 +2123,12 @@ const jokers = [
     onHandPlayed(gameState, cards) {
       this.properties.index = undefined;
       getHandType(gameState, cards).cards.forEach((card, idx) => {
-        console.log(this.properties.index);
         if (isFaceCard(gameState, card) && this.properties.index == undefined) {
           this.properties.index = idx;
-          console.log("Woah");
         }
       })
     },
     onCardScored(gameState, card) {
-      console.log(`CardIdx: ${card.index} | thisIdx: ${this.properties.index}`);
       if (card.index == this.properties.index)
         return {"timesMult": 2};
     },
