@@ -2738,7 +2738,7 @@ const jokers = [
     getDesc(gameState) { return `This Joker gains +8 Chips when each played 2 is scored\n(Currently ${this.properties.plusChips})` },
     "properties": {"plusChips":0},
     onCardScored(gameState, card) {
-      if (isSuit(gameState, card, "2")) {
+      if (isRank(gameState, card, "2")) {
         this.properties.plusChips += 8;
       }
     },
