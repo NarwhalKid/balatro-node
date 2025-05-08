@@ -4395,7 +4395,6 @@ function goNext(gameState) {
 
 function blindChoose(gameState, skip = false) {
   if (gameState.state != "blindSelect") return "Not selecting Blind";
-  console.log("A");
   const blindIdx = gameState.currentBlinds.filter(blind => blind.completed).length;
   if (skip && blindIdx == 2) return "Cannot skip Boss Blind";
   if (skip) {
