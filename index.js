@@ -4547,8 +4547,8 @@ function handleBlind(gameState, func, props = []) {
         card.selected = false;
         return;
       }
-      if (gameState.blind?.isDebuffed) card.debuffed = gameState.blind.isDebuffed();
-      if (gameState.blind?.isFaceCard) card.flipped = gameState.blind.isFaceCard();
+      if (gameState.blind?.isDebuffed) card.debuffed = gameState.blind.isDebuffed(gameState, card);
+      if (gameState.blind?.isFaceCard) card.flipped = gameState.blind.isFaceCard(gameState, card);
     })
   } else if (gameState.blind?.[func]) {
     if (gameState.blind?.disabled) return;
