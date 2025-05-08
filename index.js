@@ -2113,10 +2113,11 @@ const jokers = [
     "rarity": "Legendary",
     getDesc(gameState) { return "Creates a Negative copy of 1 random consumable card in your possession at the end of the shop" },
     "cost": 20,
-    onBlindStart(gameState) {
+    onShopEnd(gameState) {
       let cons = objectClone(gameState.consumables[Math.floor(Math.random() * gameState.consumables.length)]);
       cons.edition = "Negative";
-      addConsumable(gameState, cons);
+      gameState.consumableSlots++;
+      gameState.consumables.push(cons);
     }
   },
   {
@@ -2389,7 +2390,7 @@ const jokers = [
     onHandPlayed(gameState, cards) {
       if (cards.length == 1 && isRank(gameState, cards[0], "6")) {
         addConsumable(gameState, newCard(gameState, "Spectral Card"));
-        deleteCard(gameState, cards[0]);
+        gameState.cardsToDelete.push(cards[0]);
       }
     },
     "cost": 6,
@@ -3236,6 +3237,7 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
       "jokers": [],
       // "jokers": [objectClone(jokers.find(card => card.name == "Chaos the Clown"))],
       "consumableSlots": 2,
+      "cardsToDelete": [],
       "playedHands": 0,
       "unusedDiscards": 0,
       "skippedBlinds": 0,
@@ -4053,7 +4055,7 @@ function buyCard(gameState, index, buyAndUse = false) {
   if (!target) return "Invalid index";
   if (gameState.money-calcCost(gameState, target) < gameState.moneyLimit && calcCost(gameState, target) > 0) return "Not enough money";
   if (target.rarity) { // Joker
-    if (gameState.jokers.length >= gameState.jokerSlots) return "No empty joker slots";
+    if (gameState.jokers.length >= gameState.jokerSlots + (target.edition == "Negative" ? 1 : 0)) return "No space!";
     addNewJoker(gameState, target);
   } else if (!target.rank) { // Consumable
     if (buyAndUse) {
@@ -4065,7 +4067,7 @@ function buyCard(gameState, index, buyAndUse = false) {
         return response;
       }
     } else {
-      if (gameState.consumables.length >= gameState.consumableSlots) return "No empty consumable slots";
+      if (gameState.consumables.length >= gameState.consumableSlots) return "No space!";
       if (target.edition?.toLowerCase() == "negative") gameState.consumableSlots++;
       gameState.consumables.push(target);
     }
@@ -4303,6 +4305,7 @@ function newShop(gameState) {
 function goNext(gameState) {
   if (gameState.state != "shop") return "Not in Shop";
   gameState.state = "blindSelect";
+  handleJokers(gameState, "onShopEnd");
 }
 
 function blindChoose(gameState, skip = false) {
@@ -4399,7 +4402,7 @@ function handleJoker(gameState, joker, func, params = []) {
     response = handleJoker(gameState, gameState.jokers[idx+1], func, params);
     copied = true;
   }
-  if (joker.name.toLowerCase().replaceAll(" ", "") == "brainstorm" && !gameState.jokers[0]?.noCopy) {
+  if (joker.name.toLowerCase().replaceAll(" ", "") == "brainstorm" && !gameState.jokers[0]?.noCopy && idx != 0) {
     response = handleJoker(gameState, gameState.jokers[0], func, params);
     copied = true;
   }
@@ -4566,6 +4569,11 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
 
   gameState.blind.handPlays.push(handType);
   gameState.lastHand = handType;
+
+  gameState.cardsToDelete.forEach(card => {
+    deleteCard(card);
+  })
+  gameState.cardsToDelete = [];
 
   if (gameState.deck.toLowerCase().replaceAll(" ", "") == "plasmadeck") {
     chips = (chips + mult / BigInt(decimalAccuracy)) / 2n;
