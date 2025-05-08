@@ -150,7 +150,7 @@ const tags = [
     onBuy(gameState) {
       for (let i = 0; i < 2; i++) {
         if (gameState.jokers.length < gameState.jokerSlots) {
-          addNewJoker(gameState, newCard(gameState, "Joker", undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, true));
+          addNewJoker(gameState, newCard(gameState, "Joker", undefined, undefined, "Common", undefined, undefined, undefined, undefined, undefined, undefined, true));
         }
       }
     }
