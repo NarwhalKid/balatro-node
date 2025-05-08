@@ -4417,7 +4417,6 @@ function blindChoose(gameState, skip = false) {
     gameState.skippedBlinds++;
   } else {
     gameState.state = "blind";
-    console.log(1);
     blindSetup(gameState);
   }
 }
