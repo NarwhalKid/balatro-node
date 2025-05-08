@@ -4423,8 +4423,9 @@ function blindChoose(gameState, skip = false) {
 }
 
 function fillHand(gameState, isHand = false, isFirst = false) {
+  console.log((gameState.blind?.name == "The Serpent" && !gameState.blind?.disabled && !isFirst) ? (gameState.blind.hand.length + 3) : gameState.handSize);
   for (let i = gameState.blind.hand.length; i < (gameState.blind?.name == "The Serpent" && !gameState.blind?.disabled && !isFirst) ? (gameState.blind.hand.length + 3) : gameState.handSize; i++) {
-    drawCard(gameState, undefined, undefined, true);
+    drawCard(gameState, undefined, undefined, isHand);
   }
   setHandSort(gameState, gameState.sortByRank);
 }
