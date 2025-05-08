@@ -4590,7 +4590,7 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
   }
 
   if (!handleBlind(gameState, "onHandPlayed", [cards])?.invalidHand) {
-    const handPlayedResponses = handleJokers(gameState, "onHandPlayed", [card]).responses; // Hand played jokers
+    const handPlayedResponses = handleJokers(gameState, "onHandPlayed", [cards]).responses; // Hand played jokers
     gameState.handPlays[handType]++;
     ({ chips, mult } = handleMult(gameState, chips, mult, handPlayedResponses));
 
