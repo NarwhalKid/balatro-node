@@ -405,7 +405,6 @@ const cards = {
         if (cards.length != 2) return {"error": "Select 2 cards", "cardMax": 2};
         for (const key in cards[0]) delete cards[0][key];
         Object.assign(cards[0], objectClone(cards[1]));
-        console.log(gameState.fullDeck);
       }
     },
     {
@@ -3472,7 +3471,7 @@ function newGame(deck = "Red Deck", stake = "White Stake") {
             break;
         case "magicdeck":
             addVoucher(game, "Crystal Ball");
-            const fool = objectClone(cards["Tarot Card"].find(card => card.name == "Death"));
+            const fool = objectClone(cards["Tarot Card"].find(card => card.name == "The Fool"));
             fool.cost = 3;
             game.consumables.push(objectClone(fool));
             game.consumables.push(fool);
