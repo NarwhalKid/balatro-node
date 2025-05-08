@@ -2815,17 +2815,17 @@ const blinds = [
       "tertiaryColor": "#372a25",
       "isNormalBoss": true,
       onHandPlayed(gameState, cards) {
-        let cards = [];
+        let discards = [];
         for (let i = 0; i < 2 && i < gameState.cardArea.length-1; i++) {
-          cards.push(gameState.cardArea[Math.floor(Math.random() * gameState.cardArea.length)]);
+          discards.push(gameState.cardArea[Math.floor(Math.random() * gameState.cardArea.length)]);
         }
-        gameState.blind.hand = gameState.blind.hand.filter((card) => !cards.includes(card));
+        gameState.blind.hand = gameState.blind.hand.filter((card) => !discards.includes(card));
 
-        cards.forEach(card => {
+        discards.forEach(card => {
           if (seals[card.seal]?.onCardDiscarded)
             seals[card.seal]?.onCardDiscarded(gameState);
         })
-        handleJokers(gameState, "onDiscard", [cards]);
+        handleJokers(gameState, "onDiscard", [discards]);
       }
   },
   {
