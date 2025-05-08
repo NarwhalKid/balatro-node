@@ -278,6 +278,7 @@ const cards = {
         if (cards.length < 1 || cards.length > 2) return {"error": "Select 1-2 cards", "cardMax": 2};
         for (const card of cards) {
           card.enhancement = "Lucky Card";
+          
         }
       }
     },
@@ -5036,7 +5037,7 @@ function gameToText(gameState) {
       returnString += blindsToText(gameState);
       break;
     case "lose":
-      returnString += `YOU LOSE`; // TODO
+      returnString += `${bigIntToSci(gameState.blind.roundScore)}/${bigIntToSci(gameState.blind.blindScore)}\nYOU LOSE`; // TODO
   }
   return returnString;
 }
