@@ -4300,14 +4300,14 @@ function restoreGameFunctions(game) {
     }
   })
 
-  if (game.blind) {
-    const ogConsumable = deepFind(blinds, findConsumable => findConsumable?.name == game.blind.name); 
-    for (const [key, value] of Object.entries(ogConsumable)) {
-      if (typeof value === "function") {
-        game.blind[key] = value;
-      }
-    }
-  }
+  // if (game.blind) {
+  //   const ogConsumable = deepFind(blinds, findConsumable => findConsumable?.name == game.blind.name); 
+  //   for (const [key, value] of Object.entries(ogConsumable)) {
+  //     if (typeof value === "function") {
+  //       game.blind[key] = value;
+  //     }
+  //   }
+  // }
 
   if (game.theFool) {
     const ogConsumable = game.theFool.name;
