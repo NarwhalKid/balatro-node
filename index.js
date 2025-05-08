@@ -4417,6 +4417,7 @@ function blindChoose(gameState, skip = false) {
     gameState.skippedBlinds++;
   } else {
     gameState.state = "blind";
+    console.log(1);
     blindSetup(gameState);
   }
 }
@@ -4470,10 +4471,15 @@ function blindSetup(gameState) {
       gameState.tags.splice(idx, 1);
     }
   })
+  console.log(2);
   handleBlind(gameState, "onBlindStart");
+  console.log(3);
   fillHand(gameState);
+  console.log(4);
   handleBlind(gameState, "onHandEnd");
+  console.log(5);
   handleJokers(gameState, "onBlindStart");
+  console.log(6);
 }
 
 function handleJoker(gameState, joker, func, params = []) {
