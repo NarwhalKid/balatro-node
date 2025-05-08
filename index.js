@@ -5146,6 +5146,7 @@ function bossReroll(gameState, free = false) {
     gameState.money -= 10;
   }  
   gameState.currentBlinds[2] = getBossBlind(gameState);
+  console.log(gameState.currentBlinds[2]);
   gameState.bossRerolled = true;
 }
 
