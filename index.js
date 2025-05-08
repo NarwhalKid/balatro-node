@@ -677,6 +677,7 @@ const cards = {
 }
 
 function deleteCard(gameState, card) {
+  handleJokers(gameState, "onCardDestroyed", [card]);
   gameState.cardArea?.forEach((loopCard, idx) => {
     if (loopCard == card) gameState.cardArea.splice(idx, 1);
   })
@@ -903,27 +904,32 @@ function cardsContain(gameState, cards, handType) {
   handType = handType.toLowerCase().replaceAll(" ", "");
   const hasFourFingers = jokerCount(gameState, "fourfingers") > 0;
   const hasShortcut = jokerCount(gameState, "shortcut") > 0;
+  const stoneReturnCards = cards.filter(card => card.edition == "Stone Card");
   if (handType == "fiveofakind") {
     for (const rank of ranks) {
-      const returnCards = cards.filter(card => isRank(gameState, card, rank));
+      let returnCards = structuredClone(stoneReturnCards);
+      returnCards.push(...cards.filter(card => isRank(gameState, card, rank)));
       if (returnCards.length >= 5) return returnCards;
     } 
   }
   if (handType == "fourofakind") {
     for (const rank of ranks) {
-      const returnCards = cards.filter(card => isRank(gameState, card, rank));
+      let returnCards = structuredClone(stoneReturnCards);
+      returnCards.push(...cards.filter(card => isRank(gameState, card, rank)));
       if (returnCards.length >= 4) return returnCards;
     } 
   }
   if (handType == "threeofakind") {
     for (const rank of ranks) {
-      const returnCards = cards.filter(card => isRank(gameState, card, rank));
+      let returnCards = structuredClone(stoneReturnCards);
+      returnCards.push(...cards.filter(card => isRank(gameState, card, rank)));
       if (returnCards.length >= 3) return returnCards;
     }    
   }
   if (handType == "pair") {
     for (const rank of ranks) {
-      const returnCards = cards.filter(card => isRank(gameState, card, rank));
+      let returnCards = structuredClone(stoneReturnCards);
+      returnCards.push(...cards.filter(card => isRank(gameState, card, rank)));
       if (returnCards.length >= 2) return returnCards;
     }
   }
@@ -934,6 +940,7 @@ function cardsContain(gameState, cards, handType) {
       if (tempReturnCards.length >= (hasFourFingers ? 4 : 5)) {
         if (returnCards.length <= tempReturnCards.length) {
           returnCards = tempReturnCards;
+          returnCards.push(...stoneReturnCards);
         }
       }
     });
@@ -946,6 +953,7 @@ function cardsContain(gameState, cards, handType) {
       pairs++;
       returnCards.push(cards.filter(card => isRank(gameState, card, rank)));
     }});
+    returnCards.push(...stoneReturnCards);
     if (pairs >= 2) return returnCards;
   }
   if (handType == "fullhouse") {
@@ -995,15 +1003,21 @@ function cardsContain(gameState, cards, handType) {
   
         if (sequence.length >= neededLength) {
           if (uniqueValues.length < cards.length) return cards;
-          return sequence.map(val => valueToCards[val][0]);
+          let returnCards = sequence.map(val => valueToCards[val][0]);
+          returnCards.push(...stoneReturnCards);
+          return returnCards;
         }
       }
     }
   }
-  if (handType == "highcard") return [cards.filter(card => !card.enhancement?.toLowerCase().replaceAll(" ", "") == "stonecard").map(card => rankToValue(card.rank)).sort((a,b) => a-b)[0] || cards[0]];
+  if (handType == "highcard") {
+    let tempReturnArr = [cards.filter(card => !card.enhancement?.toLowerCase().replaceAll(" ", "") == "stonecard").map(card => rankToValue(card.rank)).sort((a,b) => a-b)[0] || cards[0]];
+    tempReturnArr.push(...cards.filter(card => card.enhancement == "Stone Card"));
+    return tempReturnArr;
+  };
   if (handType == "straightflush") {
     if (cardsContain(gameState, cards, "Straight") && cardsContain(gameState, cards, "Flush"))
-    return cards;
+    return cards; // TODO: check if theyre counted
   }
   if (handType == "flushhouse") {
     if (cardsContain(gameState, cards, "Full House") && cardsContain(gameState, cards, "Flush"))
@@ -1249,10 +1263,8 @@ const jokers = [
     getDesc(gameState) { return `This Joker gains X1 Mult when a face card is destroyed\n(Currently X${this.properties.timesMult})` },
     "properties": {"timesMult":1},
     onScore(gameState, cards) {return {"timesMult": this.properties.timesMult}},
-    onCardsDestroyed(gameState, cards) {
-      cards.forEach(card => {
-        if (isFaceCard(card)) timesMult++;
-      })
+    onCardDestroyed(gameState, card) {
+      if (isFaceCard(card)) timesMult++;
     },
     "cost": 20,
   },
@@ -1608,8 +1620,9 @@ const jokers = [
       let tempSuits = objectClone(suits);
       let wilds = 0;
       getHandType(gameState, cards).cards.forEach(card => {
-        if (card.enhancement.toLowerCase() == "wildcard" && !card.disabled) {
-          wilds++;
+        if (card.enhancement.toLowerCase() == "wildcard") {
+          if (!card.disabled) // Intentional, copying real Balatro
+            wilds++;
         } else {
           if (tempSuits.contains(card.suit)) tempSuits.splice(tempSuits.indexOf(card.suit), 1);
         }
@@ -1655,7 +1668,11 @@ const jokers = [
     "rarity": "Uncommon",
     getDesc(gameState) { return `This Joker gains X0.75 Mult for every Glass Card that is destroyed\n(Currently X${this.properties.timesMult})` },
     "properties": {"timesMult":1},
-    onGlassBreak(gameState) {this.properties.timesMult += 0.75},
+    onCardDestroyed(gameState, card) {
+      if (card.edition == "Glass Card") {
+        this.properties.timesMult += 0.75;
+      }
+    },
     onScore(gameState, cards) {return {"timesMult": this.properties.timesMult}},
     "cost": 6,
   },
