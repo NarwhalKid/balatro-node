@@ -662,6 +662,7 @@ const cards = {
     {
       name: "The Soul",
       desc: "Creates a Legendary Joker (Must have room)",
+      noAppear: true,
       onUse(gameState, cards) {
         if (gameState.jokers.length >= gameState.jokerSlots) return {"error": "No joker slots"};
         addNewJoker(gameState, newCard(gameState, "Joker", false, false, "Legendary"));
@@ -670,6 +671,7 @@ const cards = {
     {
       name: "Black Hole",
       desc: "Upgrade every poker hand by 1 level",
+      noAppear: true,
       onUse(gameState, card) {
         Object.keys(gameState.handLevels).forEach(hand => gameState.handLevels[hand]++);
       }
@@ -3800,7 +3802,7 @@ function addVoucher(gameState, voucher) {
   }
 }
 
-function newCard(gameState, cardType, certificate = false, stone = false, jokerRarity = undefined, forceEnhancement = false, blockEdition = false, playingCardType = undefined, isBoosterPack = false, isShop = false, isCoupon = false, noStickers = false) {
+function newCard(gameState, cardType, certificate = false, stone = false, jokerRarity = undefined, forceEnhancement = false, blockEdition = false, playingCardType = undefined, isBoosterPack = undefined, isShop = false, isCoupon = false, noStickers = false) {
   let card;
   let rarity = pickByPercentage([
     {"type": "Common", "odds": 70},
@@ -3808,6 +3810,18 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
     {"type": "Rare", "odds": 5},
   ]).type;
   if (jokerRarity) rarity = jokerRarity;
+  if (Math.random() <= 0.003) {
+    if ((isBoosterPack == "Arcana" || isBoosterPack == "Spectral") && (jokerCount("Showman") || !deepFind(game, (thing) => thing.name == "The Soul"))) {
+      card = cards["Spectral Card"].find(card => card.name == "The Soul");
+      card.cost = 4;
+      return card;
+    }
+    if ((isBoosterPack == "Celestial" || isBoosterPack == "Spectral") && (jokerCount("Showman") || !deepFind(game, (thing) => thing.name == "Black Hole"))) {
+      card = cards["Spectral Card"].find(card => card.name == "Black Hole");
+      card.cost = 4;
+      return card;
+    }
+  }
   const jokerNames = gameState.jokers.map(joker => joker.name.toLowerCase());
   if (isShop) {
     for (const tag of gameState.tags) {
@@ -3845,7 +3859,7 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
     } else {
       let remainingCards = cards[cardType];
       if (cardType != "Playing Card") { // CONSUMABLES
-        const newCards = remainingCards.filter(card => (!gameState.consumables.map(card => card.name).includes(card.name) && !deepFind(gameState, (thing) => thing?.name == card.name)) || jokerCount(gameState, "showman") > 0);
+        const newCards = remainingCards.filter(card => !card.noAppear && ((!gameState.consumables.map(card => card.name).includes(card.name) && !deepFind(gameState, (thing) => thing?.name == card.name)) || jokerCount(gameState, "showman") > 0));
         remainingCards = newCards.length < 1 ? remainingCards : newCards;
       } else if (playingCardType == "Number") {
         remainingCards.filter(card => {
@@ -4108,7 +4122,7 @@ function buyPack(gameState, pack, free = false) {
   const packOdds = packTypes[target.name.replaceAll("Mega", "").replaceAll("Jumbo", "").trim()];
   for (let i = 0; i < target.amount; i++) {
     const cardType = pickWeightedRandom(packOdds);
-    target.contents.push(newCard(gameState, cardType, false, false, undefined, false, false, undefined, true));
+    target.contents.push(newCard(gameState, cardType, false, false, undefined, false, false, undefined, pack.name.replaceAll("Mega","").replaceAll("Jumbo","").trim()));
   }
   gameState.currentPack = target;
   delete gameState.cardArea;
