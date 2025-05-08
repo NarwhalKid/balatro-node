@@ -878,7 +878,9 @@ function jokerCount(gameState, jokerName) {
 }
 
 function random(gameState, odds, outOf) {
-  return Math.floor(Math.random() * odds) + 1 <= outOf * Math.pow(2, jokerCount(gameState, "Oops! All 6s"));
+  const multiplier = Math.pow(2, jokerCount(gameState, "Oops! All 6s"));
+  const chance = (odds * multiplier) / outOf;
+  return Math.random() < chance;
 }
 
 function isSuit(gameState, card, suit) {
