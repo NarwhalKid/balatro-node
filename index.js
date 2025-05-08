@@ -4424,12 +4424,9 @@ function blindChoose(gameState, skip = false) {
 
 function fillHand(gameState, isHand = false, isFirst = false) {
   const handLength = gameState.blind.hand.length;
-  for (let i = gameState.blind.hand.length; i < (gameState.blind?.name == "The Serpent" && !gameState.blind?.disabled && !isFirst) ? (handLength + 3) : gameState.handSize; i++) {
-    console.log(i, (gameState.blind?.name == "The Serpent" && !gameState.blind?.disabled && !isFirst) ? (handLength + 3) : gameState.handSize);
+  for (let i = gameState.blind.hand.length; i < ((gameState.blind?.name == "The Serpent" && !gameState.blind?.disabled && !isFirst) ? (handLength + 3)) : gameState.handSize; i++) {
     drawCard(gameState, undefined, undefined, isHand);
-    console.log(i);
   }
-  console.log("erm")
   setHandSort(gameState, gameState.sortByRank);
 }
 
@@ -4475,15 +4472,10 @@ function blindSetup(gameState) {
       gameState.tags.splice(idx, 1);
     }
   })
-  console.log(2);
   handleBlind(gameState, "onBlindStart");
-  console.log(3);
   fillHand(gameState, undefined, true);
-  console.log(4);
   handleBlind(gameState, "onHandEnd");
-  console.log(5);
   handleJokers(gameState, "onBlindStart");
-  console.log(6);
 }
 
 function handleJoker(gameState, joker, func, params = []) {
