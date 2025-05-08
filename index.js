@@ -4767,6 +4767,7 @@ function blindEnd(gameState, isMrBones = false) {
     }
   })
   gameState.state = "blindWin";
+  handleBlind(gameState, "onBlindEnd");
   gameState.jokers.forEach(joker => {if (joker.stickers?.includes("Rental")) gameState.money -= 3;}) // Rentals
   delete gameState.cardArea;
   delete gameState.blind.hand;
