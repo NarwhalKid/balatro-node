@@ -3273,8 +3273,10 @@ const blinds = [
       const possibilities = gameState.jokers.filter(joker => !joker.debuffed);
       if (possibilities.length) {
         const last = gameState.jokers.find(joker => joker.bossDebuffed);
-        last?.debuffed = false;
-        last?.bossDebuffed = false;
+        if (last) {
+          last.debuffed = false;
+          last.bossDebuffed = false;
+        }
         const target = possibilities[Math.floor(Math.random() * possibilities.length)];
         target.debuffed = true;
         target.bossDebuffed = true;
