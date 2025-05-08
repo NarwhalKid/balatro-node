@@ -261,8 +261,7 @@ const cards = {
       name: "The Fool",
       getDesc(gameState) {return `Creates the last Tarot or Planet card used during this run (The Fool excluded)\n(${this.getLastText(gameState)})`},
       onUse(gameState, cards) {
-        if (!gameState.theFool || gameState.theFool.name == "The Fool") return {"error": "No card to copy!"};
-        if (gameState.consumables.length >= gameState.consumableSlots) return {"error": "No room!"};
+        if (!gameState.theFool || gameState.theFool.name == "The Fool") return {"error": "Invalid last card"};
         gameState.consumables.push(objectClone(gameState.theFool));
       },
       getLastText(gameState) {
@@ -662,7 +661,6 @@ const cards = {
     {
       name: "The Soul",
       desc: "Creates a Legendary Joker (Must have room)",
-      noAppear: true,
       onUse(gameState, cards) {
         if (gameState.jokers.length >= gameState.jokerSlots) return {"error": "No joker slots"};
         addNewJoker(gameState, newCard(gameState, "Joker", false, false, "Legendary"));
@@ -671,7 +669,6 @@ const cards = {
     {
       name: "Black Hole",
       desc: "Upgrade every poker hand by 1 level",
-      noAppear: true,
       onUse(gameState, card) {
         Object.keys(gameState.handLevels).forEach(hand => gameState.handLevels[hand]++);
       }
@@ -680,7 +677,6 @@ const cards = {
 }
 
 function deleteCard(gameState, card) {
-  handleJokers(gameState, "onCardDestroyed", [card]);
   gameState.cardArea?.forEach((loopCard, idx) => {
     if (loopCard == card) gameState.cardArea.splice(idx, 1);
   })
@@ -907,32 +903,27 @@ function cardsContain(gameState, cards, handType) {
   handType = handType.toLowerCase().replaceAll(" ", "");
   const hasFourFingers = jokerCount(gameState, "fourfingers") > 0;
   const hasShortcut = jokerCount(gameState, "shortcut") > 0;
-  const stoneReturnCards = cards.filter(card => card.edition == "Stone Card");
   if (handType == "fiveofakind") {
     for (const rank of ranks) {
-      let returnCards = structuredClone(stoneReturnCards);
-      returnCards.push(...cards.filter(card => isRank(gameState, card, rank)));
+      const returnCards = cards.filter(card => isRank(gameState, card, rank));
       if (returnCards.length >= 5) return returnCards;
     } 
   }
   if (handType == "fourofakind") {
     for (const rank of ranks) {
-      let returnCards = structuredClone(stoneReturnCards);
-      returnCards.push(...cards.filter(card => isRank(gameState, card, rank)));
+      const returnCards = cards.filter(card => isRank(gameState, card, rank));
       if (returnCards.length >= 4) return returnCards;
     } 
   }
   if (handType == "threeofakind") {
     for (const rank of ranks) {
-      let returnCards = structuredClone(stoneReturnCards);
-      returnCards.push(...cards.filter(card => isRank(gameState, card, rank)));
+      const returnCards = cards.filter(card => isRank(gameState, card, rank));
       if (returnCards.length >= 3) return returnCards;
     }    
   }
   if (handType == "pair") {
     for (const rank of ranks) {
-      let returnCards = structuredClone(stoneReturnCards);
-      returnCards.push(...cards.filter(card => isRank(gameState, card, rank)));
+      const returnCards = cards.filter(card => isRank(gameState, card, rank));
       if (returnCards.length >= 2) return returnCards;
     }
   }
@@ -943,7 +934,6 @@ function cardsContain(gameState, cards, handType) {
       if (tempReturnCards.length >= (hasFourFingers ? 4 : 5)) {
         if (returnCards.length <= tempReturnCards.length) {
           returnCards = tempReturnCards;
-          returnCards.push(...stoneReturnCards);
         }
       }
     });
@@ -956,7 +946,6 @@ function cardsContain(gameState, cards, handType) {
       pairs++;
       returnCards.push(cards.filter(card => isRank(gameState, card, rank)));
     }});
-    returnCards.push(...stoneReturnCards);
     if (pairs >= 2) return returnCards;
   }
   if (handType == "fullhouse") {
@@ -1006,21 +995,15 @@ function cardsContain(gameState, cards, handType) {
   
         if (sequence.length >= neededLength) {
           if (uniqueValues.length < cards.length) return cards;
-          let returnCards = sequence.map(val => valueToCards[val][0]);
-          returnCards.push(...stoneReturnCards);
-          return returnCards;
+          return sequence.map(val => valueToCards[val][0]);
         }
       }
     }
   }
-  if (handType == "highcard") {
-    let tempReturnArr = [cards.filter(card => !card.enhancement?.toLowerCase().replaceAll(" ", "") == "stonecard").map(card => rankToValue(card.rank)).sort((a,b) => a-b)[0] || cards[0]];
-    tempReturnArr.push(...cards.filter(card => card.enhancement == "Stone Card"));
-    return tempReturnArr;
-  };
+  if (handType == "highcard") return [cards.filter(card => !card.enhancement?.toLowerCase().replaceAll(" ", "") == "stonecard").map(card => rankToValue(card.rank)).sort((a,b) => a-b)[0] || cards[0]];
   if (handType == "straightflush") {
     if (cardsContain(gameState, cards, "Straight") && cardsContain(gameState, cards, "Flush"))
-    return cards; // TODO: check if theyre counted
+    return cards;
   }
   if (handType == "flushhouse") {
     if (cardsContain(gameState, cards, "Full House") && cardsContain(gameState, cards, "Flush"))
@@ -1052,7 +1035,7 @@ function getHandType(gameState, cards) { // TODO: go through all uses and check 
   }
 }
 
-function drawCard(gameState, card = undefined, toHand = true, isHand = false) {
+function drawCard(gameState, card = undefined, toHand = true) {
   if (card) {
     gameState.fullDeck.push(card);
     if (toHand) {
@@ -1066,10 +1049,8 @@ function drawCard(gameState, card = undefined, toHand = true, isHand = false) {
     if (gameState.blind.remainingCards.length < 1) return;
     const cardIdx = Math.floor(Math.random() * gameState.blind.remainingCards.length);
     gameState.blind.hand.push(gameState.blind.remainingCards[cardIdx]);
-    handleBlind(gameState, "onCardDrawn", [gameState.blind.remainingCards[cardIdx], isHand]);
     gameState.blind.remainingCards.splice(cardIdx, 1);
   }
-  handleBlind(gameState, "cards");
 }
 
 function addConsumable(gameState, card) {
@@ -1268,8 +1249,10 @@ const jokers = [
     getDesc(gameState) { return `This Joker gains X1 Mult when a face card is destroyed\n(Currently X${this.properties.timesMult})` },
     "properties": {"timesMult":1},
     onScore(gameState, cards) {return {"timesMult": this.properties.timesMult}},
-    onCardDestroyed(gameState, card) {
-      if (isFaceCard(card)) timesMult++;
+    onCardsDestroyed(gameState, cards) {
+      cards.forEach(card => {
+        if (isFaceCard(card)) timesMult++;
+      })
     },
     "cost": 20,
   },
@@ -1392,9 +1375,6 @@ const jokers = [
     "name": "Chicot",
     "rarity": "Legendary",
     getDesc(gameState) { return "Disables effect of every Boss Blind" },
-    onBlindStart(gameState) {
-      disableBlind(gameState);
-    },
     "cost": 20,
     "noCopy": true,
   },
@@ -1628,9 +1608,8 @@ const jokers = [
       let tempSuits = objectClone(suits);
       let wilds = 0;
       getHandType(gameState, cards).cards.forEach(card => {
-        if (card.enhancement.toLowerCase() == "wildcard") {
-          if (!card.disabled) // Intentional, copying real Balatro
-            wilds++;
+        if (card.enhancement.toLowerCase() == "wildcard" && !card.disabled) {
+          wilds++;
         } else {
           if (tempSuits.contains(card.suit)) tempSuits.splice(tempSuits.indexOf(card.suit), 1);
         }
@@ -1676,11 +1655,7 @@ const jokers = [
     "rarity": "Uncommon",
     getDesc(gameState) { return `This Joker gains X0.75 Mult for every Glass Card that is destroyed\n(Currently X${this.properties.timesMult})` },
     "properties": {"timesMult":1},
-    onCardDestroyed(gameState, card) {
-      if (card.edition == "Glass Card") {
-        this.properties.timesMult += 0.75;
-      }
-    },
+    onGlassBreak(gameState) {this.properties.timesMult += 0.75},
     onScore(gameState, cards) {return {"timesMult": this.properties.timesMult}},
     "cost": 6,
   },
@@ -1846,13 +1821,13 @@ const jokers = [
   {
     "name": "Invisible Joker",
     "rarity": "Rare",
-    getDesc(gameState) { return `After 2 rounds, sell this card to Duplicate a random Joker\n(${this.properties.roundsRemaining < 2 ? `Rounds remaining: ${this.properties.roundsRemaining}` : "Active!"})` },
-    "properties": {"roundsRemaining":0, "roundsMax":2},
+    getDesc(gameState) { return `After 2 rounds, sell this card to Duplicate a random Joker\n(${this.properties.roundsRemaining > 0 ? `Rounds remaining: ${this.properties.roundsRemaining}` : "Active!"})` },
+    "properties": {"roundsRemaining":2},
     onRoundEnd(gameState) {
-      this.properties.roundsRemaining = Math.min(2, this.properties.roundsRemaining+1);
+      this.properties.roundsRemaining = Math.max(0, this.properties.roundsRemaining-1);
     },
     onSell(gameState) {
-      if (this.properties.roundsRemaining >= 2) {
+      if (this.properties.roundsRemaining < 1) {
         let invis = false;
         let jokers = [];
         gameState.jokers.forEach(joker => {
@@ -1923,7 +1898,7 @@ const jokers = [
     "rarity": "Uncommon",
     getDesc(gameState) { return "Sell this card to disable the current Boss Blind" },
     onSell(gameState) {
-      disableBlind(gameState);
+      // TODO
     },
     "cost": 5,
     "noEternal": true,
@@ -2002,9 +1977,6 @@ const jokers = [
     "name": "Matador",
     "rarity": "Uncommon",
     getDesc(gameState) { return "Earn $8 if played hand triggers the Boss Blind ability" },
-    onBlindAbility(gameState) {
-      gameState.money += 8;
-    },
     "cost": 7,
   },
   {
@@ -2384,7 +2356,7 @@ const jokers = [
     "name": "Seltzer",
     "rarity": "Uncommon",
     getDesc(gameState) { return `Retrigger all cards played for the next ${this.properties.roundsRemaining} hand${this.properties.roundsRemaining == 1 ? "" : "s"}` },
-    "properties": {"roundsRemaining":10, roundsMax:10},
+    "properties": {"roundsRemaining":10},
     onCardScored(gameState, card) {
       return {"retriggers": 1};
     },
@@ -2813,379 +2785,363 @@ const blinds = [
     "tertiaryColor": "#54451a"
   },
   {
-    "name": "The Hook",
-    "debuff": "Discards 2 random\ncards per hand played",
-    "minimumAnte": 1,
-    "scoreMult": 2,
-    "primaryColor": "#9f2909",
-    "primaryShadow": "#651200",
-    "secondaryColor": "#522a1e",
-    "tertiaryColor": "#372a25",
-    "isNormalBoss": true,
-    onHandPlayed(gameState, cards) {
-      let discards = [];
-      for (let i = 0; i < 2 && i < gameState.cardArea.length-1; i++) {
-        discards.push(gameState.cardArea[Math.floor(Math.random() * gameState.cardArea.length)]);
+      "name": "The Hook",
+      "debuff": "Discards 2 random\ncards per hand played",
+      "minimumAnte": 1,
+      "scoreMult": 2,
+      "primaryColor": "#9f2909",
+      "primaryShadow": "#651200",
+      "secondaryColor": "#522a1e",
+      "tertiaryColor": "#372a25",
+      "isNormalBoss": true,
+      onHandPlayed(gameState, cards) {
+        // TODO
       }
-      gameState.blind.hand = gameState.blind.hand.filter((card) => !discards.includes(card));
-
-      discards.forEach(card => {
-        if (seals[card.seal]?.onCardDiscarded)
-          seals[card.seal]?.onCardDiscarded(gameState);
-      })
-      handleJokers(gameState, "onDiscard", [discards]);
-    }
   },
   {
-    "name": "The Ox",
-    "debuff": "Playing a (most played hand)\nsets money to $0",
-    "properties": {
-      "handType": undefined
-    },
-    "minimumAnte": 6,
-    "scoreMult": 2,
-    "primaryColor": "#b24700",
-    "primaryShadow": "#732700",
-    "secondaryColor": "#3c301f",
-    "tertiaryColor": "#5a3612",
-    "isNormalBoss": true,
-    onHandPlayed(gameState, cards) {
-      if (getHandType(gameState, cards).handType == this.properties.handType) {
-        gameState.money = 0;
-        handleJokers(gameState, "onBlindAbility");
+      "name": "The Ox",
+      "debuff": "Playing a (most played hand)\nsets money to $0",
+      "properties": {
+        "handType": undefined
+      },
+      "minimumAnte": 6,
+      "scoreMult": 2,
+      "primaryColor": "#b24700",
+      "primaryShadow": "#732700",
+      "secondaryColor": "#3c301f",
+      "tertiaryColor": "#5a3612",
+      "isNormalBoss": true,
+      onHandPlayed(gameState, cards) {
+        if (getHandType(gameState, cards).handType == this.properties.handType) gameState.money = 0;
       }
-    }
   },
   {
-    "name": "The House",
-    "debuff": "First hand is\ndrawn face down",
-    "minimumAnte": 2,
-    "scoreMult": 2,
-    "primaryColor": "#3c789f",
-    "primaryShadow": "#1f4a65",
-    "secondaryColor": "#243a44",
-    "tertiaryColor": "#2a4a5b",
-    "isNormalBoss": true,
-    onHandEnd(gameState) {
-      gameState.forEach(card => {
-        if (gameState.blind.firstHand && gameState.blind.firstDiscard) {
+      "name": "The House", // TODO
+      "debuff": "First hand is\ndrawn face down",
+      "minimumAnte": 2,
+      "scoreMult": 2,
+      "primaryColor": "#3c789f",
+      "primaryShadow": "#1f4a65",
+      "secondaryColor": "#243a44",
+      "tertiaryColor": "#2a4a5b",
+      "isNormalBoss": true
+  },
+  {
+      "name": "The Wall",
+      "debuff": "Extra large blind",
+      "minimumAnte": 2,
+      "scoreMult": 4,
+      "primaryColor": "#7d459c",
+      "primaryShadow": "#4d2663",
+      "secondaryColor": "#302f43",
+      "tertiaryColor": "#443558",
+      "isNormalBoss": true
+  },
+  {
+      "name": "The Wheel",
+      "debuff": "1 in 7 cards get\ndrawn face down",
+      "minimumAnte": 2,
+      "scoreMult": 2,
+      "primaryColor": "#3bb96d",
+      "primaryShadow": "#1f7742",
+      "secondaryColor": "#24473a",
+      "tertiaryColor": "#2a6446",
+      "isNormalBoss": true,
+      onCardDrawn(gameState, card) {
+        if (random(gameState, 1, 7)) {
           card.flipped = true;
         }
-      })
-    }
-  },
-  {
-    "name": "The Wall",
-    "debuff": "Extra large blind",
-    "minimumAnte": 2,
-    "scoreMult": 4,
-    "primaryColor": "#7d459c",
-    "primaryShadow": "#4d2663",
-    "secondaryColor": "#302f43",
-    "tertiaryColor": "#443558",
-    "isNormalBoss": true
-  },
-  {
-    "name": "The Wheel",
-    "debuff": "1 in 7 cards get\ndrawn face down",
-    "minimumAnte": 2,
-    "scoreMult": 2,
-    "primaryColor": "#3bb96d",
-    "primaryShadow": "#1f7742",
-    "secondaryColor": "#24473a",
-    "tertiaryColor": "#2a6446",
-    "isNormalBoss": true,
-    onCardDrawn(gameState, card, isHand) {
-      if (random(gameState, 1, 7)) {
-        card.flipped = true;
       }
-    }
   },
   {
-    "name": "The Arm",
-    "debuff": "Decrease level of\nplayed poker hand",
-    "minimumAnte": 2,
-    "scoreMult": 2,
-    "primaryColor": "#5653f5",
-    "primaryShadow": "#322fa1",
-    "secondaryColor": "#293355",
-    "tertiaryColor": "#343b7d",
-    "isNormalBoss": true,
-    onHandPlayed(gameState, cards) {
-      const handType = getHandType(gameState, cards).handType;
-      if (gameState.handLevels[handType] > 0) {
-        handleJokers(gameState, "onBlindAbility");
-        gameState.handLevels[handType]--;
+      "name": "The Arm",
+      "debuff": "Decrease level of\nplayed poker hand",
+      "minimumAnte": 2,
+      "scoreMult": 2,
+      "primaryColor": "#5653f5",
+      "primaryShadow": "#322fa1",
+      "secondaryColor": "#293355",
+      "tertiaryColor": "#343b7d",
+      "isNormalBoss": true,
+      onHandPlayed(gameState, cards) {
+        const handType = getHandType(gameState, cards).handType;
+        if (gameState.handLevels[handType] > 0) {
+          gameState.handLevels[handType]--;
+        }
       }
-    }
   },
   {
-    "name": "The Club",
-    "debuff": "All Club cards\nare debuffed",
-    "minimumAnte": 1,
-    "scoreMult": 2,
-    "primaryColor": "#b2c786",
-    "primaryShadow": "#738154",
-    "secondaryColor": "#3c4a3e",
-    "tertiaryColor": "#5a6850",
-    "isNormalBoss": true,
-    isDebuffed(gameState, card) {
-      return isSuit(gameState, card, "Clubs");
-    }
-  },
-  {
-    "name": "The Fish",
-    "debuff": "Cards drawn face down\nafter each hand played",
-    "minimumAnte": 2,
-    "scoreMult": 2,
-    "primaryColor": "#2677b7",
-    "primaryShadow": "#114a76",
-    "secondaryColor": "#1f3a48",
-    "tertiaryColor": "#214864",
-    "isNormalBoss": true,
-    onCardDrawn(gameState, card, isHand) {
-      card.flipped = isHand;
-    }
-  },
-  {
-    "name": "The Psychic",
-    "debuff": "Must play 5 cards",
-    "minimumAnte": 1,
-    "scoreMult": 2,
-    "primaryColor": "#f0ba24",
-    "primaryShadow": "#9e780f",
-    "secondaryColor": "#47472b",
-    "tertiaryColor": "#716429",
-    "isNormalBoss": true,
-    onHandPlayed(gameState, cards) {
-      if (cards.length < 5) return {"invalidHand": true};
-    }
-  },
-  {
-    "name": "The Goad",
-    "debuff": "All Spade cards\nare debuffed",
-    "minimumAnte": 1,
-    "scoreMult": 2,
-    "primaryColor": "#b2488b",
-    "primaryShadow": "#732957",
-    "secondaryColor": "#3c303f",
-    "tertiaryColor": "#5a3652",
-    "isNormalBoss": true,
-    isDebuffed(gameState, card) {
-      return isSuit(gameState, card, "Spades");
-    }
-  },
-  {
-    "name": "The Water",
-    "debuff": "Start with\n0 discards",
-    "minimumAnte": 2,
-    "scoreMult": 2,
-    "primaryColor": "#c1dfec",
-    "primaryShadow": "#7d919b",
-    "secondaryColor": "#3e4e53",
-    "tertiaryColor": "#5f7378",
-    "isNormalBoss": true,
-    "properties": {
-      "discardAmt": undefined
-    },
-    onBlindStart(gameState) {
-      this.properties.discardAmt = gameState.blind.discards;
-      gameState.blind.discards = 0;
-    },
-    onBlindDisabled(gameState) {
-      gameState.blind.discards += this.properties.discardAmt;
-    }
-  },
-  {
-    "name": "The Window",
-    "debuff": "All Diamond cards\nare debuffed",
-    "minimumAnte": 1,
-    "scoreMult": 2,
-    "primaryColor": "#a09889",
-    "primaryShadow": "#666056",
-    "secondaryColor": "#37403f",
-    "tertiaryColor": "#525652",
-    "isNormalBoss": true,
-    isDebuffed(gameState, card) {
-      return isSuit(gameState, card, "Diamonds");
-    }
-  },
-  {
-    "name": "The Manacle",
-    "debuff": "-1 Hand Size",
-    "minimumAnte": 1,
-    "scoreMult": 2,
-    "primaryColor": "#434343",
-    "primaryShadow": "#242424",
-    "secondaryColor": "#252f30",
-    "tertiaryColor": "#2c3435",
-    "isNormalBoss": true,
-    onBlindStart(gameState) {
-      gameState.handSize--;
-    },
-    onBlindEnd(gameState) {
-      gameState.handSize++;
-    },
-    onBlindDisabled(gameState) {
-      gameState.handSize++;
-    }
-  },
-  {
-    "name": "The Eye",
-    "debuff": "No repeat hand\ntypes this round",
-    "minimumAnte": 3,
-    "scoreMult": 2,
-    "primaryColor": "#3560e3",
-    "primaryShadow": "#1b3a95",
-    "secondaryColor": "#233552",
-    "tertiaryColor": "#273f76",
-    "isNormalBoss": true,
-    "properties": {
-      "playedHands": []
-    },
-    onHandPlayed(gameState, cards) {
-      const handType = getHandType(gameState, cards).handType;
-      if (this.properties.playedHands.includes(handType)) {
-        return {"invalidHand": true};
-      } else {
-        this.properties.playedHands.push(handType);
+      "name": "The Club",
+      "debuff": "All Club cards\nare debuffed",
+      "minimumAnte": 1,
+      "scoreMult": 2,
+      "primaryColor": "#b2c786",
+      "primaryShadow": "#738154",
+      "secondaryColor": "#3c4a3e",
+      "tertiaryColor": "#5a6850",
+      "isNormalBoss": true,
+      onCardDrawn(gameState, card) {
+        if (isSuit(gameState, card, "Clubs")) {
+          card.debuffed = true;
+        }
       }
-    }
   },
   {
-    "name": "The Mouth",
-    "debuff": "Play only 1 hand\ntype this round",
-    "minimumAnte": 2,
-    "scoreMult": 2,
-    "primaryColor": "#a66081",
-    "primaryShadow": "#6a3a50",
-    "secondaryColor": "#39353d",
-    "tertiaryColor": "#543f4e",
-    "isNormalBoss": true,
-    "properties": {
-      "handType": undefined
-    },
-    onHandPlayed(gameState, cards) {
-      const handType = getHandType(gameState, cards).handType;
-      if (!this.properties.handType) this.properties.handType = handType;
-      if (this.properties.handType != handType) {
-        return {"invalidHand": true};
+      "name": "The Fish", // TODO
+      "debuff": "Cards drawn face down\nafter each hand played",
+      "minimumAnte": 2,
+      "scoreMult": 2,
+      "primaryColor": "#2677b7",
+      "primaryShadow": "#114a76",
+      "secondaryColor": "#1f3a48",
+      "tertiaryColor": "#214864",
+      "isNormalBoss": true
+  },
+  {
+      "name": "The Psychic", // TODO
+      "debuff": "Must play 5 cards",
+      "minimumAnte": 1,
+      "scoreMult": 2,
+      "primaryColor": "#f0ba24",
+      "primaryShadow": "#9e780f",
+      "secondaryColor": "#47472b",
+      "tertiaryColor": "#716429",
+      "isNormalBoss": true
+  },
+  {
+      "name": "The Goad",
+      "debuff": "All Spade cards\nare debuffed",
+      "minimumAnte": 1,
+      "scoreMult": 2,
+      "primaryColor": "#b2488b",
+      "primaryShadow": "#732957",
+      "secondaryColor": "#3c303f",
+      "tertiaryColor": "#5a3652",
+      "isNormalBoss": true,
+      onCardDrawn(gameState, card) {
+        if (isSuit(gameState, card, "Spades")) {
+          card.debuffed = true;
+        }
       }
-    }
   },
   {
-    "name": "The Plant",
-    "debuff": "All face cards\nare debuffed",
-    "minimumAnte": 4,
-    "scoreMult": 2,
-    "primaryColor": "#5f8676",
-    "primaryShadow": "#395448",
-    "secondaryColor": "#2b3d3b",
-    "tertiaryColor": "#374f4a",
-    "isNormalBoss": true,
-    isDebuffed(gameState, card) {
-      return isFaceCard(gameState, card);
-    }
+      "name": "The Water",
+      "debuff": "Start with\n0 discards",
+      "minimumAnte": 2,
+      "scoreMult": 2,
+      "primaryColor": "#c1dfec",
+      "primaryShadow": "#7d919b",
+      "secondaryColor": "#3e4e53",
+      "tertiaryColor": "#5f7378",
+      "isNormalBoss": true,
+      "properties": {
+        "discardAmt": undefined
+      },
+      onBlindStart(gameState) {
+        this.properties.discardAmt = gameState.blind.discards;
+        gameState.blind.discards = 0;
+      },
+      onBlindDebuffed(gameState) {
+        gameState.blind.discards += this.properties.discardAmt;
+      }
   },
   {
-    "name": "The Serpent",
-    "debuff": "After Play or Discard,\nalways draw 3 cards",
-    "minimumAnte": 5,
-    "scoreMult": 2,
-    "primaryColor": "#2c8f3a",
-    "primaryShadow": "#145a1e",
-    "secondaryColor": "#213e2f",
-    "tertiaryColor": "#235332",
-    "isNormalBoss": true
+      "name": "The Window",
+      "debuff": "All Diamond cards\nare debuffed",
+      "minimumAnte": 1,
+      "scoreMult": 2,
+      "primaryColor": "#a09889",
+      "primaryShadow": "#666056",
+      "secondaryColor": "#37403f",
+      "tertiaryColor": "#525652",
+      "isNormalBoss": true,
+      onCardDrawn(gameState, card) {
+        if (isSuit(gameState, card, "Diamonds")) {
+          card.debuffed = true;
+        }
+      }
   },
   {
-    "name": "The Pillar",
-    "debuff": "Cards played previously\nthis Ante are debuffed",
-    "minimumAnte": 1,
-    "scoreMult": 2,
-    "primaryColor": "#6f553d",
-    "primaryShadow": "#443221",
-    "secondaryColor": "#2e332f",
-    "tertiaryColor": "#3e3b33",
-    "isNormalBoss": true,
-    isDebuffed(gameState, card) {
-      return card.wasPlayed;
-    }
+      "name": "The Manacle",
+      "debuff": "-1 Hand Size",
+      "minimumAnte": 1,
+      "scoreMult": 2,
+      "primaryColor": "#434343",
+      "primaryShadow": "#242424",
+      "secondaryColor": "#252f30",
+      "tertiaryColor": "#2c3435",
+      "isNormalBoss": true,
+      onBlindStart(gameState) {
+        gameState.handSize--;
+      },
+      onBlindEnd(gameState) {
+        gameState.handSize++;
+      }
   },
   {
-    "name": "The Needle",
-    "debuff": "Play only 1 hand",
-    "minimumAnte": 2,
-    "scoreMult": 1,
-    "primaryColor": "#485d17",
-    "primaryShadow": "#293706",
-    "secondaryColor": "#263429",
-    "tertiaryColor": "#2e3e24",
-    "isNormalBoss": true,
-    "properties": {
-      "handAmt": undefined
-    },
-    onBlindStart(gameState) {
-      this.properties.handAmt = gameState.blind.hands-1;
-      gameState.blind.hands = 1;
-    },
-    onBlindDisabled(gameState) {
-      gameState.blind.hands += this.properties.handAmt;
-      if (gameState.blind.hands < 1) gameState.blind.hands = 1;
-    }
+      "name": "The Eye",
+      "debuff": "No repeat hand\ntypes this round",
+      "minimumAnte": 3,
+      "scoreMult": 2,
+      "primaryColor": "#3560e3",
+      "primaryShadow": "#1b3a95",
+      "secondaryColor": "#233552",
+      "tertiaryColor": "#273f76",
+      "isNormalBoss": true,
+      "properties": {
+        "playedHands": []
+      },
+      onHandPlayed(gameState, cards) {
+        const handType = getHandType(gameState, cards).handType;
+        if (this.properties.playedHands.includes(handType)) {
+          // TODO
+        } else {
+          this.properties.playedHands.push(handType);
+        }
+      }
   },
   {
-    "name": "The Head",
-    "debuff": "All Heart cards\nare debuffed",
-    "minimumAnte": 1,
-    "scoreMult": 2,
-    "primaryColor": "#a493ad",
-    "primaryShadow": "#685c6f",
-    "secondaryColor": "#393f46",
-    "tertiaryColor": "#53545f",
-    "isNormalBoss": true,
-    isDebuffed(gameState, card) {
-      return isSuit(gameState, card, "Hearts");
-    }
+      "name": "The Mouth",
+      "debuff": "Play only 1 hand\ntype this round",
+      "minimumAnte": 2,
+      "scoreMult": 2,
+      "primaryColor": "#a66081",
+      "primaryShadow": "#6a3a50",
+      "secondaryColor": "#39353d",
+      "tertiaryColor": "#543f4e",
+      "isNormalBoss": true,
+      "properties": {
+        "handType": undefined
+      },
+      onHandPlayed(gameState, cards) {
+        const handType = getHandType(gameState, cards).handType;
+        if (!this.properties.handType) this.properties.handType = handType;
+        if (this.properties.handType != handType) {
+          // TODO
+        }
+      }
   },
   {
-    "name": "The Tooth",
-    "debuff": "Lose $1 per\ncard played",
-    "minimumAnte": 3,
-    "scoreMult": 2,
-    "primaryColor": "#ae1313",
-    "primaryShadow": "#6f0303",
-    "secondaryColor": "#3b2527",
-    "tertiaryColor": "#572122",
-    "isNormalBoss": true,
-    onHandPlayed(gameState, cards) {
-      gameState.money -= cards.length;
-    }
+      "name": "The Plant",
+      "debuff": "All face cards\nare debuffed",
+      "minimumAnte": 4,
+      "scoreMult": 2,
+      "primaryColor": "#5f8676",
+      "primaryShadow": "#395448",
+      "secondaryColor": "#2b3d3b",
+      "tertiaryColor": "#374f4a",
+      "isNormalBoss": true,
+      onCardDrawn(gameState, card) {
+        if (isFaceCard(gameState, card)) {
+          card.debuffed = true;
+        }
+      }
   },
   {
-    "name": "The Flint",
-    "debuff": "Base Chips and\nMult are halved",
-    "minimumAnte": 2,
-    "scoreMult": 2,
-    "primaryColor": "#e55815",
-    "primaryShadow": "#963404",
-    "secondaryColor": "#453427",
-    "tertiaryColor": "#6d3d23",
-    "isNormalBoss": true
+      "name": "The Serpent", // TODO
+      "debuff": "After Play or Discard,\nalways draw 3 cards",
+      "minimumAnte": 5,
+      "scoreMult": 2,
+      "primaryColor": "#2c8f3a",
+      "primaryShadow": "#145a1e",
+      "secondaryColor": "#213e2f",
+      "tertiaryColor": "#235332",
+      "isNormalBoss": true
   },
   {
-    "name": "The Mark",
-    "debuff": "All face cards are\ndrawn face down",
-    "minimumAnte": 2,
-    "scoreMult": 2,
-    "primaryColor": "#581f30",
-    "primaryShadow": "#293706",
-    "secondaryColor": "#2a292d",
-    "tertiaryColor": "#35262e",
-    "isNormalBoss": true,
-    isFaceDown(gameState, card) {
-      return isFaceCard(gameState, card);
-    }
+      "name": "The Pillar", // TODO
+      "debuff": "Cards played previously\nthis Ante are debuffed",
+      "minimumAnte": 1,
+      "scoreMult": 2,
+      "primaryColor": "#6f553d",
+      "primaryShadow": "#443221",
+      "secondaryColor": "#2e332f",
+      "tertiaryColor": "#3e3b33",
+      "isNormalBoss": true,
+      onCardDrawn(gameState, card) {
+        if (card.wasPlayed) { // TODO
+          card.debuffed = true;
+        }
+      }
+  },
+  {
+      "name": "The Needle",
+      "debuff": "Play only 1 hand",
+      "minimumAnte": 2,
+      "scoreMult": 1,
+      "primaryColor": "#485d17",
+      "primaryShadow": "#293706",
+      "secondaryColor": "#263429",
+      "tertiaryColor": "#2e3e24",
+      "isNormalBoss": true,
+      "properties": {
+        "handAmt": undefined
+      },
+      onBlindStart(gameState) {
+        this.properties.handAmt = gameState.blind.hands-1;
+        gameState.blind.hands = 1;
+      },
+      onBlindDebuffed(gameState) {
+        gameState.blind.hands += this.properties.handAmt;
+        if (gameState.blind.hands < 1) gameState.blind.hands = 1;
+      }
+  },
+  {
+      "name": "The Head",
+      "debuff": "All Heart cards\nare debuffed",
+      "minimumAnte": 1,
+      "scoreMult": 2,
+      "primaryColor": "#a493ad",
+      "primaryShadow": "#685c6f",
+      "secondaryColor": "#393f46",
+      "tertiaryColor": "#53545f",
+      "isNormalBoss": true,
+      onCardDrawn(gameState, card) {
+        if (isSuit(gameState, card, "Hearts")) {
+          card.debuffed = true;
+        }
+      }
+  },
+  {
+      "name": "The Tooth",
+      "debuff": "Lose $1 per\ncard played",
+      "minimumAnte": 3,
+      "scoreMult": 2,
+      "primaryColor": "#ae1313",
+      "primaryShadow": "#6f0303",
+      "secondaryColor": "#3b2527",
+      "tertiaryColor": "#572122",
+      "isNormalBoss": true,
+      onHandPlayed(gameState, cards) {
+        gameState.money -= cards.length;
+      }
+  },
+  {
+      "name": "The Flint", // TODO
+      "debuff": "Base Chips and\nMult are halved",
+      "minimumAnte": 2,
+      "scoreMult": 2,
+      "primaryColor": "#e55815",
+      "primaryShadow": "#963404",
+      "secondaryColor": "#453427",
+      "tertiaryColor": "#6d3d23",
+      "isNormalBoss": true
+  },
+  {
+      "name": "The Mark",
+      "debuff": "All face cards are\ndrawn face down",
+      "minimumAnte": 2,
+      "scoreMult": 2,
+      "primaryColor": "#581f30",
+      "primaryShadow": "#293706",
+      "secondaryColor": "#2a292d",
+      "tertiaryColor": "#35262e",
+      "isNormalBoss": true,
+      onCardDrawn(gameState, card) {
+        if (isFaceCard(gameState, card)) {
+          card.flipped = true;
+        }
+      }
   },
 
   {
@@ -3200,7 +3156,7 @@ const blinds = [
     "isFinisherBoss": true
   },
   {
-    "name": "Cerulean Bell",
+    "name": "Cerulean Bell", // TODO
     "debuff": "Forces 1 card to\nalways be selected",
     "minimumAnte": 8,
     "scoreMult": 2,
@@ -3208,19 +3164,10 @@ const blinds = [
     "primaryShadow": "#005ca9",
     "secondaryColor": "#123f57",
     "tertiaryColor": "#055481",
-    "isFinisherBoss": true,
-    onHandEnd(gameState, cards) {
-      const possibilities = gameState.cardArea.filter(card => !card.selected);
-      if (possibilities) {
-        gameState.cardArea.filter(card => card.selected).forEach(card => {
-          card.selected = false;
-        })
-        possibilities[Math.floor(Math.random() * possibilities.length)].selected = true;
-      }
-    }
+    "isFinisherBoss": true
   },
   {
-    "name": "Verdant Leaf",
+    "name": "Verdant Leaf", // TODO
     "debuff": "All cards debuffed\nuntil 1 Joker sold",
     "minimumAnte": 8,
     "scoreMult": 2,
@@ -3232,11 +3179,10 @@ const blinds = [
     "properties": {
       "jokerSold": false
     },
-    isDebuffed(gameState, card) {
-      return !this.properties.jokerSold;
-    },
-    onCardSold(gameState, card) {
-      this.properties.jokerSold = true;
+    onCardDrawn(gameState, card) {
+      if (!this.properties.jokerSold) {
+        card.debuffed = true;
+      }
     }
   },
   {
@@ -3260,7 +3206,7 @@ const blinds = [
     }
   },
   {
-    "name": "Crimson Heart",
+    "name": "Crimson Heart", // TODO
     "debuff": "One random Joker\ndisabled every hand",
     "minimumAnte": 8,
     "scoreMult": 2,
@@ -3269,18 +3215,8 @@ const blinds = [
     "secondaryColor": "#392629",
     "tertiaryColor": "#532324",
     "isFinisherBoss": true,
-    onHandEnd(gameState, cards) {
-      const possibilities = gameState.jokers.filter(joker => !joker.debuffed);
-      if (possibilities.length) {
-        const last = gameState.jokers.find(joker => joker.bossDebuffed);
-        if (last) {
-          last.debuffed = false;
-          last.bossDebuffed = false;
-        }
-        const target = possibilities[Math.floor(Math.random() * possibilities.length)];
-        target.debuffed = true;
-        target.bossDebuffed = true;
-      }
+    onBlindStart(gameState) {
+
     }
   },
   
@@ -3713,8 +3649,7 @@ function sellCard(gameState, section, index) { // Pass index starting with 0
   if (!card) return "Invalid index";
   if (card.stickers?.includes("Eternal")) return "Joker is eternal";
   gameState.money += Math.max(1, roundHalfDown(calcCost(gameState, card)/2)+(card.addedSellValue || 0));
-  handleBlind(gameState, "onCardSold", [card]); // TODO: check order
-  handleJokers(gameState, "onCardSold", [card]);
+  handleJokers(gameState, "onCardSold");
   if (card.onSell) card.onSell(gameState);
   if (section == "consumables") {
     gameState[section].splice(index, 1);
@@ -3847,7 +3782,7 @@ function addVoucher(gameState, voucher) {
   }
 }
 
-function newCard(gameState, cardType, certificate = false, stone = false, jokerRarity = undefined, forceEnhancement = false, blockEdition = false, playingCardType = undefined, isBoosterPack = undefined, isShop = false, isCoupon = false, noStickers = false) {
+function newCard(gameState, cardType, certificate = false, stone = false, jokerRarity = undefined, forceEnhancement = false, blockEdition = false, playingCardType = undefined, isBoosterPack = false, isShop = false, isCoupon = false, noStickers = false) {
   let card;
   let rarity = pickByPercentage([
     {"type": "Common", "odds": 70},
@@ -3855,18 +3790,6 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
     {"type": "Rare", "odds": 5},
   ]).type;
   if (jokerRarity) rarity = jokerRarity;
-  if (Math.random() <= 0.003) {
-    if ((isBoosterPack == "Arcana" || isBoosterPack == "Spectral") && (jokerCount("Showman") || !deepFind(game, (thing) => thing.name == "The Soul"))) {
-      card = cards["Spectral Card"].find(card => card.name == "The Soul");
-      card.cost = 4;
-      return card;
-    }
-    if ((isBoosterPack == "Celestial" || isBoosterPack == "Spectral") && (jokerCount("Showman") || !deepFind(game, (thing) => thing.name == "Black Hole"))) {
-      card = cards["Spectral Card"].find(card => card.name == "Black Hole");
-      card.cost = 4;
-      return card;
-    }
-  }
   const jokerNames = gameState.jokers.map(joker => joker.name.toLowerCase());
   if (isShop) {
     for (const tag of gameState.tags) {
@@ -3904,7 +3827,7 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
     } else {
       let remainingCards = cards[cardType];
       if (cardType != "Playing Card") { // CONSUMABLES
-        const newCards = remainingCards.filter(card => !card.noAppear && ((!gameState.consumables.map(card => card.name).includes(card.name) && !deepFind(gameState, (thing) => thing?.name == card.name)) || jokerCount(gameState, "showman") > 0));
+        const newCards = remainingCards.filter(card => (!gameState.consumables.map(card => card.name).includes(card.name) && !deepFind(gameState, (thing) => thing?.name == card.name)) || jokerCount(gameState, "showman") > 0);
         remainingCards = newCards.length < 1 ? remainingCards : newCards;
       } else if (playingCardType == "Number") {
         remainingCards.filter(card => {
@@ -4167,7 +4090,7 @@ function buyPack(gameState, pack, free = false) {
   const packOdds = packTypes[target.name.replaceAll("Mega", "").replaceAll("Jumbo", "").trim()];
   for (let i = 0; i < target.amount; i++) {
     const cardType = pickWeightedRandom(packOdds);
-    target.contents.push(newCard(gameState, cardType, false, false, undefined, false, false, undefined, pack.name.replaceAll("Mega","").replaceAll("Jumbo","").trim()));
+    target.contents.push(newCard(gameState, cardType, false, false, undefined, false, false, undefined, true));
   }
   gameState.currentPack = target;
   delete gameState.cardArea;
@@ -4300,14 +4223,6 @@ function restoreGameFunctions(game) {
     }
   })
 
-  if (game.blind) {
-    const ogConsumable = deepFind(blinds, findConsumable => findConsumable?.name == game.blind.name); 
-    for (const [key, value] of Object.entries(ogConsumable)) {
-      if (typeof value === "function") {
-        game.blind[key] = value;
-      }
-    }
-  }
 
   if (game.theFool) {
     const ogConsumable = game.theFool.name;
@@ -4421,9 +4336,9 @@ function blindChoose(gameState, skip = false) {
   }
 }
 
-function fillHand(gameState, isHand = false) {
-  for (let i = gameState.blind.hand.length; i < (gameState.blind?.name == "The Serpent" && !gameState.blind?.disabled) ? gameState.blind.hand.length + 3 : gameState.handSize; i++) {
-    drawCard(gameState, undefined, undefined, true);
+function fillHand(gameState) {
+  for (let i = gameState.blind.hand.length; i < gameState.handSize; i++) {
+    drawCard(gameState);
   }
   setHandSort(gameState, gameState.sortByRank);
 }
@@ -4470,9 +4385,7 @@ function blindSetup(gameState) {
       gameState.tags.splice(idx, 1);
     }
   })
-  handleBlind(gameState, "onBlindStart");
   fillHand(gameState);
-  handleBlind(gameState, "onHandEnd");
   handleJokers(gameState, "onBlindStart");
 }
 
@@ -4531,35 +4444,9 @@ function destroyJoker(gameState, joker) {
   })
 }
 
-function disableBlind(gameState) {
-  gameState.blind.disabled = true;
-  if (gameState.blind.onBlindDisabled) gameState.blind.onBlindDisabled(gameState);
-  handleBlind(gameState, "cards");
-}
-
-function handleBlind(gameState, func, props = []) {
-  return;
-  if (func == "cards") {
-    gameState.fullDeck.forEach(card => {
-      if (gameState.blind?.disabled) {
-        card.debuffed = false;
-        card.flipped = false;
-        card.selected = false;
-        return;
-      }
-      if (gameState.blind?.isDebuffed) card.debuffed = gameState.blind.isDebuffed;
-      if (gameState.blind?.isFaceCard) card.flipped = gameState.blind.isFaceCard;
-    })
-  } else if (gameState.blind?.[func]) {
-    if (gameState.blind?.disabled) return;
-    return gameState.blind[func](gameState, ...props);
-  }
-}
-
 function playHand(gameState, indices) { // Pass the indices starting at 0
   if (gameState.state != "blind") return "Not in Blind";
   if (!indices.length || [...new Set(indices)].length != indices.length || Math.min(...indices) < 0 || Math.max(...indices) > gameState.blind.hand.length-1) return "Invalid indices";
-  handleBlind(gameState, "cards");
 
   let cards = [];
   indices.forEach(index => {
@@ -4573,144 +4460,128 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
   gameState.playedHands++;
 
   const handType = getHandType(gameState, cards).handType;
-  const playedCards = getHandType(gameState, cards).cards;
   const pokerHand = pokerHands[handType];
-
-  if (playedCards.find(card => card.debuffed)) {
-    handleJokers(gameState, "onBlindAbility");
-  }
 
   let chips = pokerHand.base.chips + pokerHand.addition.chips * BigInt(gameState.handLevels[handType]-1); // Base chips & mult
   let mult = (pokerHand.base.mult + pokerHand.addition.mult * BigInt(gameState.handLevels[handType]-1)) * BigInt(decimalAccuracy); // Multiply all mult by decimalAccuracy, reset at the final calculation
 
-  if (gameState.blind.name == "The Flint" && !gameState.blind.disabled) {
-    chips = chips*5/10;
-    mult = chips*5/10;
-    handleJokers(gameState, "onBlindAbility");
+  const handPlayedResponses = handleJokers(gameState, "onHandPlayed", [cards]).responses; // Hand played jokers
+  gameState.handPlays[handType]++;
+  ({ chips, mult } = handleMult(gameState, chips, mult, handPlayedResponses));
+
+  cards.forEach((card, idx) => { // Loop through played cards
+    if (card.debuffed) return;
+    card.index = idx;
+    let playedCardResponses = [];
+    let retriggers = 0;
+    let trigger = 0;
+    while (trigger <= retriggers) {
+      // Handle rank chips and any extra chips from Hiker
+      if (!card.enhancement || card.enhancement.toLowerCase().replaceAll(" ", "") != "stonecard") playedCardResponses.push({"plusChips": card.chips});
+      if (card.extraChips) playedCardResponses.push({"plusChips": card.extraChips});
+
+      if (card.enhancement && enhancements[card.enhancement].onCardScored) { // Handle enhancement
+        playedCardResponses.push(enhancements[card.enhancement].onCardScored(gameState, card));
+      }
+      if (card.seal && seals[card.seal].onCardScored) { // Handle seal
+        playedCardResponses.push(seals[card.seal].onCardScored(gameState, card));
+      }
+      if (card.edition) { // Handle edition
+        if (card.edition.toLowerCase().replaceAll(" ", "") == "foil") playedCardResponses.push({"plusChips": 50});
+        if (card.edition.toLowerCase().replaceAll(" ", "") == "holographic") playedCardResponses.push({"plusMult": 10});
+        if (card.edition.toLowerCase().replaceAll(" ", "") == "polychrome") playedCardResponses.push({"timesMult": 1.5});
+      }
+      const handledJokers = handleJokers(gameState, "onCardScored", [card]);
+      retriggers = handledJokers.retriggers;
+      playedCardResponses.push(...handledJokers.responses); // Handle jokers
+      trigger++;
+    }
+    if (card.enhancement == "Glass Card" && random(gameState, 1, 4)) deleteCard(gameState, card);
+    ({ chips, mult } = handleMult(gameState, chips, mult, playedCardResponses));
+  })
+
+  gameState.blind.hand.forEach((card, idx) => { // Loop through held cards
+    if (card.debuffed) return;
+    card.index = idx;
+    let heldCardResponses = [];
+    let retriggers = 0;
+    let trigger = 0;
+    while (trigger <= retriggers) {
+      if (card.enhancement && enhancements[card.enhancement].onCardHeld) { // Handle enhancement
+        heldCardResponses.push(enhancements[card.enhancement].onCardHeld(gameState, card));
+      }
+      if (card.seal && seals[card.seal].onCardHeld) { // Handle seal
+        heldCardResponses.push(seals[card.seal].onCardHeld(gameState, card));
+      }
+      if (card.edition) { // Handle edition
+        switch (card.edition.toLowerCase().replaceAll(" ", "")) {
+          case "foil":
+            returnArray.push({"plusChips": 50});
+            break;
+          case "holographic":
+            returnArray.push({"plusMult": 10});
+            break;
+          case "polychrome":
+            returnArray.push({"timesMult": 1.5});
+            break;
+          case "negative":
+            break;
+          default:
+            throw new Error("Invalid edition")
+        }
+      }
+      const handledJokers = handleJokers(gameState, "onCardHeld", [card]);
+      retriggers = handledJokers.retriggers;
+      heldCardResponses.push(...handledJokers.responses); // Handle jokers
+      trigger++;
+    }
+    ({ chips, mult } = handleMult(gameState, chips, mult, heldCardResponses));
+  })
+
+  if (gameState.vouchers.includes("Observatory")) { // Observatory
+    let observatoryArr = [];
+    gameState.consumables.forEach(consumable => {
+      if (consumable.handType == handType) {
+        observatoryArr.push({"timesMult": 1.5});
+      }
+    })
+    ({chips, mult} = handleMult(gameState, chips, mult, observatoryArr));
   }
 
-  if (!handleBlind(gameState, "onHandPlayed")?.invalidHand) {
-    const handPlayedResponses = handleJokers(gameState, "onHandPlayed", [cards]).responses; // Hand played jokers
-    gameState.handPlays[handType]++;
-    ({ chips, mult } = handleMult(gameState, chips, mult, handPlayedResponses));
-
-    playedCards.forEach((card, idx) => { // Loop through played cards
-      card.wasPlayed = true;
-      if (card.debuffed) return;
-      card.index = idx;
-      let playedCardResponses = [];
-      let retriggers = 0;
-      let trigger = 0;
-      while (trigger <= retriggers) {
-        // Handle rank chips and any extra chips from Hiker
-        if (!card.enhancement || card.enhancement.toLowerCase().replaceAll(" ", "") != "stonecard") playedCardResponses.push({"plusChips": card.chips});
-        if (card.extraChips) playedCardResponses.push({"plusChips": card.extraChips});
-
-        if (card.enhancement && enhancements[card.enhancement].onCardScored) { // Handle enhancement
-          playedCardResponses.push(enhancements[card.enhancement].onCardScored(gameState, card));
+  let jokerResponses = [];
+  if (Array.isArray(gameState.jokers)) {
+    gameState.jokers.forEach((joker, idx) => { // Handle joker scoring
+      joker.index = idx;
+      if (joker.rarity.toLowerCase().replaceAll(" ", "") == "uncommon" && jokerCount(gameState, "baseballcard")) {
+        for (let i = 0; i < jokerCount(gameState, "baseballcard"); i++) {
+          jokerResponses.push({"timesMult": 1.5});
         }
-        if (card.seal && seals[card.seal].onCardScored) { // Handle seal
-          playedCardResponses.push(seals[card.seal].onCardScored(gameState, card));
-        }
-        if (card.edition) { // Handle edition
-          if (card.edition.toLowerCase().replaceAll(" ", "") == "foil") playedCardResponses.push({"plusChips": 50});
-          if (card.edition.toLowerCase().replaceAll(" ", "") == "holographic") playedCardResponses.push({"plusMult": 10});
-          if (card.edition.toLowerCase().replaceAll(" ", "") == "polychrome") playedCardResponses.push({"timesMult": 1.5});
-        }
-        const handledJokers = handleJokers(gameState, "onCardScored", [card]);
-        retriggers = handledJokers.retriggers;
-        playedCardResponses.push(...handledJokers.responses); // Handle jokers
-        trigger++;
       }
-      if (card.enhancement == "Glass Card" && random(gameState, 1, 4)) deleteCard(gameState, card);
-      ({ chips, mult } = handleMult(gameState, chips, mult, playedCardResponses));
+      if (joker.debuffed) return;
+      if (joker.edition && joker.edition.toLowerCase().replaceAll(" ", "") == "foil") jokerResponses.push({"plusChips": 50});
+      if (joker.edition && joker.edition.toLowerCase().replaceAll(" ", "") == "holographic") jokerResponses.push({"plusMult": 10});
+      const handledJoker = handleJoker(gameState, joker, "onScore", [cards]);
+      jokerResponses.push(handledJoker);
+      if (joker.edition && joker.edition.toLowerCase().replaceAll(" ", "") == "polychrome") jokerResponses.push({"timesMult": 1.5});
     })
+  }
+  ({ chips, mult } = handleMult(gameState, chips, mult, jokerResponses));
 
-    gameState.blind.hand.forEach((card, idx) => { // Loop through held cards
-      if (card.debuffed) return;
-      card.index = idx;
-      let heldCardResponses = [];
-      let retriggers = 0;
-      let trigger = 0;
-      while (trigger <= retriggers) {
-        if (card.enhancement && enhancements[card.enhancement].onCardHeld) { // Handle enhancement
-          heldCardResponses.push(enhancements[card.enhancement].onCardHeld(gameState, card));
-        }
-        if (card.seal && seals[card.seal].onCardHeld) { // Handle seal
-          heldCardResponses.push(seals[card.seal].onCardHeld(gameState, card));
-        }
-        if (card.edition) { // Handle edition
-          switch (card.edition.toLowerCase().replaceAll(" ", "")) {
-            case "foil":
-              returnArray.push({"plusChips": 50});
-              break;
-            case "holographic":
-              returnArray.push({"plusMult": 10});
-              break;
-            case "polychrome":
-              returnArray.push({"timesMult": 1.5});
-              break;
-            case "negative":
-              break;
-            default:
-              throw new Error("Invalid edition")
-          }
-        }
-        const handledJokers = handleJokers(gameState, "onCardHeld", [card]);
-        retriggers = handledJokers.retriggers;
-        heldCardResponses.push(...handledJokers.responses); // Handle jokers
-        trigger++;
-      }
-      ({ chips, mult } = handleMult(gameState, chips, mult, heldCardResponses));
-    })
+  gameState.blind.handPlays.push(handType);
+  gameState.lastHand = handType;
 
-    if (gameState.vouchers.includes("Observatory")) { // Observatory
-      let observatoryArr = [];
-      gameState.consumables.forEach(consumable => {
-        if (consumable.handType == handType) {
-          observatoryArr.push({"timesMult": 1.5});
-        }
-      })
-      ({chips, mult} = handleMult(gameState, chips, mult, observatoryArr));
-    }
+  gameState.cardsToDelete.forEach(card => {
+    deleteCard(card);
+  })
+  gameState.cardsToDelete = [];
 
-    let jokerResponses = [];
-    if (Array.isArray(gameState.jokers)) {
-      gameState.jokers.forEach((joker, idx) => { // Handle joker scoring
-        joker.index = idx;
-        if (joker.rarity.toLowerCase().replaceAll(" ", "") == "uncommon" && jokerCount(gameState, "baseballcard")) {
-          for (let i = 0; i < jokerCount(gameState, "baseballcard"); i++) {
-            jokerResponses.push({"timesMult": 1.5});
-          }
-        }
-        if (joker.debuffed) return;
-        if (joker.edition && joker.edition.toLowerCase().replaceAll(" ", "") == "foil") jokerResponses.push({"plusChips": 50});
-        if (joker.edition && joker.edition.toLowerCase().replaceAll(" ", "") == "holographic") jokerResponses.push({"plusMult": 10});
-        const handledJoker = handleJoker(gameState, joker, "onScore", [cards]);
-        jokerResponses.push(handledJoker);
-        if (joker.edition && joker.edition.toLowerCase().replaceAll(" ", "") == "polychrome") jokerResponses.push({"timesMult": 1.5});
-      })
-    }
-    ({ chips, mult } = handleMult(gameState, chips, mult, jokerResponses));
-
-    gameState.blind.handPlays.push(handType);
-    gameState.lastHand = handType;
-
-    gameState.cardsToDelete.forEach(card => {
-      deleteCard(card);
-    })
-    gameState.cardsToDelete = [];
-
-    if (gameState.deck.toLowerCase().replaceAll(" ", "") == "plasmadeck") {
-      chips = (chips + mult / BigInt(decimalAccuracy)) / 2n;
-      mult = chips;
-      gameState.blind.roundScore += chips * mult;
-    } else {
-      gameState.blind.roundScore += chips * mult / BigInt(decimalAccuracy);
-    }
+  if (gameState.deck.toLowerCase().replaceAll(" ", "") == "plasmadeck") {
+    chips = (chips + mult / BigInt(decimalAccuracy)) / 2n;
+    mult = chips;
+    gameState.blind.roundScore += chips * mult;
   } else {
-    handleJokers(gameState, "onBlindAbility");
-  } // TODO: check what should be in and outside the if here
+    gameState.blind.roundScore += chips * mult / BigInt(decimalAccuracy);
+  }
   gameState.blind.firstHand = false;
   if (gameState.blind.roundScore >= gameState.blind.blindScore) {
     blindEnd(gameState);
@@ -4725,9 +4596,7 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
     }
     return;
   }
-  fillHand(gameState, true);
-  handleBlind(gameState, "onHandEnd");
-  handleBlind(gameState, "cards");
+  fillHand(gameState);
 }
 
 function gameLose(gameState) {
@@ -4754,7 +4623,6 @@ function discardCards(gameState, indices) { // Pass the indices starting at 0
   fillHand(gameState);
   gameState.blind.firstDiscard = false;
   gameState.blind.discards--;
-  handleBlind(gameState, "cards");
 }
 
 function blindEnd(gameState, isMrBones = false) {
@@ -4790,19 +4658,12 @@ function blindEnd(gameState, isMrBones = false) {
     const handledJoker = handleJoker(gameState, joker, "onRoundEnd");
     if (handledJoker?.money) gameState.moneySources.push([joker.name, handledJoker.money]);
   });
-  gameState.fullDeck.forEach(card => {
-    card.flipped = false;
-    card.debuffed = false;
-  })
   if (currentBlindIdx == 2) { // Boss blind
     gameState.tags.forEach((tag, idx) => {
       if (tag.name.toLowerCase().replaceAll(" ", "") == "investmenttag") {
         gameState.moneySources.push(["Investment Tag", 25]);
         gameState.tags.splice(idx, 1);
       }
-    })
-    gameState.fullDeck.forEach(card => {
-      card.wasPlayed = false;
     })
     if (gameState.ante >= 8) gameState.endless = true;
     gameState.ante++;
@@ -4867,7 +4728,6 @@ function useConsumable(gameState, index, selectedCards) { // Pass the index star
   if (card.handType) usePlanet(gameState, card);
   gameState.consumables.splice(index, 1);
   if (card.edition?.toLowerCase() == "negative") gameState.consumableSlots--;
-  handleBlind(gameState, "cards");
 }
 
 function jokerToText(gameState, joker, addDesc = false) {
