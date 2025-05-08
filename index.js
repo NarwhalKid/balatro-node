@@ -1066,14 +1066,10 @@ function drawCard(gameState, card = undefined, toHand = true, isHand = false) {
     if (gameState.blind.remainingCards.length < 1) return;
     const cardIdx = Math.floor(Math.random() * gameState.blind.remainingCards.length);
     gameState.blind.hand.push(gameState.blind.remainingCards[cardIdx]);
-    console.log("Woah")
     handleBlind(gameState, "onCardDrawn", [gameState.blind.remainingCards[cardIdx], isHand]);
-    console.log("wow")
     gameState.blind.remainingCards.splice(cardIdx, 1);
   }
-  console.log("hi");
   handleBlind(gameState, "cards");
-  console.log("Hello");
 }
 
 function addConsumable(gameState, card) {
@@ -4429,8 +4425,11 @@ function blindChoose(gameState, skip = false) {
 function fillHand(gameState, isHand = false, isFirst = false) {
   const handLength = gameState.blind.hand.length;
   for (let i = gameState.blind.hand.length; i < (gameState.blind?.name == "The Serpent" && !gameState.blind?.disabled && !isFirst) ? (handLength + 3) : gameState.handSize; i++) {
+    console.log(i);
     drawCard(gameState, undefined, undefined, isHand);
+    console.log(i);
   }
+  console.log("erm")
   setHandSort(gameState, gameState.sortByRank);
 }
 
