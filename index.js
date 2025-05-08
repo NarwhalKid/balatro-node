@@ -3287,7 +3287,6 @@ const blinds = [
 ]
 
 function newGame(deck = "Red Deck", stake = "White Stake") {
-  console.log("woah");
     let game = {
       "endless": false,
       stake,
