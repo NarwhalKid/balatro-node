@@ -1628,7 +1628,7 @@ const jokers = [
       let tempSuits = objectClone(suits);
       let wilds = 0;
       getHandType(gameState, cards).cards.forEach(card => {
-        if (card.enhancement.toLowerCase() == "wildcard") {
+        if (card.enhancement?.toLowerCase() == "wildcard") {
           if (!card.disabled) // Intentional, copying real Balatro
             wilds++;
         } else {
