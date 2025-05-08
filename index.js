@@ -261,7 +261,8 @@ const cards = {
       name: "The Fool",
       getDesc(gameState) {return `Creates the last Tarot or Planet card used during this run (The Fool excluded)\n(${this.getLastText(gameState)})`},
       onUse(gameState, cards) {
-        if (!gameState.theFool || gameState.theFool.name == "The Fool") return {"error": "Invalid last card"};
+        if (!gameState.theFool || gameState.theFool.name == "The Fool") return {"error": "No card to copy!"};
+        if (gameState.consumables.length >= gameState.consumableSlots) return {"error": "No room!"};
         gameState.consumables.push(objectClone(gameState.theFool));
       },
       getLastText(gameState) {
