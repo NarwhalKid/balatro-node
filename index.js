@@ -1632,7 +1632,7 @@ const jokers = [
           if (!card.disabled) // Intentional, copying real Balatro
             wilds++;
         } else {
-          if (tempSuits.contains(card.suit)) tempSuits.splice(tempSuits.indexOf(card.suit), 1);
+          if (tempSuits.includes(card.suit)) tempSuits.splice(tempSuits.indexOf(card.suit), 1);
         }
       })
       if (tempSuits.length - wilds < 1) return {"timesMult": 3}
