@@ -1841,13 +1841,13 @@ const jokers = [
   {
     "name": "Invisible Joker",
     "rarity": "Rare",
-    getDesc(gameState) { return `After 2 rounds, sell this card to Duplicate a random Joker\n(${this.properties.roundsRemaining > 0 ? `Rounds remaining: ${this.properties.roundsRemaining}` : "Active!"})` },
-    "properties": {"roundsRemaining":2},
+    getDesc(gameState) { return `After 2 rounds, sell this card to Duplicate a random Joker\n(${this.properties.roundsRemaining < 2 ? `Rounds remaining: ${this.properties.roundsRemaining}` : "Active!"})` },
+    "properties": {"roundsRemaining":0, "roundsMax":2},
     onRoundEnd(gameState) {
-      this.properties.roundsRemaining = Math.max(0, this.properties.roundsRemaining-1);
+      this.properties.roundsRemaining = Math.min(2, this.properties.roundsRemaining+1);
     },
     onSell(gameState) {
-      if (this.properties.roundsRemaining < 1) {
+      if (this.properties.roundsRemaining >= 2) {
         let invis = false;
         let jokers = [];
         gameState.jokers.forEach(joker => {
@@ -2376,7 +2376,7 @@ const jokers = [
     "name": "Seltzer",
     "rarity": "Uncommon",
     getDesc(gameState) { return `Retrigger all cards played for the next ${this.properties.roundsRemaining} hand${this.properties.roundsRemaining == 1 ? "" : "s"}` },
-    "properties": {"roundsRemaining":10},
+    "properties": {"roundsRemaining":10, roundsMax:10},
     onCardScored(gameState, card) {
       return {"retriggers": 1};
     },
@@ -2815,7 +2815,17 @@ const blinds = [
       "tertiaryColor": "#372a25",
       "isNormalBoss": true,
       onHandPlayed(gameState, cards) {
-        // TODO
+        let cards = [];
+        for (let i = 0; i < 2 && i < gameState.cardArea.length-1; i++) {
+          cards.push(gameState.cardArea[Math.floor(Math.random() * gameState.cardArea.length)]);
+        }
+        gameState.blind.hand = gameState.blind.hand.filter((card) => !cards.includes(card));
+
+        cards.forEach(card => {
+          if (seals[card.seal]?.onCardDiscarded)
+            seals[card.seal]?.onCardDiscarded(gameState);
+        })
+        handleJokers(gameState, "onDiscard", [cards]);
       }
   },
   {
@@ -2926,7 +2936,10 @@ const blinds = [
       "primaryShadow": "#9e780f",
       "secondaryColor": "#47472b",
       "tertiaryColor": "#716429",
-      "isNormalBoss": true
+      "isNormalBoss": true,
+      onHandPlayed(gameState, cards) {
+        if (cards.length < 5) return {"invalidHand": true};
+      }
   },
   {
       "name": "The Goad",
@@ -3014,7 +3027,7 @@ const blinds = [
       onHandPlayed(gameState, cards) {
         const handType = getHandType(gameState, cards).handType;
         if (this.properties.playedHands.includes(handType)) {
-          // TODO
+          return {"invalidHand": true};
         } else {
           this.properties.playedHands.push(handType);
         }
@@ -3037,7 +3050,7 @@ const blinds = [
         const handType = getHandType(gameState, cards).handType;
         if (!this.properties.handType) this.properties.handType = handType;
         if (this.properties.handType != handType) {
-          // TODO
+          return {"invalidHand": true};
         }
       }
   },
@@ -4690,6 +4703,10 @@ function blindEnd(gameState, isMrBones = false) {
     const handledJoker = handleJoker(gameState, joker, "onRoundEnd");
     if (handledJoker?.money) gameState.moneySources.push([joker.name, handledJoker.money]);
   });
+  gameState.fullDeck.forEach(card => {
+    card.flipped = false;
+    card.debuffed = false;
+  })
   if (currentBlindIdx == 2) { // Boss blind
     gameState.tags.forEach((tag, idx) => {
       if (tag.name.toLowerCase().replaceAll(" ", "") == "investmenttag") {
