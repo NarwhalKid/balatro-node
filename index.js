@@ -5188,8 +5188,8 @@ function vouchersToText(gameState) {
 function handLevelsToText(gameState) {
   let returnArr = [];
   Object.keys(pokerHands).filter(hand => pokerHands[hand].unlocked || gameState.handPlays[hand] > 0).forEach(hand => {
-    let baseChips = pokerHands[hand].base.chips + pokerHands[hand].addition.chips * BigInt(gameState.handLevels[handType]-1);
-    let baseMult = pokerHands[hand].base.mult + pokerHands[hand].addition.mult * BigInt(gameState.handLevels[handType]-1)
+    let baseChips = pokerHands[hand].base.chips + pokerHands[hand].addition.chips * BigInt(gameState.handLevels[hand]-1);
+    let baseMult = pokerHands[hand].base.mult + pokerHands[hand].addition.mult * BigInt(gameState.handLevels[hand]-1)
     returnArr.push(`lvl.${gameState.handLevels[hand]} | ${hand} | ${bigIntToSci(baseChips)} X ${bigIntToSci(baseMult)} | #${gameState.handPlays[hand]}`);
   })
   return returnArr.join("\n");
