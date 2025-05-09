@@ -4543,7 +4543,6 @@ function handleJokers(gameState, func, params = []) {
 const decimalAccuracy = 100000000;
 
 function handleMult(gameState, chips, mult, responseArray) {
-  console.log(responseArray);
   responseArray.filter(Boolean).forEach(response => {
     if (response.plusChips && response.plusChips > 0) {
       chips += BigInt(response.plusChips);
@@ -4775,7 +4774,6 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
     handleJokers(gameState, "onBlindAbility");
   } // TODO: check what should be in and outside the if here
   gameState.blind.firstHand = false;
-  console.log(gameState.log);
   if (gameState.blind.roundScore >= gameState.blind.blindScore) {
     blindEnd(gameState);
     return;
