@@ -1313,7 +1313,7 @@ const jokers = [
   },
   {
     "name": "Castle",
-    getDesc(gameState) { return `This Joker gains +3 Chips per discarded ${gameState.jokerProperties.castle.suit} card, suit changes every round\n(Currently +${this.properties.plusChips})` },
+    getDesc(gameState) { return `This Joker gains +3 Chips per discarded ${gameState.jokerProperties.castle.suit.replace("s", "")} card, suit changes every round\n(Currently +${this.properties.plusChips})` },
     "rarity": "Common",
     "properties": {"plusChips":0},
     onCardScored(gameState, card) {return {"plusChips": this.properties.plusChips};},
@@ -4833,16 +4833,22 @@ function updateJokerProps(gameState) {
   const possibleCastleCards = gameState.fullDeck.filter(card => !card.enhancement || card.enhancement.toLowerCase().replaceAll(" ", "") != "stonecard");
   if (possibleCastleCards.length >= 1) 
     gameState.jokerProperties.castle.suit = possibleCastleCards[Math.floor(Math.random() * possibleCastleCards.length)].suit;
+  else 
+    gameState.jokerProperties.castle.suit = "Spades";
 
   // The Idol
   const possibleIdolCards = gameState.fullDeck.filter(card => !card.enhancement || card.enhancement.toLowerCase().replaceAll(" ", "") != "stonecard");
   if (possibleIdolCards.length >= 1)
     gameState.jokerProperties.idol.card = objectClone(possibleIdolCards[Math.floor(Math.random() * possibleIdolCards.length)]);
+  else
+    gameState.jokerProperties.idol.card = {"suit": "Spades", "rank": "Ace"};
 
   // Mail-In Rebate
   const possibleRebateCards = gameState.fullDeck.filter(card => !card.enhancement || card.enhancement.toLowerCase().replaceAll(" ", "") != "stonecard");
   if (possibleRebateCards.length >= 1)
     gameState.jokerProperties.rebate.rank = possibleCastleCards[Math.floor(Math.random() * possibleCastleCards.length)].rank;
+  else
+    gameState.jokerProperties.rebate.rank = "Ace";
 
   // To Do List
   const possibleHandTypes = Object.keys(pokerHands).filter(handType => (pokerHands[handType].unlocked || gameState.handPlays[handType]) && handType != gameState.jokerProperties.todo.handType);
