@@ -4455,9 +4455,9 @@ function setHandSort(gameState, sortByRank) {
   if (gameState.state != "blind") return "Not in Blind";
   gameState.sortByRank = sortByRank;
   
-  const sortedCards = sortCards(gameState, gameState.cardArea);
-  gameState.cardArea.length = 0;
-  gameState.cardArea.push(...sortedCards);
+  const sortedCards = sortCards(gameState, gameState.blind.hand);
+  gameState.blind.hand.length = 0;
+  gameState.blind.hand.push(...sortedCards);
 }
 
 function sortCards(gameState, cardArr) {
