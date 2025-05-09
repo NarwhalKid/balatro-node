@@ -4465,7 +4465,7 @@ function sortCards(gameState, cardArr) {
   const smaller = gameState.sortByRank ? "suit" : "rank";
   const biggerArr = gameState.sortByRank ? ranks : suits;
   const smallerArr = gameState.sortByRank ? suits : ranks;
-  return objectClone(cardArr).sort((a,b) => {
+  return objectClone(cardArr).toSorted((a,b) => {
     if (a.edition == "Stone Card") return -1;
     if (b.edition == "Stone Card") return 1;
     if (biggerArr.indexOf(a[bigger]) < biggerArr.indexOf(b[bigger])) return -1;
