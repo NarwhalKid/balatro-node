@@ -79,7 +79,8 @@ const tags = [
     "desc": "Gives a free Mega Standard Pack",
     onBuy(gameState) {
       buyPack(gameState, boosterPacks.find(pack => pack.name == "Mega Standard Pack"), true);
-    }
+    },
+    "pack": "Mega Standard Pack"
   },
   {
     "name": "Charm Tag",  
@@ -87,7 +88,8 @@ const tags = [
     "desc": "Gives a free Mega Arcana Pack",
     onBuy(gameState) {
       buyPack(gameState, boosterPacks.find(pack => pack.name == "Mega Arcana Pack"), true);
-    }
+    },
+    "pack": "Mega Arcana Pack"
   },
   {
     "name": "Meteor Tag",  
@@ -95,7 +97,8 @@ const tags = [
     "desc": "Gives a free Mega Celestial Pack",
     onBuy(gameState) {
       buyPack(gameState, boosterPacks.find(pack => pack.name == "Mega Celestial Pack"), true);
-    }
+    },
+    "pack": "Mega Standard Pack"
   },
   {
     "name": "Buffoon Tag",  
@@ -103,7 +106,8 @@ const tags = [
     "desc": "Gives a free Mega Buffoon Pack",
     onBuy(gameState) {
       buyPack(gameState, boosterPacks.find(pack => pack.name == "Mega Buffoon Pack"), true);
-    }
+    },
+    "pack": "Mega Buffoon Pack"
   },
   {
     "name": "Handy Tag",  
@@ -121,7 +125,8 @@ const tags = [
     "desc": "Gives a free Spectral Pack",
     onBuy(gameState) {
       buyPack(gameState, boosterPacks.find(pack => pack.name == "Spectral Pack"), true);
-    }
+    },
+    "pack": "Spectral Pack"
   },
   {
     "name": "Coupon Tag",  
@@ -4163,6 +4168,9 @@ function buyPack(gameState, pack, free = false) {
   const target = pack;
   if (!target) return "Invalid index";
   if (gameState.money-calcCost(gameState, target) < gameState.moneyLimit && calcCost(gameState, target) > 0 && !free) return "Not enough money";
+  if (free && gameState.state == "openingPack") {
+    gameState.tags.push(tags.find(tag => tag.pack == pack.name));
+  }
   gameState.oldState = gameState.state;
   gameState.state = "openingPack";
   handleJokers(gameState, "onBoosterPack");
@@ -4223,6 +4231,9 @@ function packSelect(gameState, index, selectedCards = []) {
   if (gameState.currentPack.choices < 1) {
     gameState.state = gameState.oldState;
     delete gameState.cardArea;
+    gameState.tags.forEach(tag => {
+      if (tag.onBuy) tag.onBuy();
+    })
   }
 }
 
@@ -4231,6 +4242,9 @@ function skipPack(gameState) {
   handleJokers(gameState, "onBoosterPackSkipped");
   delete gameState.cardArea;
   gameState.state = gameState.oldState;
+  gameState.tags.forEach(tag => {
+    if (tag.onBuy) tag.onBuy();
+  })
 }
 
 function buyVoucher(gameState, index) {
