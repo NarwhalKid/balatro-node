@@ -4524,7 +4524,8 @@ function handleJoker(gameState, joker, func, params = []) {
   }
   if (copied) response.destroy = false;
   if (response?.destroy) destroyJoker(gameState, joker);
-  response.name = jokerToText(gameState, joker).replaceAll("\n", "");
+  if (response)
+    response.name = jokerToText(gameState, joker).replaceAll("\n", "");
   return response;
 }
 
