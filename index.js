@@ -4525,7 +4525,7 @@ function handleJoker(gameState, joker, func, params = []) {
   if (copied) response.destroy = false;
   if (response?.destroy) destroyJoker(gameState, joker);
   if (response)
-    response.name = jokerToText(gameState, joker).replaceAll("\n", "");
+    response.name = jokerToText(gameState, joker, undefined).replaceAll("\n", "");
   return response;
 }
 
@@ -4949,7 +4949,7 @@ function jokerToText(gameState, joker, addDesc = false) {
       case "weejoker":
         return `Flipped ${joker.name}${addon}`;
       default:
-        return `Flipped Joker${addon}`;
+        return `Flipped Joker${addon} #${gameState.jokers.indexOf(joker)}`;
     }
   }
   let returnString = "";
