@@ -4172,6 +4172,11 @@ function buyPack(gameState, pack, free = false) {
     const cardType = pickWeightedRandom(packOdds);
     target.contents.push(newCard(gameState, cardType, false, false, undefined, false, false, undefined, pack.name.replaceAll("Mega","").replaceAll("Jumbo","").trim()));
   }
+
+  const sortedCards = sortCards(gameState, target.contents);
+  target.contents.length = 0;
+  target.contents.push(...sortedCards);
+
   gameState.currentPack = target;
   delete gameState.cardArea;
   if (target.name.toLowerCase().includes("spectral") || target.name.toLowerCase().includes("arcana")) {
@@ -4436,11 +4441,17 @@ function setHandSort(gameState, sortByRank) {
   if (gameState.state != "blind") return "Not in Blind";
   gameState.sortByRank = sortByRank;
   
+  const sortedCards = sortCards(gameState, gameState.cardArea);
+  gameState.cardArea.length = 0;
+  gameState.cardArea.push(...sortedCards);
+}
+
+function sortCards(gameState, cardArr) {
   const bigger = gameState.sortByRank ? "rank" : "suit";
   const smaller = gameState.sortByRank ? "suit" : "rank";
   const biggerArr = gameState.sortByRank ? ranks : suits;
   const smallerArr = gameState.sortByRank ? suits : ranks;
-  gameState.blind.hand.sort((a,b) => {
+  return objectClone(cardArr).sort((a,b) => {
     if (a.edition == "Stone Card") return -1;
     if (b.edition == "Stone Card") return 1;
     if (biggerArr.indexOf(a[bigger]) < biggerArr.indexOf(b[bigger])) return -1;
@@ -5099,15 +5110,16 @@ function cardsToText(gameState, fullDeck = false) { // TODO: check if stone card
   gameState.fullDeck.forEach(card => {
     if (fullDeck || !gameState.blind || gameState.blind.remainingCards.includes(card) || card.flipped) {
       suitArrays[card.suit].push(card);
-      rankCounts[card.rank]++;
+      if (card.enhancement != "Stone Card")
+        rankCounts[card.rank]++;
     }
   })
   const hasFlippedQuestion = gameState.fullDeck.find(card => card.flipped) ? "?" : "";
 
   let returnString = "";
   Object.keys(suitArrays).forEach(suit => {
-    returnString += `\n\n${suit}: ${suitArrays[suit].length}${hasFlippedQuestion}\n`;
-    suitArrays[suit].forEach(card => returnString += `${cardToText(gameState, card)}`);
+    returnString += `\n\n${suit}: ${suitArrays[suit].filter(card => card.enhancement != "Stone Card").length}${hasFlippedQuestion}\n`;
+    sortCards(gameState, suitArrays[suit]).forEach(card => returnString += `${cardToText(gameState, card)}`);
   })
   returnString += "\n\nRank Counts:";
   ranks.forEach(rank => {
@@ -5129,7 +5141,9 @@ function vouchersToText(gameState) {
 function handLevelsToText(gameState) {
   let returnArr = [];
   Object.keys(pokerHands).filter(hand => pokerHands[hand].unlocked || gameState.handPlays[hand] > 0).forEach(hand => {
-    returnArr.push(`${hand}: lvl.${gameState.handLevels[hand]} | ${gameState.handPlays[hand]}`);
+    let baseChips = pokerHands[hand].base.chips + pokerHands[hand].addition.chips * BigInt(gameState.handLevels[handType]-1);
+    let baseMult = pokerHands[hand].base.mult + pokerHands[hand].addition.mult * BigInt(gameState.handLevels[handType]-1)
+    returnArr.push(`lvl.${gameState.handLevels[hand]} | ${hand} | ${bigIntToSci(baseChips)} X ${bigIntToSci(baseMult)} | #${gameState.handPlays[hand]}`);
   })
   return returnArr.join("\n");
 }
