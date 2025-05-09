@@ -4636,6 +4636,7 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
   let invalidHand = handleBlind(gameState, "onHandPlayed", [cards])?.invalidHand;
 
   if (!invalidHand) {
+    gameState.log += `Base Chips: ${chips}\nBase Mult: ${mult}`;
     const handPlayedResponses = handleJokers(gameState, "onHandPlayed", [cards]).responses; // Hand played jokers
     gameState.handPlays[handType]++;
     ({ chips, mult } = handleMult(gameState, chips, mult, handPlayedResponses));
