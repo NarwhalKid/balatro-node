@@ -4524,6 +4524,7 @@ function handleJoker(gameState, joker, func, params = []) {
   }
   if (copied) response.destroy = false;
   if (response?.destroy) destroyJoker(gameState, joker);
+  response.name = jokerToText(gameState, joker).replaceAll("\n", "");
   return response;
 }
 
@@ -4543,9 +4544,19 @@ const decimalAccuracy = 100000000;
 function handleMult(gameState, chips, mult, responseArray) {
   console.log(responseArray);
   responseArray.filter(Boolean).forEach(response => {
-    if (response.plusChips && response.plusChips > 0) chips += BigInt(response.plusChips);
-    if (response.plusMult && response.plusMult > 0) mult += BigInt(response.plusMult * decimalAccuracy);
-    if (response.timesMult && response.timesMult > 1) mult = mult * BigInt(Math.round(response.timesMult * 100)) / 100n;
+    if (response.plusChips && response.plusChips > 0) {
+      chips += BigInt(response.plusChips);
+      gameState.log += `\n${response.name}: +${response.plusChips} Chips`;
+    }
+    if (response.plusMult && response.plusMult > 0) {
+      mult += BigInt(response.plusMult * decimalAccuracy);
+      gameState.log += `\n${response.name}: +${response.plusMult} Mult`;
+    }
+    if (response.timesMult && response.timesMult > 1) {
+      mult = mult * BigInt(Math.round(response.timesMult * 100)) / 100n;
+      gameState.log += `\n${response.name}: X${response.timesMult} Mult`;
+    }
+    if (response.log) gameState.log += `\n${response.name}: ${response.log}`;
   })
   
   return {chips, mult};
@@ -4617,7 +4628,13 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
     handleJokers(gameState, "onBlindAbility");
   }
 
-  if (!handleBlind(gameState, "onHandPlayed", [cards])?.invalidHand) {
+  let brokenGlass = [];
+
+  gameState.log = "";
+
+  let invalidHand = handleBlind(gameState, "onHandPlayed", [cards])?.invalidHand;
+
+  if (!invalidHand) {
     const handPlayedResponses = handleJokers(gameState, "onHandPlayed", [cards]).responses; // Hand played jokers
     gameState.handPlays[handType]++;
     ({ chips, mult } = handleMult(gameState, chips, mult, handPlayedResponses));
@@ -4626,57 +4643,68 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
       card.wasPlayed = true;
       if (card.debuffed) return;
       card.index = idx;
-      let playedCardResponses = [];
+      let playedCardResponses = [{"log": "Card scoring", "name": cardToText(gameState, card).replaceAll("\n", "")}];
       let retriggers = 0;
       let trigger = 0;
       while (trigger <= retriggers) {
         // Handle rank chips and any extra chips from Hiker
-        if (!card.enhancement || card.enhancement.toLowerCase().replaceAll(" ", "") != "stonecard") playedCardResponses.push({"plusChips": card.chips});
-        if (card.extraChips) playedCardResponses.push({"plusChips": card.extraChips});
+        if (!card.enhancement || card.enhancement.toLowerCase().replaceAll(" ", "") != "stonecard") playedCardResponses.push({"plusChips": card.chips, "name": "Card Chips"});
+        if (card.extraChips) playedCardResponses.push({"plusChips": card.extraChips, "name": "Hiker Chips"});
 
         if (card.enhancement && enhancements[card.enhancement].onCardScored) { // Handle enhancement
-          playedCardResponses.push(enhancements[card.enhancement].onCardScored(gameState, card));
+          let response = enhancements[card.enhancement].onCardScored(gameState, card);
+          response.name = card.enhancement;
+          playedCardResponses.push(response);
         }
         if (card.seal && seals[card.seal].onCardScored) { // Handle seal
-          playedCardResponses.push(seals[card.seal].onCardScored(gameState, card));
+          let response = seals[card.seal].onCardScored(gameState, card);
+          response.name = card.seal;
+          playedCardResponses.push(response);
         }
         if (card.edition) { // Handle edition
-          if (card.edition.toLowerCase().replaceAll(" ", "") == "foil") playedCardResponses.push({"plusChips": 50});
-          if (card.edition.toLowerCase().replaceAll(" ", "") == "holographic") playedCardResponses.push({"plusMult": 10});
-          if (card.edition.toLowerCase().replaceAll(" ", "") == "polychrome") playedCardResponses.push({"timesMult": 1.5});
+          if (card.edition.toLowerCase().replaceAll(" ", "") == "foil") playedCardResponses.push({"plusChips": 50, "name": "Foil"});
+          if (card.edition.toLowerCase().replaceAll(" ", "") == "holographic") playedCardResponses.push({"plusMult": 10, "name": "Holographic"});
+          if (card.edition.toLowerCase().replaceAll(" ", "") == "polychrome") playedCardResponses.push({"timesMult": 1.5, "name": "Polychrome"});
         }
         const handledJokers = handleJokers(gameState, "onCardScored", [card]);
         retriggers = handledJokers.retriggers;
         playedCardResponses.push(...handledJokers.responses); // Handle jokers
         trigger++;
       }
-      if (card.enhancement == "Glass Card" && random(gameState, 1, 4)) deleteCard(gameState, card);
+      if (card.enhancement == "Glass Card" && random(gameState, 1, 4)) {
+        playedCardResponses.push({"log": "Shattered", "name": "Glass Card"});
+        brokenGlass.push(card);
+      }
       ({ chips, mult } = handleMult(gameState, chips, mult, playedCardResponses));
     })
 
     gameState.blind.hand.forEach((card, idx) => { // Loop through held cards
       if (card.debuffed) return;
       card.index = idx;
-      let heldCardResponses = [];
+      let heldCardResponses = [{"log": "Card in hand", "name": cardToText(gameState, card).replaceAll("\n", "")}];
       let retriggers = 0;
       let trigger = 0;
       while (trigger <= retriggers) {
         if (card.enhancement && enhancements[card.enhancement].onCardHeld) { // Handle enhancement
-          heldCardResponses.push(enhancements[card.enhancement].onCardHeld(gameState, card));
+          let response = enhancements[card.enhancement].onCardHeld(gameState, card);
+          response.name = card.enhancement;
+          heldCardResponses.push(response);
         }
         if (card.seal && seals[card.seal].onCardHeld) { // Handle seal
-          heldCardResponses.push(seals[card.seal].onCardHeld(gameState, card));
+          let response = seals[card.seal].onCardHeld(gameState, card);
+          response.name = card.seal;
+          heldCardResponses.push(response);
         }
         if (card.edition) { // Handle edition
           switch (card.edition.toLowerCase().replaceAll(" ", "")) {
             case "foil":
-              returnArray.push({"plusChips": 50});
+              returnArray.push({"plusChips": 50, "name": "Foil"});
               break;
             case "holographic":
-              returnArray.push({"plusMult": 10});
+              returnArray.push({"plusMult": 10, "name": "Holographic"});
               break;
             case "polychrome":
-              returnArray.push({"timesMult": 1.5});
+              returnArray.push({"timesMult": 1.5, "name": "Polychrome"});
               break;
             case "negative":
               break;
@@ -4696,11 +4724,13 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
       let observatoryArr = [];
       gameState.consumables.forEach(consumable => {
         if (consumable.handType == handType) {
-          observatoryArr.push({"timesMult": 1.5});
+          observatoryArr.push({"timesMult": 1.5, "name": "Observatory"});
         }
       })
       ({chips, mult} = handleMult(gameState, chips, mult, observatoryArr));
     }
+
+    let baseballCards = gameState.jokers.filter(joker => joker.name == "Baseball Card" && !joker.debuffed);
 
     let jokerResponses = [];
     if (Array.isArray(gameState.jokers)) {
@@ -4708,15 +4738,15 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
         joker.index = idx;
         if (joker.rarity.toLowerCase().replaceAll(" ", "") == "uncommon" && jokerCount(gameState, "baseballcard")) {
           for (let i = 0; i < jokerCount(gameState, "baseballcard"); i++) {
-            jokerResponses.push({"timesMult": 1.5});
+            jokerResponses.push({"timesMult": 1.5, "name": jokerToText(gameState, baseballCards[i]).replaceAll("\n", "")});
           }
         }
         if (joker.debuffed) return;
-        if (joker.edition && joker.edition.toLowerCase().replaceAll(" ", "") == "foil") jokerResponses.push({"plusChips": 50});
-        if (joker.edition && joker.edition.toLowerCase().replaceAll(" ", "") == "holographic") jokerResponses.push({"plusMult": 10});
+        if (joker.edition && joker.edition.toLowerCase().replaceAll(" ", "") == "foil") jokerResponses.push({"plusChips": 50, "name": "Foil"});
+        if (joker.edition && joker.edition.toLowerCase().replaceAll(" ", "") == "holographic") jokerResponses.push({"plusMult": 10, "name": "Holographic"});
         const handledJoker = handleJoker(gameState, joker, "onScore", [cards]);
         jokerResponses.push(handledJoker);
-        if (joker.edition && joker.edition.toLowerCase().replaceAll(" ", "") == "polychrome") jokerResponses.push({"timesMult": 1.5});
+        if (joker.edition && joker.edition.toLowerCase().replaceAll(" ", "") == "polychrome") jokerResponses.push({"timesMult": 1.5, "name": "Polychrome"});
       })
     }
     ({ chips, mult } = handleMult(gameState, chips, mult, jokerResponses));
@@ -4736,10 +4766,13 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
     } else {
       gameState.blind.roundScore += chips * mult / BigInt(decimalAccuracy);
     }
+
+    brokenGlass.forEach(card => deleteCard(gameState, card));
   } else {
     handleJokers(gameState, "onBlindAbility");
   } // TODO: check what should be in and outside the if here
   gameState.blind.firstHand = false;
+  console.log(gameState.log);
   if (gameState.blind.roundScore >= gameState.blind.blindScore) {
     blindEnd(gameState);
     return;
@@ -4915,7 +4948,7 @@ function jokerToText(gameState, joker, addDesc = false) {
       case "weejoker":
         return `Flipped ${joker.name}${addon}`;
       default:
-        return `Flipped joker${addon}`;
+        return `Flipped Joker${addon}`;
     }
   }
   let returnString = "";
