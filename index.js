@@ -4181,11 +4181,6 @@ function buyPack(gameState, pack, free = false) {
     target.contents.push(newCard(gameState, cardType, false, false, undefined, false, false, undefined, pack.name.replaceAll("Mega","").replaceAll("Jumbo","").trim()));
   }
 
-  const sortedCards = sortCards(gameState, target.contents);
-  console.log(sortedCards);
-  target.contents.length = 0;
-  target.contents.push(...sortedCards);
-
   gameState.currentPack = target;
   delete gameState.cardArea;
   if (target.name.toLowerCase().includes("spectral") || target.name.toLowerCase().includes("arcana")) {
@@ -4195,6 +4190,10 @@ function buyPack(gameState, pack, free = false) {
       drawCard(gameState, gameState.fullDeck[cardIdx]);
       gameState.fullDeck.splice(cardIdx, 1);
     }
+    
+    const sortedCards = sortCards(gameState, gameState.cardArea);
+    gameState.cardArea.length = 0;
+    gameState.cardArea.push(...sortedCards);
   }
   if (!free) {
     gameState.money -= calcCost(gameState, target);
