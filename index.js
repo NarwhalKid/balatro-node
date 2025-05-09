@@ -4182,6 +4182,7 @@ function buyPack(gameState, pack, free = false) {
   }
 
   const sortedCards = sortCards(gameState, target.contents);
+  console.log(sortedCards);
   target.contents.length = 0;
   target.contents.push(...sortedCards);
 
@@ -4465,7 +4466,7 @@ function sortCards(gameState, cardArr) {
   const smaller = gameState.sortByRank ? "suit" : "rank";
   const biggerArr = gameState.sortByRank ? ranks : suits;
   const smallerArr = gameState.sortByRank ? suits : ranks;
-  return objectClone(cardArr).toSorted((a,b) => {
+  return [...cardArr].toSorted((a,b) => {
     if (a.edition == "Stone Card") return -1;
     if (b.edition == "Stone Card") return 1;
     if (biggerArr.indexOf(a[bigger]) < biggerArr.indexOf(b[bigger])) return -1;
