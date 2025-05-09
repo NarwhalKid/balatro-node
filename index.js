@@ -4546,15 +4546,15 @@ function handleMult(gameState, chips, mult, responseArray) {
   responseArray.filter(Boolean).forEach(response => {
     if (response.plusChips && response.plusChips > 0) {
       chips += BigInt(response.plusChips);
-      gameState.log += `\n${response.name}: +${response.plusChips} Chips`;
+      gameState.log += `\n${response.name}: +${bigIntToSci(response.plusChips)} Chips`;
     }
     if (response.plusMult && response.plusMult > 0) {
       mult += BigInt(response.plusMult * decimalAccuracy);
-      gameState.log += `\n${response.name}: +${response.plusMult} Mult`;
+      gameState.log += `\n${response.name}: +${bigIntToSci(response.plusMult)} Mult`;
     }
     if (response.timesMult && response.timesMult > 1) {
       mult = mult * BigInt(Math.round(response.timesMult * 100)) / 100n;
-      gameState.log += `\n${response.name}: X${response.timesMult} Mult`;
+      gameState.log += `\n${response.name}: X${bigIntToSci(response.timesMult)} Mult`;
     }
     if (response.log) gameState.log += `\n${response.name}: ${response.log}`;
   })
@@ -4635,7 +4635,7 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
   let invalidHand = handleBlind(gameState, "onHandPlayed", [cards])?.invalidHand;
 
   if (!invalidHand) {
-    gameState.log += `Base Chips: ${chips}\nBase Mult: ${mult/decimalAccuracy}`;
+    gameState.log += `Base Chips: ${bigIntToSci(chips)}\nBase Mult: ${bigIntToSci(mult/BigInt(decimalAccuracy))}`;
     const handPlayedResponses = handleJokers(gameState, "onHandPlayed", [cards]).responses; // Hand played jokers
     gameState.handPlays[handType]++;
     ({ chips, mult } = handleMult(gameState, chips, mult, handPlayedResponses));
