@@ -4641,7 +4641,6 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
     ({ chips, mult } = handleMult(gameState, chips, mult, handPlayedResponses));
 
     playedCards.forEach((card, idx) => { // Loop through played cards
-      console.log(card);
       card.wasPlayed = true;
       if (card.debuffed) return;
       card.index = idx;
