@@ -4737,17 +4737,21 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
     if (Array.isArray(gameState.jokers)) {
       gameState.jokers.forEach((joker, idx) => { // Handle joker scoring
         joker.index = idx;
+
+        if (!joker.debuffed && joker.edition && joker.edition.toLowerCase().replaceAll(" ", "") == "foil") jokerResponses.push({"plusChips": 50, "name": "Foil"});
+        if (!joker.debuffed && joker.edition && joker.edition.toLowerCase().replaceAll(" ", "") == "holographic") jokerResponses.push({"plusMult": 10, "name": "Holographic"});
+        let handledJoker;
+        if (!joker.debuffed) handledJoker = handleJoker(gameState, joker, "onScore", [cards]);
+
         if (joker.rarity.toLowerCase().replaceAll(" ", "") == "uncommon" && jokerCount(gameState, "baseballcard")) {
           for (let i = 0; i < jokerCount(gameState, "baseballcard"); i++) {
             jokerResponses.push({"timesMult": 1.5, "name": jokerToText(gameState, baseballCards[i]).replaceAll("\n", "")});
           }
         }
-        if (joker.debuffed) return;
-        if (joker.edition && joker.edition.toLowerCase().replaceAll(" ", "") == "foil") jokerResponses.push({"plusChips": 50, "name": "Foil"});
-        if (joker.edition && joker.edition.toLowerCase().replaceAll(" ", "") == "holographic") jokerResponses.push({"plusMult": 10, "name": "Holographic"});
-        const handledJoker = handleJoker(gameState, joker, "onScore", [cards]);
-        jokerResponses.push(handledJoker);
-        if (joker.edition && joker.edition.toLowerCase().replaceAll(" ", "") == "polychrome") jokerResponses.push({"timesMult": 1.5, "name": "Polychrome"});
+        
+        if (!joker.debuffed && joker.edition && joker.edition.toLowerCase().replaceAll(" ", "") == "polychrome") jokerResponses.push({"timesMult": 1.5, "name": "Polychrome"});
+        
+        if (handledJoker) jokerResponses.push(handledJoker);
       })
     }
     ({ chips, mult } = handleMult(gameState, chips, mult, jokerResponses));
