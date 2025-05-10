@@ -4232,8 +4232,11 @@ function packSelect(gameState, index, selectedCards = []) {
     gameState.state = gameState.oldState;
     delete gameState.cardArea;
     delete gameState.undrawnCards;
-    gameState.tags.forEach(tag => {
-      if (tag.onBuy) tag.onBuy(gameState);
+    gameState.tags.forEach((tag, idx) => {
+      if (tag.onBuy) {
+        tag.onBuy(gameState);
+        gameState.tags.splice(idx, 1);
+      }
     })
   }
 }
@@ -4244,8 +4247,11 @@ function skipPack(gameState) {
   delete gameState.cardArea;
   delete gameState.undrawnCards;
   gameState.state = gameState.oldState;
-  gameState.tags.forEach(tag => {
-    if (tag.onBuy) tag.onBuy(gameState);
+  gameState.tags.forEach((tag, idx) => {
+    if (tag.onBuy) {
+      tag.onBuy(gameState);
+      gameState.tags.splice(idx, 1);
+    }
   })
 }
 
