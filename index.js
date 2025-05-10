@@ -3721,7 +3721,7 @@ function sellCard(gameState, section, index) { // Pass index starting with 0
   if (!card) return "Invalid index";
   if (card.stickers?.includes("Eternal")) return "Joker is eternal";
   gameState.money += Math.max(1, roundHalfDown(calcCost(gameState, card)/2)+(card.addedSellValue || 0));
-  handleBlind(gameState, "onCardSold", [card]); // TODO: check order
+  if (section == "jokers") handleBlind(gameState, "onCardSold", [card]); // TODO: check order
   handleJokers(gameState, "onCardSold", [card]);
   if (card.onSell) card.onSell(gameState);
   if (section == "consumables") {
