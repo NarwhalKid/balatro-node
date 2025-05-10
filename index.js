@@ -4623,8 +4623,8 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
   let mult = (pokerHand.base.mult + pokerHand.addition.mult * BigInt(gameState.handLevels[handType]-1)) * BigInt(decimalAccuracy); // Multiply all mult by decimalAccuracy, reset at the final calculation
 
   if (gameState.blind.name == "The Flint" && !gameState.blind.disabled) {
-    chips = chips*5/10;
-    mult = chips*5/10;
+    chips = chips*5n/10n;
+    mult = chips*5n/10n;
     handleJokers(gameState, "onBlindAbility");
   }
 
@@ -4748,7 +4748,7 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
             jokerResponses.push({"timesMult": 1.5, "name": jokerToText(gameState, baseballCards[i]).replaceAll("\n", "")});
           }
         }
-        
+
         if (!joker.debuffed && joker.edition && joker.edition.toLowerCase().replaceAll(" ", "") == "polychrome") jokerResponses.push({"timesMult": 1.5, "name": "Polychrome"});
         
         if (handledJoker) jokerResponses.push(handledJoker);
