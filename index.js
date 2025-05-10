@@ -1321,7 +1321,7 @@ const jokers = [
     getDesc(gameState) { return `This Joker gains +3 Chips per discarded ${gameState.jokerProperties.castle.suit.replace("s", "")} card, suit changes every round\n(Currently +${this.properties.plusChips})` },
     "rarity": "Common",
     "properties": {"plusChips":0},
-    onCardScored(gameState, card) {return {"plusChips": this.properties.plusChips};},
+    onScore(gameState, card) {return {"plusChips": this.properties.plusChips};},
     onDiscard(gameState, cards) {
       cards.forEach(card => {
         if (isSuit(gameState, card, gameState.jokerProperties.castle.suit)) {
