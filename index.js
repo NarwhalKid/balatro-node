@@ -2875,7 +2875,7 @@ const blinds = [
     "tertiaryColor": "#2a4a5b",
     "isNormalBoss": true,
     onHandEnd(gameState) {
-      gameState.forEach(card => {
+      gameState.hand.forEach(card => {
         if (gameState.blind.firstHand && gameState.blind.firstDiscard) {
           card.flipped = true;
         }
