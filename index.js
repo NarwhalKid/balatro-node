@@ -4185,10 +4185,11 @@ function buyPack(gameState, pack, free = false) {
   delete gameState.cardArea;
   if (target.name.toLowerCase().includes("spectral") || target.name.toLowerCase().includes("arcana")) {
     gameState.cardArea = [];
-    for (let i = gameState.cardArea.length; i < gameState.handSize; i++) {
-      const cardIdx = Math.floor(Math.random() * gameState.fullDeck.length);
-      drawCard(gameState, gameState.fullDeck[cardIdx]);
-      gameState.fullDeck.splice(cardIdx, 1);
+    gameState.undrawnCards = [...gameState.fullDeck];
+    for (let i = gameState.cardArea.length; i < gameState.handSize && i < gameState.undrawnCards.length; i++) {
+      const cardIdx = Math.floor(Math.random() * gameState.undrawnCards.length);
+      gameState.cardArea.push(gameState.undrawnCards[cardIdx]);
+      gameState.undrawnCards.splice(cardIdx, 1);
     }
     
     const sortedCards = sortCards(gameState, gameState.cardArea);
@@ -4231,6 +4232,7 @@ function packSelect(gameState, index, selectedCards = []) {
   if (gameState.currentPack.choices < 1) {
     gameState.state = gameState.oldState;
     delete gameState.cardArea;
+    delete gameState.undrawnCards;
     gameState.tags.forEach(tag => {
       if (tag.onBuy) tag.onBuy();
     })
@@ -4241,6 +4243,7 @@ function skipPack(gameState) {
   if (gameState.state != "openingPack") return "Not opening pack";
   handleJokers(gameState, "onBoosterPackSkipped");
   delete gameState.cardArea;
+  delete gameState.undrawnCards;
   gameState.state = gameState.oldState;
   gameState.tags.forEach(tag => {
     if (tag.onBuy) tag.onBuy();
