@@ -894,7 +894,7 @@ function isSuit(gameState, card, suit) {
   if (card.edition?.toLowerCase().replaceAll(" ", "") == "wildcard" && !card.debuffed) return true;
   const redHands = ["hearts", "diamonds"];
   const blackHands = ["spades", "clubs"];
-  if (jokerCount(gameState, "smearedjoker") && ((redHands.contains(card.suit.toLowerCase()) && redHands.contains(suit.toLowerCase())) || (blackHands.contains(card.suit.toLowerCase()) && blackHands.contains(suit.toLowerCase())))) return true;
+  if (jokerCount(gameState, "smearedjoker") && ((redHands.includes(card.suit.toLowerCase()) && redHands.includes(suit.toLowerCase())) || (blackHands.includes(card.suit.toLowerCase()) && blackHands.includes(suit.toLowerCase())))) return true;
   return card.suit.toLowerCase() == suit.toLowerCase();
 }
 
