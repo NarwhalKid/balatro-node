@@ -3733,7 +3733,7 @@ function sellCard(gameState, section, index) { // Pass index starting with 0
 
 function addVoucher(gameState, voucher) {
   gameState.vouchers.push(voucher);
-  gameState.vouchers.splice(gameState.vouchers.indexOf(voucher), 1);
+  gameState.possibleVouchers.splice(gameState.possibleVouchers.indexOf(voucher), 1);
 
   switch (voucher.toLowerCase().replaceAll(" ", "")) {
     case "overstock":
