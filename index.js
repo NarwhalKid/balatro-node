@@ -374,7 +374,7 @@ const cards = {
         if (!random(gameState, 1, 4)) return; // Nope!
         const targetJoker = possibleJokers[Math.floor(Math.random() * possibleJokers.length)];
         let tempEditions = objectClone(gameState.editions);
-        delete tempEditions.negative;
+        delete tempEditions.Negative;
         targetJoker.edition = pickWeightedRandom(tempEditions);
       }
     },
