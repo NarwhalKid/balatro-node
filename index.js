@@ -1534,8 +1534,15 @@ const jokers = [
     "name": "Drunkard",
     getDesc(gameState) { return "+1 discard each round" },
     "rarity": "Common",
-    onBuy(gameState) {gameState.defaultDiscards++;},
-    onDestroy(gameState) {gameState.defaultDiscards--;},
+    onBuy(gameState) {
+      gameState.defaultDiscards++;
+      gameState.blind?.discards++;
+    },
+    onDestroy(gameState) {
+      gameState.defaultDiscards--;
+      if (gameState.blind?.discards > 0)
+        gameState.blind?.discards--;
+    },
     "cost": 4,
     "noCopy": true,
   },
