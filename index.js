@@ -1536,7 +1536,8 @@ const jokers = [
     "rarity": "Common",
     onBuy(gameState) {
       gameState.defaultDiscards++;
-      gameState.blind?.discards++;
+      if (gameState.blind)
+        gameState.blind.discards++;
     },
     onDestroy(gameState) {
       gameState.defaultDiscards--;
