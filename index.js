@@ -4760,6 +4760,7 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
         if (!joker.debuffed && joker.edition && joker.edition.toLowerCase().replaceAll(" ", "") == "holographic") jokerResponses.push({"plusMult": 10, "name": "Holographic"});
         let handledJoker;
         if (!joker.debuffed) handledJoker = handleJoker(gameState, joker, "onScore", [cards]);
+        if (handledJoker) jokerResponses.push(handledJoker);
 
         if (joker.rarity.toLowerCase().replaceAll(" ", "") == "uncommon" && jokerCount(gameState, "baseballcard")) {
           for (let i = 0; i < jokerCount(gameState, "baseballcard"); i++) {
@@ -4769,7 +4770,6 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
 
         if (!joker.debuffed && joker.edition && joker.edition.toLowerCase().replaceAll(" ", "") == "polychrome") jokerResponses.push({"timesMult": 1.5, "name": "Polychrome"});
         
-        if (handledJoker) jokerResponses.push(handledJoker);
       })
     }
     ({ chips, mult } = handleMult(gameState, chips, mult, jokerResponses));
