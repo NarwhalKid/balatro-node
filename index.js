@@ -2214,7 +2214,7 @@ const jokers = [
     getDesc(gameState) { return `X${this.properties.timesMult} Mult, loses X0.01 Mult per card discarded` },
     "properties": {"timesMult":2},
     onDiscard(gameState, cards) {
-      this.properties.timesMult -= 0.01 * cards.length;
+      this.properties.timesMult = parseFloat((this.properties.timesMult - 0.01 * cards.length).toFixed(2));
       return {"destroy": this.properties.timesMult <= 0};
     },
     onScore(gameState, cards) {
