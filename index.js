@@ -5078,6 +5078,7 @@ function gameToText(gameState) {
       let money = 0;
       let moneyString = "";
       gameState.moneySources.filter(Boolean).forEach(source => {
+        money += Math.max(source[1], 0);
         moneyString += `\n${source[0]}: ${"$".repeat(Math.max(source[1], 0))}`;
       })
       returnString += `Cash Out: $${money}`;
