@@ -4639,8 +4639,8 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
   let mult = (pokerHand.base.mult + pokerHand.addition.mult * BigInt(gameState.handLevels[handType]-1)) * BigInt(decimalAccuracy); // Multiply all mult by decimalAccuracy, reset at the final calculation
 
   if (gameState.blind.name == "The Flint" && !gameState.blind.disabled) {
-    chips = chips*5n/10n;
-    mult = chips*5n/10n;
+    chips = Math.max(chips*5n/10n, 1);
+    mult = Math.max(chips*5n/10n, 1);
     handleJokers(gameState, "onBlindAbility");
   }
 
