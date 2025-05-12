@@ -4661,6 +4661,7 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
     playedCards.forEach((card, idx) => { // Loop through played cards
       card.wasPlayed = true;
       if (card.debuffed) return;
+      card.flipped = false;
       card.index = idx;
       let playedCardResponses = [{"log": "Card scoring", "name": cardToText(gameState, card).replaceAll("\n", "")}];
       let retriggers = 0;
