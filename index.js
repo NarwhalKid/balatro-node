@@ -1542,7 +1542,7 @@ const jokers = [
     onDestroy(gameState) {
       gameState.defaultDiscards--;
       if (gameState.blind?.discards > 0)
-        gameState.blind?.discards--;
+        gameState.blind.discards--;
     },
     "cost": 4,
     "noCopy": true,
