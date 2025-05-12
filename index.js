@@ -4030,6 +4030,8 @@ function newCard(gameState, cardType, certificate = false, stone = false, jokerR
       const isRental = pickByPercentage({"Rental": {"odds": gameState.typeOdds.rental}});
       if (isRental) card.stickers.push(isRental);
       if (timeBasedSticker == "Perishable") {
+        if (!card.properties)
+          card.properties = {};
         card.properties.perishable = 5;
       }
     }
