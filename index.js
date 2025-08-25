@@ -5206,8 +5206,7 @@ function cardsToText(gameState, fullDeck = false) { // TODO: check if stone card
 function vouchersToText(gameState) {
   let response = "";
   gameState.vouchers.forEach(voucher => {
-    console.log(voucher);
-    response += voucherToText(gameState, voucher, true);
+    response += voucherToText(gameState, {"name": voucher, "cost": 10, "desc": voucherDescs[voucher]}, true);
   })
   return response;
 }
