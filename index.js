@@ -4661,7 +4661,7 @@ function playHand(gameState, indices) { // Pass the indices starting at 0
     playedCards.forEach((card, idx) => { // Loop through played cards
       card.wasPlayed = true;
       if (card.debuffed) {
-        gameState.log += `\nCard scoring: ${cardToText(gameState, card).replaceAll("\n", "")} did not score`;
+        gameState.log += `\n${cardToText(gameState, card).replaceAll("\n", "")}: Did not score`;
         return;
       }
       card.flipped = false;
