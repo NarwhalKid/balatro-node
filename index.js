@@ -2399,7 +2399,7 @@ const jokers = [
     "name": "Seltzer",
     "rarity": "Uncommon",
     getDesc(gameState) { return `Retrigger all cards played for the next ${this.properties.roundsRemaining} hand${this.properties.roundsRemaining == 1 ? "" : "s"}` },
-    "properties": {"roundsRemaining":10, roundsMax:10},
+    "properties": {"roundsRemaining":10, "roundsMax":10},
     onCardScored(gameState, card) {
       return {"retriggers": 1};
     },
@@ -4484,8 +4484,8 @@ function sortCards(gameState, cardArr) {
   const biggerArr = gameState.sortByRank ? ranks : suits;
   const smallerArr = gameState.sortByRank ? suits : ranks;
   return [...cardArr].toSorted((a,b) => {
-    if (a.edition == "Stone Card") return -1;
-    if (b.edition == "Stone Card") return 1;
+    if (a.enhancement == "Stone Card") return -1;
+    if (b.enhancement == "Stone Card") return 1;
     if (biggerArr.indexOf(a[bigger]) < biggerArr.indexOf(b[bigger])) return -1;
     if (biggerArr.indexOf(a[bigger]) > biggerArr.indexOf(b[bigger])) return 1;
     if (smallerArr.indexOf(a[smaller]) < smallerArr.indexOf(b[smaller])) return -1;
