@@ -5204,11 +5204,11 @@ function cardsToText(gameState, fullDeck = false) { // TODO: check if stone card
 }
 
 function vouchersToText(gameState) {
-  let response = "";
+  let response = [];
   gameState.vouchers.forEach(voucher => {
-    response += `${voucherToText(gameState, {"name": voucher, "cost": 10, "desc": voucherDescs[voucher]}, true)}\n`;
+    response.push(`${voucherToText(gameState, {"name": voucher, "cost": 10, "desc": voucherDescs[voucher]}, true)}`);
   })
-  return response;
+  return response.join("\n");
 }
 
 function handLevelsToText(gameState) {
