@@ -4484,8 +4484,8 @@ function sortCards(gameState, cardArr) {
   const biggerArr = gameState.sortByRank ? ranks : suits;
   const smallerArr = gameState.sortByRank ? suits : ranks;
   return [...cardArr].toSorted((a,b) => {
-    if (a.enhancement == "Stone Card") return -1;
-    if (b.enhancement == "Stone Card") return 1;
+    if (a.enhancement == "Stone Card") return 1;
+    if (b.enhancement == "Stone Card") return -1;
     if (biggerArr.indexOf(a[bigger]) < biggerArr.indexOf(b[bigger])) return -1;
     if (biggerArr.indexOf(a[bigger]) > biggerArr.indexOf(b[bigger])) return 1;
     if (smallerArr.indexOf(a[smaller]) < smallerArr.indexOf(b[smaller])) return -1;
