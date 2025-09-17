@@ -612,7 +612,7 @@ const cards = {
         const targetJoker = gameState.jokers[Math.floor(Math.random() * gameState.jokers.length)];
         gameState.jokers.forEach(joker => {if (joker != targetJoker) destroyJoker(gameState, joker)});
         const jokerClone = objectClone(targetJoker);
-        if (jokerClone.edition.toLowerCase().replaceAll(" ", "") == "negative") delete jokerClone.edition;
+        if (jokerClone.edition?.toLowerCase().replaceAll(" ", "") == "negative") delete jokerClone.edition;
         addNewJoker(gameState, jokerClone);
       }
     },
